@@ -16,21 +16,19 @@ def apply_client():
 	cf = class_file.load(mod.config.path("stage/client/uu.class"))
 	cp = cf[0x04]
 
+	cf[0x03] = (int.from_bytes(cf[0x03]) + 4).to_bytes(2)
 	cp.extend([
 		[1211, b"\x01", len("fortress_bricks").to_bytes(2), utf8.encode("fortress_bricks")],
 		[1212, b"\x0c", (1211).to_bytes(2) + (905).to_bytes(2)],
 		[1213, b"\x09", (196).to_bytes(2) + (1212).to_bytes(2)],
 		[1214, b"\x08", (1211).to_bytes(2)]
 	])
-	cf[0x03] = (int.from_bytes(cf[0x03]) + 4).to_bytes(2)
 
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 1).to_bytes(2)
 	cf[0x0b].append([
 		(0x0001.__or__(0x0008)).to_bytes(2),
-		(1211).to_bytes(2),
-		(905).to_bytes(2),
-		(0).to_bytes(2),
-		[]
+		(1211).to_bytes(2), (905).to_bytes(2),
+		(0).to_bytes(2), []
 	])
 
 	m = None
@@ -69,8 +67,6 @@ def apply_client():
 		['invokevirtual', 527],
 		['putstatic', 1213]
 	]) + a_code[0x03][3398:3678]
-
-	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	# remove line number table
