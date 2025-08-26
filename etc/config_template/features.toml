@@ -1,0 +1,10 @@
+[features]
+minimal_title_screen = true
+no_crop_trampling = true
+stackable_food = true
+log_version = true
+single_pixel_crosshair = true
+raw_squid_and_calamari = true
+fortress_bricks = true
+fixed_time = false
+debug_fov = false

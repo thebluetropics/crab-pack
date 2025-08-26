@@ -1,0 +1,21 @@
+# Intellij IDEA
+/.idea/
+
+# Visual Studio Code
+/.vscode/*
+!settings.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Temporary files
+/dist/
+/artifacts/
+/out/
+/stage/
+/jars/
+/opts.json
+
+# Mod configuration
+/config/

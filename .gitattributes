@@ -1,0 +1,5 @@
+*.py text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
