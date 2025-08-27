@@ -66,7 +66,7 @@ def apply_server():
 	if not mod.config.is_feature_enabled("stackable_food"):
 		return
 
-	cf = class_file.load(mod.config.path("stage/client/px.class"))
+	cf = class_file.load(mod.config.path("stage/server/px.class"))
 	cp = cf[0x04]
 
 	m = None
@@ -112,7 +112,7 @@ def apply_server():
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	with open(mod.config.path("stage/client/px.class"), "wb") as f:
+	with open(mod.config.path("stage/server/px.class"), "wb") as f:
 		f.write(class_file.make(cf))
 
 	print("Patched server:px.class → net.minecraft.item.FoodItem")

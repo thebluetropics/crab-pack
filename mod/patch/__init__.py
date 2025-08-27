@@ -16,6 +16,7 @@ def apply_server_patches():
 	server.apply()
 	world.apply_server()
 	packet.apply_server()
+	item.apply_server()
 
 	meta_inf.apply_server()
 
