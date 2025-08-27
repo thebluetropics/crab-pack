@@ -133,7 +133,7 @@ def _modify_player_tick_client(cf, cp):
 
 	a_code = code_attribute.load(a[0x02])
 	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(402, [
-		'aload_0', ['getfield', 123], ['getfield', 108], ['ifne', 'a06'],
+		'aload_0', ['getfield', 123], ['getfield', 108], ['ifne*', 'a06'],
 		'aload_0', ['getfield', 815], 'iconst_5', ['if_icmpge*', 'a02'],
 
 		# 01
