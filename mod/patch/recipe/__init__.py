@@ -6,5 +6,6 @@ def apply_client():
 
 def apply_server():
 	block_recipes.apply_server()
+	smelting_recipe_manager.apply_server()
 
 __all__ = [apply_client.__name__]

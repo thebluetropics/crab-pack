@@ -18,6 +18,7 @@ def apply_server_patches():
 	packet.apply_server()
 	item.apply_server()
 	recipe.apply_server()
+	entity.apply_server()
 
 	meta_inf.apply_server()
 
