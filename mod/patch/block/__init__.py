@@ -6,5 +6,6 @@ def apply_client():
 
 def apply_server():
 	farmland_block.apply_server()
+	block.apply_server()
 
 __all__ = [apply_client.__name__, apply_server.__name__]

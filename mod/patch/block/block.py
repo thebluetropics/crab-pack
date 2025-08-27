@@ -79,3 +79,64 @@ def apply_client():
 		file.write(class_file.make(cf))
 
 	print('Patched client:uu.class → net.minecraft.block.Block')
+
+def apply_server():
+	if not mod.config.is_feature_enabled('fortress_bricks'):
+		return
+
+	cf = class_file.load(mod.config.path('stage/server/na.class'))
+	cp = cf[0x04]
+
+	cf[0x03] = (int.from_bytes(cf[0x03]) + 4).to_bytes(2)
+	cp.extend([
+		[1192, b"\x01", len('fortress_bricks').to_bytes(2), utf8.encode('fortress_bricks')],
+		[1193, b"\x0c", (1192).to_bytes(2) + i2cp_utf8_get(cp, 'Lna;')],
+		[1194, b"\x09", i2cp_class_get(cp, 'na') + (1193).to_bytes(2)],
+		[1195, b"\x08", (1192).to_bytes(2)]
+	])
+
+	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 1).to_bytes(2)
+	cf[0x0b].append(make_field(['public', 'static'], 1192, icp_utf8_get(cp, 'Lna;')))
+
+	m = get_method(cf, cp, '<clinit>', '()V')
+	a = get_attribute(m[0x04], cp, 'Code')
+
+	a_code = code_attribute.load(a[0x02])
+
+	a_code[0x03] = a_code[0x03][0:3398] + instructions.make(3398, [
+		['new', icp_class_get(cp, 'na')],
+		'dup',
+		['bipush', 97],
+		['sipush', 166],
+		['getstatic', icp_f_get(cp, 'hj', 'e', 'Lhj;')],
+		['invokespecial', icp_m_get(cp, 'na', '<init>', '(IILhj;)V')],
+		'fconst_2',
+		['invokevirtual', icp_m_get(cp, 'na', 'c', '(F)Lna;')],
+		['ldc', 21],
+		['invokevirtual', icp_m_get(cp, 'na', 'b', '(F)Lna;')],
+		['getstatic', icp_f_get(cp, 'na', 'h', 'Lbu;')],
+		['invokevirtual', icp_m_get(cp, 'na', 'a', '(Lbu;)Lna;')],
+		['ldc_w', 1195],
+		['invokevirtual', icp_m_get(cp, 'na', 'a', '(Ljava/lang/String;)Lna;')],
+		['putstatic', 1194]
+	]) + a_code[0x03][3398:3678]
+	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
+
+	# remove line number table
+	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
+
+	for i, a in a_code[0x07]:
+		if vcp_utf8_get(cp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+			del a[0x07][i]
+			break
+
+	# update code attribute
+	a[0x02] = code_attribute.assemble(a_code)
+
+	# update code attribute length
+	a[0x01] = len(a[0x02]).to_bytes(4)
+
+	with open(mod.config.path('stage/server/na.class'), 'wb') as file:
+		file.write(class_file.make(cf))
+
+	print('Patched server:na.class → net.minecraft.block.Block')
