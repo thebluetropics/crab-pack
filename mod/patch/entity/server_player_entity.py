@@ -28,7 +28,7 @@ def apply():
 	print('Patched server:dl.class → net.minecraft.entity.ServerPlayerEntity')
 
 def _make_update_hunger_method(xcp):
-	m = make_method(['protected'], icpx_utf8(xcp, 'updateHunger'), icpx_utf8(xcp, '()V'))
+	m = make_method(['protected'], icpx_utf8(xcp, 'updateHunger'), icpx_utf8(xcp, '(II)V'))
 
 	code = instructions.make(0, [
 		'return'

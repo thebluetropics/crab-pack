@@ -216,14 +216,14 @@ def _modify_player_tick_client(cf, cp):
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
 def _add_update_hunger_method(cf, cp):
-	m = make_method(['protected'], 819, icp_utf8_get(cp, '()V'))
+	m = make_method(['protected'], 819, icp_utf8_get(cp, '(II)V'))
 
 	code = instructions.make(0, [
 		'return'
 	])
 	a_code = code_attribute.assemble([
 		(0).to_bytes(2),
-		(1).to_bytes(2),
+		(3).to_bytes(2),
 		len(code).to_bytes(4),
 		code,
 		(0).to_bytes(2),
