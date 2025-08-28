@@ -167,7 +167,7 @@ def icpx_utf8(cp, value):
 
 def i2cpx_utf8(cp, value): return icpx_utf8(cp, value).to_bytes(2)
 
-def icpx_class(cp, internal_name):
+def icpx_c(cp, internal_name):
 	if (0x07, internal_name) in cp.cache:
 		return cp.cache[(0x07, internal_name)]
 
@@ -188,7 +188,7 @@ def icpx_class(cp, internal_name):
 
 	return i
 
-def i2cpx_class(cp, internal_name): return icpx_class(cp, internal_name).to_bytes(2)
+def i2cpx_c(cp, internal_name): return icpx_c(cp, internal_name).to_bytes(2)
 
 def icpx_string(cp, value):
 	if (0x08, value) in cp.cache:
@@ -241,7 +241,7 @@ def icpx_f(cp, owner, name, desc):
 	if (0x09, owner, name, desc) in cp.cache:
 		return cp.cache[(0x09, owner, name, desc)]
 
-	icp_class = icpx_class(cp, owner)
+	icp_class = icpx_c(cp, owner)
 	icp_name_and_type = icpx_name_and_type(cp, name, desc)
 
 	rcp = cp.cf[0x04]
@@ -265,7 +265,7 @@ def icpx_m(cp, owner, name, desc):
 	if (0x0a, owner, name, desc) in cp.cache:
 		return cp.cache[(0x0a, owner, name, desc)]
 
-	icp_class = icpx_class(cp, owner)
+	icp_class = icpx_c(cp, owner)
 	icp_name_and_type = icpx_name_and_type(cp, name, desc)
 
 	rcp = cp.cf[0x04]
