@@ -137,3 +137,203 @@ def icp_m_get(cp, owner, name, desc):
 
 def i2cp_m_get(cp, owner, name, desc):
 	return icp_m_get(cp, owner, name, desc).to_bytes(2)
+
+constant_pool_t = type('constant_pool', tuple([object]), {
+	object.__init__.__name__: lambda self, cf: [].extend([
+		setattr(self, 'cf', cf),
+		setattr(self, 'idx_cache', {}),
+		setattr(self, 'cache', {})
+	])
+})
+
+def icpx_utf8(cp, value):
+	if (0x01, value) in cp.cache:
+		return cp.cache[(0x01, value)]
+
+	rcp = cp.cf[0x04]
+	i = rcp[-1][0]
+
+	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+		i = i + 2
+	else:
+		i = i + 1
+
+	rcp.append([i, b'\x01', len(value).to_bytes(2), utf8.encode(value)])
+	cp.idx_cache[i] = rcp[-1]
+	cp.cf[0x03] = (i + 1).to_bytes(2)
+	cp.cache[(0x01, value)] = i
+
+	return i
+
+def icpx_class(cp, internal_name):
+	if (0x07, internal_name) in cp.cache:
+		return cp.cache[(0x07, internal_name)]
+
+	icp_utf8 = icpx_utf8(cp, internal_name)
+
+	rcp = cp.cf[0x04]
+	i = rcp[-1][0]
+
+	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+		i = i + 2
+	else:
+		i = i + 1
+
+	rcp.append([i, b'\x07', icp_utf8.to_bytes(2)])
+	cp.idx_cache[i] = rcp[-1]
+	cp.cf[0x03] = (i + 1).to_bytes(2)
+	cp.cache[(0x07, internal_name)] = i
+
+	return i
+
+def icpx_string(cp, value):
+	if (0x08, value) in cp.cache:
+		return cp.cache[(0x08, value)]
+
+	icp_utf8 = icpx_utf8(cp, value)
+
+	rcp = cp.cf[0x04]
+	i = rcp[-1][0]
+
+	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+		i = i + 2
+	else:
+		i = i + 1
+
+	rcp.append([i, b'\x08', icp_utf8.to_bytes(2)])
+	cp.idx_cache[i] = rcp[-1]
+	cp.cf[0x03] = (i + 1).to_bytes(2)
+	cp.cache[(0x08, value)] = i
+
+	return i
+
+def icpx_name_and_type(cp, name, desc):
+	if (0x0c, name, desc) in cp.cache:
+		return cp.cache[(0x0c, name, desc)]
+
+	icp_name = icpx_utf8(cp, name)
+	icp_type = icpx_utf8(cp, desc)
+
+	rcp = cp.cf[0x04]
+	i = rcp[-1][0]
+
+	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+		i = i + 2
+	else:
+		i = i + 1
+
+	rcp.append([i, b'\x0c', icp_name.to_bytes(2) + icp_type.to_bytes(2)])
+	cp.idx_cache[i] = rcp[-1]
+	cp.cf[0x03] = (i + 1).to_bytes(2)
+	cp.cache[(0x0c, name, desc)] = i
+
+	return i
+
+def icpx_f(cp, owner, name, desc):
+	if (0x09, owner, name, desc) in cp.cache:
+		return cp.cache[(0x09, owner, name, desc)]
+
+	icp_class = icpx_class(cp, owner)
+	icp_name_and_type = icpx_name_and_type(cp, name, desc)
+
+	rcp = cp.cf[0x04]
+	i = rcp[-1][0]
+
+	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+		i = i + 2
+	else:
+		i = i + 1
+
+	rcp.append([i, b'\x09', icp_class.to_bytes(2) + icp_name_and_type.to_bytes(2)])
+	cp.idx_cache[i] = rcp[-1]
+	cp.cf[0x03] = (i + 1).to_bytes(2)
+	cp.cache[(0x09, owner, name, desc)] = i
+
+	return i
+
+def icpx_m(cp, owner, name, desc):
+	if (0x0a, owner, name, desc) in cp.cache:
+		return cp.cache[(0x0a, owner, name, desc)]
+
+	icp_class = icpx_class(cp, owner)
+	icp_name_and_type = icpx_name_and_type(cp, name, desc)
+
+	rcp = cp.cf[0x04]
+	i = rcp[-1][0]
+
+	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+		i = i + 2
+	else:
+		i = i + 1
+
+	rcp.append([i, b'\x0a', icp_class.to_bytes(2) + icp_name_and_type.to_bytes(2)])
+	cp.idx_cache[i] = rcp[-1]
+	cp.cf[0x03] = (i + 1).to_bytes(2)
+	cp.cache[(0x0a, owner, name, desc)] = i
+
+	return i
+
+def use_helper(cf):
+	cp = constant_pool_t(cf)
+
+	for entry in cf[0x04]:
+		cp.idx_cache[entry[0]] = entry
+
+	for entry in cf[0x04]:
+		if entry[1].__eq__(b'\x01'):
+			cp.cache[(0x01, utf8.decode(entry[3]))] = entry[0]
+
+	for entry in cf[0x04]:
+		if entry[1].__eq__(b'\x07'):
+			i, _, i2cp_to_utf8 = entry
+			ecp_utf8 = cp.idx_cache[int.from_bytes(i2cp_to_utf8)]
+			vcp_utf8 = utf8.decode(ecp_utf8[3])
+			cp.cache[(0x07, vcp_utf8)] = i
+			continue
+
+		if entry[1].__eq__(b'\x08'):
+			i, _, i2cp_to_utf8 = entry
+			ecp_utf8 = cp.idx_cache[int.from_bytes(i2cp_to_utf8)]
+			vcp_utf8 = utf8.decode(ecp_utf8[3])
+			cp.cache[(0x08, vcp_utf8)] = i
+			continue
+
+		if entry[1].__eq__(b'\x0c'):
+			i = entry[0]
+			ecp_name = cp.idx_cache[int.from_bytes(entry[2][0:2])]
+			ecp_type = cp.idx_cache[int.from_bytes(entry[2][2:4])]
+			name_string = utf8.decode(ecp_name[3])
+			type_string = utf8.decode(ecp_type[3])
+			cp.cache[(0x0c, name_string, type_string)] = i
+			continue
+
+	for entry in cf[0x04]:
+		if entry[1].__eq__(b'\x09'):
+			i = entry[0]
+			ecp_class = cp.idx_cache[int.from_bytes(entry[2][0:2])]
+			ecp_name_and_type = cp.idx_cache[int.from_bytes(entry[2][2:4])]
+			ecp_class_utf8 = cp.idx_cache[int.from_bytes(ecp_class[2])]
+			ecp_name_utf8 = cp.idx_cache[int.from_bytes(ecp_name_and_type[2][0:2])]
+			ecp_type_utf8 = cp.idx_cache[int.from_bytes(ecp_name_and_type[2][2:4])]
+
+			class_string = utf8.decode(ecp_class_utf8[3])
+			name_string = utf8.decode(ecp_name_utf8[3])
+			type_string = utf8.decode(ecp_type_utf8[3])
+			cp.cache[(0x09, class_string, name_string, type_string)] = i
+			continue
+
+		if entry[1].__eq__(b'\x0a'):
+			i = entry[0]
+			ecp_class = cp.idx_cache[int.from_bytes(entry[2][0:2])]
+			ecp_name_and_type = cp.idx_cache[int.from_bytes(entry[2][2:4])]
+			ecp_class_utf8 = cp.idx_cache[int.from_bytes(ecp_class[2])]
+			ecp_name_utf8 = cp.idx_cache[int.from_bytes(ecp_name_and_type[2][0:2])]
+			ecp_type_utf8 = cp.idx_cache[int.from_bytes(ecp_name_and_type[2][2:4])]
+
+			class_string = utf8.decode(ecp_class_utf8[3])
+			name_string = utf8.decode(ecp_name_utf8[3])
+			type_string = utf8.decode(ecp_type_utf8[3])
+			cp.cache[(0x0a, class_string, name_string, type_string)] = i
+			continue
+
+	return cp
