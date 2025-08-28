@@ -1,13 +1,25 @@
 import mod
 
 from operator import eq
+from mod.bytecode.fields import make_field
+from mod.bytecode.method import (make_method, get_method)
+from mod.bytecode.attribute import get_attribute
 from mod.bytecode import (
-	instructions,
 	class_file,
-	constant_pool,
 	code_attribute,
+	instructions,
 	utf8,
+	constant_pool,
 	fields
+)
+from mod.bytecode.constant_pool import (
+	vcp_utf8_get,
+	i2cp_utf8_get,
+	icp_utf8_get,
+	i2cp_class_get,
+	icp_class_get,
+	icp_f_get,
+	icp_m_get
 )
 
 def apply_client():
@@ -18,7 +30,7 @@ def apply_client():
 	cp = cf[0x04]
 
 	# update constant pool count
-	cf[0x03] = (int.from_bytes(cf[0x03]) + 18).to_bytes(2)
+	cf[0x03] = (int.from_bytes(cf[0x03]) + 21).to_bytes(2)
 
 	# add new constant pool entries
 	cp.append([801, b"\x01", len("hunger").to_bytes(2), utf8.encode("hunger")])
@@ -44,6 +56,12 @@ def apply_client():
 	cp.append([816, b"\x01", len("thirstTick").to_bytes(2), utf8.encode("thirstTick")])
 	cp.append([817, b"\x0c", (816).to_bytes(2) + (642).to_bytes(2)])
 	cp.append([818, b"\x09", (48).to_bytes(2) + (817).to_bytes(2)])
+
+	cp.extend([
+		[819, b"\x01", len('updateHunger').to_bytes(2), utf8.encode('updateHunger')],
+		[820, b"\x0c", (819).to_bytes(2) + i2cp_utf8_get(cp, '()V')],
+		[821, b"\x0a", i2cp_class_get(cp, 'gs') + (820).to_bytes(2)]
+	])
 
 	# update field count
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 6).to_bytes(2)
@@ -106,6 +124,9 @@ def apply_client():
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
 	_modify_player_tick_client(cf, cp)
+
+	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
+	cf[0x0d].extend([_add_update_hunger_method(cf, cp)])
 
 	with open("stage/client/gs.class", "wb") as f:
 		f.write(class_file.make(cf))
@@ -193,3 +214,26 @@ def _modify_player_tick_client(cf, cp):
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _add_update_hunger_method(cf, cp):
+	m = make_method(['protected'], 819, icp_utf8_get(cp, '()V'))
+
+	code = instructions.make(0, [
+		'return'
+	])
+	a_code = code_attribute.assemble([
+		(0).to_bytes(2),
+		(1).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+	a = [i2cp_utf8_get(cp, 'Code'), len(a_code).to_bytes(4), a_code]
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [a]
+
+	return m
