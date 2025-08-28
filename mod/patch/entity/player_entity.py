@@ -8,18 +8,12 @@ from mod.bytecode import (
 	class_file,
 	code_attribute,
 	instructions,
-	utf8,
-	constant_pool,
-	fields
+	constant_pool
 )
 from mod.bytecode.constant_pool import (
-	vcp_utf8_get,
-	i2cp_utf8_get,
-	icp_utf8_get,
-	i2cp_class_get,
-	icp_class_get,
-	icp_f_get,
-	icp_m_get
+	icpx_utf8,
+	icpx_f,
+	i2cpx_utf8
 )
 
 def apply_client():
@@ -27,80 +21,29 @@ def apply_client():
 		return
 
 	cf = class_file.load(mod.config.path("stage/client/gs.class"))
+	xcp = constant_pool.use_helper(cf)
 	cp = cf[0x04]
 
-	# update constant pool count
-	cf[0x03] = (int.from_bytes(cf[0x03]) + 21).to_bytes(2)
-
-	# add new constant pool entries
-	cp.append([801, b"\x01", len("hunger").to_bytes(2), utf8.encode("hunger")])
-	cp.append([802, b"\x0c", (801).to_bytes(2) + (642).to_bytes(2)])
-	cp.append([803, b"\x09", (48).to_bytes(2) + (802).to_bytes(2)])
-
-	cp.append([804, b"\x01", len("maxHunger").to_bytes(2), utf8.encode("maxHunger")])
-	cp.append([805, b"\x0c", (804).to_bytes(2) + (642).to_bytes(2)])
-	cp.append([806, b"\x09", (48).to_bytes(2) + (805).to_bytes(2)])
-
-	cp.append([807, b"\x01", len("thirst").to_bytes(2), utf8.encode("thirst")])
-	cp.append([808, b"\x0c", (807).to_bytes(2) + (642).to_bytes(2)])
-	cp.append([809, b"\x09", (48).to_bytes(2) + (808).to_bytes(2)])
-
-	cp.append([810, b"\x01", len("maxThirst").to_bytes(2), utf8.encode("maxThirst")])
-	cp.append([811, b"\x0c", (810).to_bytes(2) + (642).to_bytes(2)])
-	cp.append([812, b"\x09", (48).to_bytes(2) + (811).to_bytes(2)])
-
-	cp.append([813, b"\x01", len("hungerTick").to_bytes(2), utf8.encode("hungerTick")])
-	cp.append([814, b"\x0c", (813).to_bytes(2) + (642).to_bytes(2)])
-	cp.append([815, b"\x09", (48).to_bytes(2) + (814).to_bytes(2)])
-
-	cp.append([816, b"\x01", len("thirstTick").to_bytes(2), utf8.encode("thirstTick")])
-	cp.append([817, b"\x0c", (816).to_bytes(2) + (642).to_bytes(2)])
-	cp.append([818, b"\x09", (48).to_bytes(2) + (817).to_bytes(2)])
-
-	cp.extend([
-		[819, b"\x01", len('updateHunger').to_bytes(2), utf8.encode('updateHunger')],
-		[820, b"\x0c", (819).to_bytes(2) + i2cp_utf8_get(cp, '()V')],
-		[821, b"\x0a", i2cp_class_get(cp, 'gs') + (820).to_bytes(2)]
-	])
-
-	# update field count
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 6).to_bytes(2)
+	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'hunger'), icpx_utf8(xcp, 'I')))
+	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'maxHunger'), icpx_utf8(xcp, 'I')))
+	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'thirst'), icpx_utf8(xcp, 'I')))
+	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'maxThirst'), icpx_utf8(xcp, 'I')))
+	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'hungerTick'), icpx_utf8(xcp, 'I')))
+	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'thirstTick'), icpx_utf8(xcp, 'I')))
 
-	fields.push(cf, 0x0001, 801, 642, [])
-	fields.push(cf, 0x0001, 804, 642, [])
-	fields.push(cf, 0x0001, 807, 642, [])
-	fields.push(cf, 0x0001, 810, 642, [])
-	fields.push(cf, 0x0001, 813, 642, [])
-	fields.push(cf, 0x0001, 816, 642, [])
+	m = get_method(cf, cp, '<init>', '(Lfd;)V')
+	a = get_attribute(m[0x04], cp, 'Code')
 
-	m = None
-	for _m in cf[0x0d]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_m[0x01]))
-		desc = constant_pool.get_utf8(cp, int.from_bytes(_m[0x02]))
-
-		if eq(name, "<init>") and eq(desc, "(Lfd;)V"):
-			m = _m
-			break
-
-	a = None
-	for _a in m[0x04]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if name.__eq__("Code"):
-			a = _a
-			break
-
-	# load code attribute
 	a_code = code_attribute.load(a[0x02])
 
-	# Modify code
 	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(0, [
-		'aload_0', ['bipush', 100], ['putfield', 803],
-		'aload_0', ['bipush', 100], ['putfield', 806],
-		'aload_0', ['bipush', 100], ['putfield', 809],
-		'aload_0', ['bipush', 100], ['putfield', 812],
-		'aload_0', 'iconst_0', ['putfield', 815],
-		'aload_0', 'iconst_0', ['putfield', 818],
+		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'gs', 'hunger', 'I')],
+		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'gs', 'maxHunger', 'I')],
+		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'gs', 'thirst', 'I')],
+		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'gs', 'maxThirst', 'I')],
+		'aload_0', 'iconst_0', ['putfield', icpx_f(xcp, 'gs', 'hungerTick', 'I')],
+		'aload_0', 'iconst_0', ['putfield', icpx_f(xcp, 'gs', 'thirstTick', 'I')],
 		'return'
 	])
 
@@ -123,75 +66,55 @@ def apply_client():
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	_modify_player_tick_client(cf, cp)
+	_modify_player_tick_client(cf, cp, xcp)
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].extend([_add_update_hunger_method(cf, cp)])
+	cf[0x0d].extend([_add_update_hunger_method(cf, cp, xcp)])
 
 	with open("stage/client/gs.class", "wb") as f:
 		f.write(class_file.make(cf))
 
 	print("Patched client:gs.class → net.minecraft.entity.player.PlayerEntity")
 
-def _modify_player_tick_client(cf, cp):
+def _modify_player_tick_client(cf, cp, xcp):
 	# gs.w_()V → PlayerEntity.tick
-	m = None
-	for _m in cf[0x0d]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_m[0x01]))
-		desc = constant_pool.get_utf8(cp, int.from_bytes(_m[0x02]))
-
-		if eq(name, "w_") and eq(desc, "()V"):
-			m = _m
-			break
-
-	a = None
-	for _a in m[0x04]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if name.__eq__("Code"):
-			a = _a
-			break
+	m = get_method(cf, cp, 'w_', '()V')
+	a = get_attribute(m[0x04], cp, 'Code')
 
 	a_code = code_attribute.load(a[0x02])
 	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(402, [
-		'aload_0', ['getfield', 123], ['getfield', 108], ['ifne*', 'a06'],
-		'aload_0', ['getfield', 815], 'iconst_5', ['if_icmpge*', 'a02'],
+		'aload_0', ['getfield', icpx_f(xcp, 'gs', 'aI', 'Lfd;')], ['getfield', icpx_f(xcp, 'fd', 'B', 'Z')], ['ifne*', 'a06'],
+		'aload_0', ['getfield', icpx_f(xcp, 'gs', 'tickCounter', 'I')], 'iconst_5', ['if_icmpge*', 'a02'],
 
-		# 01
 		'aload_0',
 		'aload_0',
-		['getfield', 815],
+		['getfield', icpx_f(xcp, 'gs', 'tickCounter', 'I')],
 		'iconst_1',
 		'iadd',
-		['putfield', 815], # → tickCounter++
+		['putfield', icpx_f(xcp, 'gs', 'tickCounter', 'I')],
 
-		# 02
 		['jump_target*', 'a02'],
 		'aload_0',
-		['getfield', 815],
+		['getfield', icpx_f(xcp, 'gs', 'tickCounter', 'I')],
 		'iconst_5',
-		['if_icmplt*', 'a06'], # → if tickCounter < 5
+		['if_icmplt*', 'a06'],
 
-		# 03
 		'aload_0',
-		['getfield', 803],
-		['ifle*', 'a05'], # → if hunger < 0 or hunger.eq(0)
+		['getfield', icpx_f(xcp, 'gs', 'hunger', 'I')],
+		['ifle*', 'a05'],
 
-		# 04
 		'aload_0',
 		'aload_0',
-		['getfield', 803],
+		['getfield', icpx_f(xcp, 'gs', 'hunger', 'I')],
 		'iconst_1',
 		'isub',
-		['putfield', 803],
+		['putfield', icpx_f(xcp, 'gs', 'hunger', 'I')],
 
-		# 05
 		['jump_target*', 'a05'],
 		'aload_0',
 		'iconst_0',
-		['putfield', 815],
+		['putfield', icpx_f(xcp, 'gs', 'tickCounter', 'I')],
 
-		# 06
 		['jump_target*', 'a06'],
 		'return'
 	])
@@ -202,10 +125,8 @@ def _modify_player_tick_client(cf, cp):
 	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
-	for i, _a in a_code[0x07]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if eq(name, "LineNumberTable"):
+	for i, a in a_code[0x07]:
+		if constant_pool.get_utf8(cp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
@@ -215,8 +136,8 @@ def _modify_player_tick_client(cf, cp):
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-def _add_update_hunger_method(cf, cp):
-	m = make_method(['protected'], 819, icp_utf8_get(cp, '(II)V'))
+def _add_update_hunger_method(cf, cp, xcp):
+	m = make_method(['protected'], icpx_utf8(xcp, 'updateHunger'), icpx_utf8(xcp, '(II)V'))
 
 	code = instructions.make(0, [
 		'return'
@@ -231,7 +152,7 @@ def _add_update_hunger_method(cf, cp):
 		(0).to_bytes(2),
 		[]
 	])
-	a = [i2cp_utf8_get(cp, 'Code'), len(a_code).to_bytes(4), a_code]
+	a = [i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]
 
 	m[0x03] = (1).to_bytes(2)
 	m[0x04] = [a]
