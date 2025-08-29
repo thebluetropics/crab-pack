@@ -5,7 +5,8 @@ from . import (
 	assets,
 	keyboard_input,
 	game_renderer,
-	i18n
+	i18n,
+	client_network_handler
 )
 
 def apply():
@@ -16,5 +17,6 @@ def apply():
 	keyboard_input.apply()
 	game_renderer.apply()
 	i18n.apply()
+	client_network_handler.apply()
 
 __all__ = [title_screen.__name__]
