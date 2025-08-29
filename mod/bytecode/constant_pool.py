@@ -138,16 +138,14 @@ def icp_m_get(cp, owner, name, desc):
 def i2cp_m_get(cp, owner, name, desc):
 	return icp_m_get(cp, owner, name, desc).to_bytes(2)
 
-constant_pool_helper = type('constant_pool_helper', tuple([object]), {
-	object.__init__.__name__: lambda self, cf: [].extend(setattr(self, k, v) for k, v in {
-		'cf': cf,
-		'idx_cache': {},
-		'cache': {}
-	}.items())
-})
+class ConstantPoolHelper:
+	def __init__(self, cf):
+		self.cf = cf
+		self.idx_cache = {}
+		self.cache = {}
 
 def use_helper(cf):
-	cp = constant_pool_helper(cf)
+	cp = ConstantPoolHelper(cf)
 
 	for entry in cf[0x04]:
 		cp.idx_cache[entry[0]] = entry
@@ -216,12 +214,15 @@ def icpx_utf8(cp, value):
 		return cp.cache[(0x01, value)]
 
 	rcp = cp.cf[0x04]
-	i = rcp[-1][0]
+	i = 1
 
-	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
-		i = i + 2
-	else:
-		i = i + 1
+	if rcp:
+		i = rcp[-1][0]
+
+		if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
 
 	rcp.append([i, b'\x01', len(value).to_bytes(2), utf8.encode(value)])
 	cp.idx_cache[i] = rcp[-1]
@@ -239,12 +240,15 @@ def icpx_c(cp, internal_name):
 	icp_utf8 = icpx_utf8(cp, internal_name)
 
 	rcp = cp.cf[0x04]
-	i = rcp[-1][0]
+	i = 1
 
-	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
-		i = i + 2
-	else:
-		i = i + 1
+	if rcp:
+		i = rcp[-1][0]
+
+		if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
 
 	rcp.append([i, b'\x07', icp_utf8.to_bytes(2)])
 	cp.idx_cache[i] = rcp[-1]
@@ -262,12 +266,15 @@ def icpx_string(cp, value):
 	icp_utf8 = icpx_utf8(cp, value)
 
 	rcp = cp.cf[0x04]
-	i = rcp[-1][0]
+	i = 1
 
-	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
-		i = i + 2
-	else:
-		i = i + 1
+	if rcp:
+		i = rcp[-1][0]
+
+		if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
 
 	rcp.append([i, b'\x08', icp_utf8.to_bytes(2)])
 	cp.idx_cache[i] = rcp[-1]
@@ -286,12 +293,15 @@ def icpx_name_and_type(cp, name, desc):
 	icp_type = icpx_utf8(cp, desc)
 
 	rcp = cp.cf[0x04]
-	i = rcp[-1][0]
+	i = 1
 
-	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
-		i = i + 2
-	else:
-		i = i + 1
+	if rcp:
+		i = rcp[-1][0]
+
+		if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
 
 	rcp.append([i, b'\x0c', icp_name.to_bytes(2) + icp_type.to_bytes(2)])
 	cp.idx_cache[i] = rcp[-1]
@@ -310,12 +320,15 @@ def icpx_f(cp, owner, name, desc):
 	icp_name_and_type = icpx_name_and_type(cp, name, desc)
 
 	rcp = cp.cf[0x04]
-	i = rcp[-1][0]
+	i = 1
 
-	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
-		i = i + 2
-	else:
-		i = i + 1
+	if rcp:
+		i = rcp[-1][0]
+
+		if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
 
 	rcp.append([i, b'\x09', icp_class.to_bytes(2) + icp_name_and_type.to_bytes(2)])
 	cp.idx_cache[i] = rcp[-1]
@@ -334,12 +347,15 @@ def icpx_m(cp, owner, name, desc):
 	icp_name_and_type = icpx_name_and_type(cp, name, desc)
 
 	rcp = cp.cf[0x04]
-	i = rcp[-1][0]
+	i = 1
 
-	if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
-		i = i + 2
-	else:
-		i = i + 1
+	if rcp:
+		i = rcp[-1][0]
+
+		if rcp[-1][1].__eq__(b'\x05') or rcp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
 
 	rcp.append([i, b'\x0a', icp_class.to_bytes(2) + icp_name_and_type.to_bytes(2)])
 	cp.idx_cache[i] = rcp[-1]
