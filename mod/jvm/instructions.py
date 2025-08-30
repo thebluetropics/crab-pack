@@ -1,6 +1,6 @@
 from .istr_info import istr_info
 
-def make(pc_begin, code):
+def assemble(pc_begin, code):
 	out = []
 	target_table = {}
 
@@ -14,7 +14,7 @@ def make(pc_begin, code):
 			i = i + 1
 			continue
 
-		if type(istr) is list and not istr[0][-1].__eq__("*"):
+		if type(istr) is list and not istr[0][-1].__eq__('*'):
 			opcode, *operands = istr
 			opcode_byte, operands_info, sz = istr_info[opcode]
 
@@ -25,7 +25,7 @@ def make(pc_begin, code):
 			i = i + sz
 			continue
 
-		if type(istr) is list and istr[0][-1].__eq__("*"):
+		if type(istr) is list and istr[0][-1].__eq__('*'):
 			opcode, *operands = istr
 
 			if opcode[0:-1] in istr_info:
@@ -33,7 +33,7 @@ def make(pc_begin, code):
 				out.append(istr)
 				i = i + sz
 			else:
-				if opcode[0:-1].__eq__("jump_target"):
+				if opcode[0:-1].__eq__('jump_target'):
 					target_table[operands[0]] = i
 
 			continue
@@ -45,7 +45,7 @@ def make(pc_begin, code):
 			i = i + len(istr)
 			continue
 
-		if type(istr) is list and istr[0][-1].__eq__("*"):
+		if type(istr) is list and istr[0][-1].__eq__('*'):
 			opcode, *operands = istr
 			opcode_byte, _, sz = istr_info[opcode[0:-1]]
 

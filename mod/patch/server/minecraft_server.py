@@ -1,22 +1,22 @@
 import mod
 
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
 	utf8
 )
 
 def apply():
-	if not mod.config.is_feature_enabled("log_version"):
+	if not mod.config.is_feature_enabled('log_version'):
 		return
 
-	cf = class_file.load(mod.config.path("stage/server/net/minecraft/server/MinecraftServer.class"))
+	cf = class_file.load(mod.config.path('stage/server/net/minecraft/server/MinecraftServer.class'))
 
 	for e in cf[0x04]:
 		if e[0].__eq__(452):
-			e[2] = len(f"Crab Pack {mod.version}").to_bytes(2)
-			e[3] = utf8.encode(f"Crab Pack {mod.version}")
+			e[2] = len(f'Crab Pack {mod.version}').to_bytes(2)
+			e[3] = utf8.encode(f'Crab Pack {mod.version}')
 
-	with open(mod.config.path("stage/server/net/minecraft/server/MinecraftServer.class"), "wb") as file:
-		file.write(class_file.make(cf))
+	with open(mod.config.path('stage/server/net/minecraft/server/MinecraftServer.class'), 'wb') as file:
+		file.write(class_file.assemble(cf))
 
-	print("Patched net.minecraft.server.MinecraftServer")
+	print('Patched net.minecraft.server.MinecraftServer')

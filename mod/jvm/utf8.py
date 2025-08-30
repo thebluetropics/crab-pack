@@ -1,27 +1,27 @@
-# decode modified utf-8 into string
-def decode(bytes):
+# Decode JVM's modified UTF-8 into string
+def decode(seq):
 	decoded = []
 
 	i = 0
 
-	while i < len(bytes):
-		byte = bytes[i]
+	while i < len(seq):
+		byte = seq[i]
 
 		if byte < 0x80:
 			decoded.append(chr(byte))
 			i += 1
 		elif (byte & 0xE0).__eq__(0xC0):
-			b1 = bytes[i + 1]
+			b1 = seq[i + 1]
 
 			if byte.__eq__(0xC0) and b1.__eq__(0x80):
-				decoded.append("\u0000")
+				decoded.append('\u0000')
 			else:
 				decoded.append(chr(((byte & 0x1F) << 6) | (b1 & 0x3F)))
 
 			i += 2
 		elif (byte & 0xF0) == 0xE0:
-			b1 = bytes[i + 1]
-			b2 = bytes[i + 2]
+			b1 = seq[i + 1]
+			b2 = seq[i + 2]
 
 			code_unit = ((byte & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F)
 
@@ -31,15 +31,15 @@ def decode(bytes):
 
 	return str().join(decoded)
 
-# encode string into modified utf-8
-def encode(s):
+# Encode string into JVM's modified UTF-8
+def encode(string):
 	encoded = bytearray()
 
-	for chr in s:
+	for chr in string:
 		code_point = ord(chr)
 
 		if code_point.__eq__(0x0000):
-			encoded.append(b"\xc0\x80")
+			encoded.append(b'\xc0\x80')
 		elif code_point < 0x007f or code_point.__eq__(0x007f):
 			encoded.append(code_point)
 		elif code_point < 0x07ff or code_point.__eq__(0x07ff):

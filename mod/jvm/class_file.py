@@ -1,6 +1,6 @@
-# Load a `.class` file into memory
+# Load `.class` file into memory
 def load(path):
-	f = open(path, "rb")
+	f = open(path, 'rb')
 
 	cf = [None] * 16
 
@@ -18,78 +18,78 @@ def load(path):
 	while i < cp_count:
 		tag = f.read(1)
 
-		if tag.__eq__(b"\x07"):
+		if tag.__eq__(b'\x07'):
 			cp.append([i, tag, f.read(2)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x09"):
+		if tag.__eq__(b'\x09'):
 			cp.append([i, tag, f.read(4)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x0a"):
+		if tag.__eq__(b'\x0a'):
 			cp.append([i, tag, f.read(4)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x0b"):
+		if tag.__eq__(b'\x0b'):
 			cp.append([i, tag, f.read(4)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x08"):
+		if tag.__eq__(b'\x08'):
 			cp.append([i, tag, f.read(2)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x03"):
+		if tag.__eq__(b'\x03'):
 			cp.append([i, tag, f.read(4)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x04"):
+		if tag.__eq__(b'\x04'):
 			cp.append([i, tag, f.read(4)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x05"):
+		if tag.__eq__(b'\x05'):
 			cp.append([i, tag, f.read(8)])
 			i += 2
 			continue
 
-		if tag.__eq__(b"\x06"):
+		if tag.__eq__(b'\x06'):
 			cp.append([i, tag, f.read(8)])
 			i += 2
 			continue
 
-		if tag.__eq__(b"\x0c"):
+		if tag.__eq__(b'\x0c'):
 			cp.append([i, tag, f.read(4)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x01"):
+		if tag.__eq__(b'\x01'):
 			utf8_text_length_bytes = f.read(2)
-			utf8_text_length = int.from_bytes(utf8_text_length_bytes, "big")
+			utf8_text_length = int.from_bytes(utf8_text_length_bytes, 'big')
 
 			cp.append(
-				[i, b"\x01", utf8_text_length_bytes, f.read(utf8_text_length)]
+				[i, b'\x01', utf8_text_length_bytes, f.read(utf8_text_length)]
 			)
 
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x0f"):
+		if tag.__eq__(b'\x0f'):
 			cp.append([i, tag, f.read(3)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x10"):
+		if tag.__eq__(b'\x10'):
 			cp.append([i, tag, f.read(2)])
 			i += 1
 			continue
 
-		if tag.__eq__(b"\x12"):
+		if tag.__eq__(b'\x12'):
 			cp.append([i, tag, f.read(4)])
 			i += 1
 			continue
@@ -208,7 +208,8 @@ def load(path):
 
 	return cf
 
-def make(cf):
+# Assemble `.class` file back into byte array
+def assemble(cf):
 	b = bytearray()
 
 	b.extend(cf[0x00]) # → magic
@@ -220,7 +221,7 @@ def make(cf):
 
 	# constant pool
 	for entry in cf[0x04]:
-		if entry[1].__eq__(b"\x01"):
+		if entry[1].__eq__(b'\x01'):
 			b.extend(entry[1])
 			b.extend(entry[2])
 			b.extend(entry[3])
@@ -280,10 +281,11 @@ def make(cf):
 
 	return bytes(b)
 
-def create_template():
+# Construct a new empty in-memory `.class` file
+def create_new():
 	cf = [None] * 16
 
-	cf[0x00] = b"\xca\xfe\xba\xbe"
+	cf[0x00] = b'\xca\xfe\xba\xbe'
 	cf[0x01], cf[0x02] = [(0).to_bytes(2), (52).to_bytes(2)]
 
 	cf[0x03] = (0).to_bytes(2)

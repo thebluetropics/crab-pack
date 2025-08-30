@@ -6,10 +6,10 @@ import mod
 from sys import (exit, stderr)
 
 def stage(side):
-	if not side in ("client", "server"):
+	if not side in ('client', 'server'):
 		exit(1)
 
-	dir_path = os.path.join(mod.config.root_dir, f"stage/{side}")
+	dir_path = os.path.join(mod.config.root_dir, f'stage/{side}')
 
 	if not os.path.isdir(dir_path):
 		os.makedirs(dir_path, exist_ok=True)
@@ -24,8 +24,8 @@ def stage(side):
 				shutil.rmtree(entry_path)
 
 	try:
-		with zipfile.ZipFile(os.path.join(mod.config.root_dir, f"artifacts/b1.7.3_{side}.jar"), "r") as zip:
+		with zipfile.ZipFile(os.path.join(mod.config.root_dir, f'artifacts/b1.7.3_{side}.jar'), 'r') as zip:
 			zip.extractall(dir_path)
 	except zipfile.BadZipFile:
-		print("Err: unknown.", file=stderr)
+		print('Err: unknown.', file=stderr)
 		exit(1)

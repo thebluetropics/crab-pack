@@ -6,11 +6,11 @@ import mod
 from sys import (exit, stderr)
 
 def apply():
-	lib_name = "assets.dll" if platform.system().__eq__("Windows") else "assets.so"
-	lib_path = mod.config.path(f"lib/{lib_name}" if not mod.config.is_debug else f"c_libs/assets/lib/{lib_name}")
+	lib_name = 'assets.dll' if platform.system().__eq__('Windows') else 'assets.so'
+	lib_path = mod.config.path(f'lib/{lib_name}' if not mod.config.is_debug else f'c_libs/assets/lib/{lib_name}')
 
 	if not os.path.exists(lib_path):
-		print("Err: unknown.", file=stderr)
+		print('Err: unknown.', file=stderr)
 		exit(1)
 
 	lib = ctypes.CDLL(lib_path)
@@ -27,43 +27,43 @@ def apply():
 	lib.apply_single_pixel_crosshair.argtypes = [ctypes.c_char_p] * 2
 	lib.apply_single_pixel_crosshair.restype = ctypes.c_uint8
 
-	if mod.config.is_feature_enabled("raw_squid_and_calamari"):
+	if mod.config.is_feature_enabled('raw_squid_and_calamari'):
 		ret_code = lib.apply_raw_squid_and_calamari(
-			os.path.join(mod.config.path("assets"), "raw_squid.png").encode("utf-8"),
-			os.path.join(mod.config.path("assets"), "calamari.png").encode("utf-8"),
-			os.path.join(mod.config.path("stage"), "client", "gui", "items.png").encode("utf-8"),
+			os.path.join(mod.config.path('assets'), 'raw_squid.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'calamari.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'gui', 'items.png').encode('utf-8'),
 		)
 
 		if not ret_code.__eq__(0):
-			print("Err: unknown.", file=stderr)
+			print('Err: unknown.', file=stderr)
 			exit(1)
 
-	if mod.config.is_feature_enabled("fortress_bricks"):
+	if mod.config.is_feature_enabled('fortress_bricks'):
 		ret_code = lib.apply_fortress_bricks(
-			os.path.join(mod.config.path("assets"), "fortress_bricks.png").encode("utf-8"),
-			os.path.join(mod.config.path("stage"), "client", "terrain.png").encode("utf-8"),
+			os.path.join(mod.config.path('assets'), 'fortress_bricks.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'terrain.png').encode('utf-8'),
 		)
 
 		if not ret_code.__eq__(0):
-			print("Err: unknown.", file=stderr)
+			print('Err: unknown.', file=stderr)
 			exit(1)
 
-	if mod.config.is_feature_enabled("hunger_and_thirst"):
+	if mod.config.is_feature_enabled('hunger_and_thirst'):
 		ret_code = lib.apply_hunger_and_thirst(
-			os.path.join(mod.config.path("assets"), "hunger_and_thirst.png").encode("utf-8"),
-			os.path.join(mod.config.path("stage"), "client", "gui", "icons.png").encode("utf-8"),
+			os.path.join(mod.config.path('assets'), 'hunger_and_thirst.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'gui', 'icons.png').encode('utf-8'),
 		)
 
 		if not ret_code.__eq__(0):
-			print("Err: unknown.", file=stderr)
+			print('Err: unknown.', file=stderr)
 			exit(1)
 
-	if mod.config.is_feature_enabled("single_pixel_crosshair"):
+	if mod.config.is_feature_enabled('single_pixel_crosshair'):
 		ret_code = lib.apply_single_pixel_crosshair(
-			os.path.join(mod.config.path("assets"), "single_pixel_crosshair.png").encode("utf-8"),
-			os.path.join(mod.config.path("stage"), "client", "gui", "icons.png").encode("utf-8"),
+			os.path.join(mod.config.path('assets'), 'single_pixel_crosshair.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'gui', 'icons.png').encode('utf-8'),
 		)
 
 		if not ret_code.__eq__(0):
-			print("Err: unknown.", file=stderr)
+			print('Err: unknown.', file=stderr)
 			exit(1)

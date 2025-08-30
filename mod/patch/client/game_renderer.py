@@ -1,60 +1,39 @@
 import mod
 
-from operator import eq
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
-	constant_pool,
-	code_attribute,
+	attribute,
 	instructions,
-	utf8
+	constant_pool,
+	create_field,
+	get_method,
+	get_attribute,
+	icpx_f,
+	get_utf8_at,
 )
 
 def apply():
-	if not mod.config.is_feature_enabled("debug_fov"):
+	if not mod.config.is_feature_enabled('debug_fov'):
 		return
 
-	cf = class_file.load(mod.config.path("stage/client/px.class"))
-	cp = cf[0x04]
+	cf = class_file.load(mod.config.path('stage/client/px.class'))
+	xcp = constant_pool.use_helper(cf)
 
 	cf[0x03] = (int.from_bytes(cf[0x03]) + 3).to_bytes(2)
 
-	cp.extend((
-		[899, b"\x01", len("useDebugFov").to_bytes(2), utf8.encode("useDebugFov")],
-		[900, b"\x0c", (899).to_bytes(2) + (748).to_bytes(2)],
-		[901, b"\x09", (88).to_bytes(2) + (900).to_bytes(2)],
-	))
-
-	# update field count
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 1).to_bytes(2)
+	cf[0x0b].append(create_field(xcp, ['public', 'static'], 'useDebugFov', 'Z'))
 
-	# add field
-	cf[0x0b].append([(0x0001 | 0x0008).to_bytes(2), (899).to_bytes(2), (748).to_bytes(2), (0).to_bytes(2), []])
+	_modify_static_initializer(cf, xcp)
 
-	_modify_static_initializer(cf, cp)
+	m = get_method(cf, xcp, 'd', '(F)F') # → getFov
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	# px.d(F)F → getFov
-	m = None
-	for _m in cf[0x0d]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_m[0x01]))
-		desc = constant_pool.get_utf8(cp, int.from_bytes(_m[0x02]))
-
-		if eq(name, "d") and eq(desc, "(F)F"):
-			m = _m
-			break
-
-	a = None
-	for _a in m[0x04]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if name.__eq__("Code"):
-			a = _a
-			break
-
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
 	# modify code
-	a_code[0x03] = a_code[0x03][0:57] + instructions.make(57, [
-		['getstatic', 901],
+	a_code[0x03] = a_code[0x03][0:57] + instructions.assemble(57, [
+		['getstatic', icpx_f(xcp, 'px', 'useDebugFov', 'Z')],
 		['ifeq*', 'a'],
 		['bipush', 30],
 		'i2f',
@@ -68,47 +47,31 @@ def apply():
 	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
-	for i, _a in a_code[0x07]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if eq(name, "LineNumberTable"):
+	for i, a in a_code[0x07]:
+		if get_utf8_at(cf[0x04], int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	with open(mod.config.path("stage/client/px.class"), "wb") as f:
-		f.write(class_file.make(cf))
+	with open(mod.config.path('stage/client/px.class'), 'wb') as f:
+		f.write(class_file.assemble(cf))
 
-	print("Patched client:px.class → net.minecraft.client.render.GameRenderer")
+	print('Patched client:px.class → net.minecraft.client.render.GameRenderer')
 
-def _modify_static_initializer(cf, cp):
-	m = None
-	for _m in cf[0x0d]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_m[0x01]))
-		desc = constant_pool.get_utf8(cp, int.from_bytes(_m[0x02]))
-
-		if eq(name, "<clinit>") and eq(desc, "()V"):
-			m = _m
-			break
-
-	a = None
-	for _a in m[0x04]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if name.__eq__("Code"):
-			a = _a
-			break
+def _modify_static_initializer(cf, xcp):
+	m = get_method(cf, xcp, '<clinit>', '()V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
 	# load code attribute
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
 	# modify code
-	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(0, [
+	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(0, [
 		'iconst_0', ['putstatic', 901],
 		'return'
 	])
@@ -119,15 +82,13 @@ def _modify_static_initializer(cf, cp):
 	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
-	for i, _a in a_code[0x07]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if eq(name, "LineNumberTable"):
+	for i, a in a_code[0x07]:
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)

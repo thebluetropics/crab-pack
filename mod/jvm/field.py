@@ -1,3 +1,5 @@
+from .constant_pool import i2cpx_utf8
+
 field_access_flags = {
 	'public': 0x0001,
 	'private': 0x0002,
@@ -10,21 +12,7 @@ field_access_flags = {
 	'enum': 0x4000,
 }
 
-def push(cf, acc, name, desc, attrs):
-	f = [None] * 5
-
-	# field meta data
-	f[0x00] = (acc).to_bytes(2)
-	f[0x01] = (name).to_bytes(2)
-	f[0x02] = (desc).to_bytes(2)
-
-	# attributes
-	f[0x03] = len(attrs).to_bytes(2)
-	f[0x04] = attrs
-
-	cf[0x0b].append(f)
-
-def make_field(acc_flags, name, desc):
+def create_field(xcp, acc_flags, name, desc):
 	acc = 0x0000
 
 	for flag in acc_flags:
@@ -33,8 +21,8 @@ def make_field(acc_flags, name, desc):
 	f = [None] * 5
 
 	f[0x00] = acc.to_bytes(2)
-	f[0x01] = name.to_bytes(2)
-	f[0x02] = desc.to_bytes(2)
+	f[0x01] = i2cpx_utf8(xcp, name)
+	f[0x02] = i2cpx_utf8(xcp, desc)
 
 	f[0x03] = bytes(2)
 	f[0x04] = []

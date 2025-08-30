@@ -1,36 +1,30 @@
 import mod
 
-from mod.bytecode.fields import make_field
-from mod.bytecode.method import (make_method, get_method)
-from mod.bytecode.attribute import get_attribute
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
-	code_attribute,
+	attribute,
 	instructions,
-	constant_pool
-)
-from mod.bytecode.constant_pool import (
-	icpx_utf8,
-	icpx_f,
-	icpx_m,
-	i2cpx_utf8,
-	icpx_string,
+	constant_pool,
+	get_method,
+	get_attribute,
 	icpx_c,
+	icpx_m,
+	get_utf8_at
 )
 
 def apply_client():
-	if not mod.config.is_feature_enabled("hunger_and_thirst"):
+	if not mod.config.is_feature_enabled('hunger_and_thirst'):
 		return
 
-	cf = class_file.load(mod.config.path("stage/client/ki.class"))
+	cf = class_file.load(mod.config.path('stage/client/ki.class'))
 	xcp = constant_pool.use_helper(cf)
 
-	m = get_method(cf, cf[0x04], '<clinit>', '()V')
-	a = get_attribute(m[0x04], cf[0x04], 'Code')
+	m = get_method(cf, xcp, '<clinit>', '()V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:552] + instructions.make(0, [
+	a_code[0x03] = a_code[0x03][0:552] + instructions.assemble(0, [
 		['sipush', 201],
 		'iconst_1',
 		'iconst_1',
@@ -45,34 +39,34 @@ def apply_client():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if constant_pool.get_utf8(cf[0x04], int.from_bytes(a[0x00])).__eq__("LineNumberTable"):
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	with open("stage/client/ki.class", "wb") as f:
-		f.write(class_file.make(cf))
+	with open('stage/client/ki.class', 'wb') as f:
+		f.write(class_file.assemble(cf))
 
-	print("Patched client:ki.class → net.minecraft.network.packet.Packet")
+	print('Patched client:ki.class → net.minecraft.network.packet.Packet')
 
 def apply_server():
-	if not mod.config.is_feature_enabled("hunger_and_thirst"):
+	if not mod.config.is_feature_enabled('hunger_and_thirst'):
 		return
 
-	cf = class_file.load(mod.config.path("stage/server/gt.class"))
+	cf = class_file.load(mod.config.path('stage/server/gt.class'))
 	xcp = constant_pool.use_helper(cf)
 
-	m = get_method(cf, cf[0x04], '<clinit>', '()V')
-	a = get_attribute(m[0x04], cf[0x04], 'Code')
+	m = get_method(cf, xcp, '<clinit>', '()V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:541] + instructions.make(0, [
+	a_code[0x03] = a_code[0x03][0:541] + instructions.assemble(0, [
 		['sipush', 201],
 		'iconst_1',
 		'iconst_1',
@@ -87,17 +81,17 @@ def apply_server():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if constant_pool.get_utf8(cf[0x04], int.from_bytes(a[0x00])).__eq__("LineNumberTable"):
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	with open("stage/server/gt.class", "wb") as f:
-		f.write(class_file.make(cf))
+	with open('stage/server/gt.class', 'wb') as f:
+		f.write(class_file.assemble(cf))
 
-	print("Patched server:gt.class → net.minecraft.network.packet.Packet")
+	print('Patched server:gt.class → net.minecraft.network.packet.Packet')

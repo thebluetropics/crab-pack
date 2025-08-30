@@ -1,12 +1,13 @@
 import mod
 
-from mod.bytecode.method import get_method
-from mod.bytecode.attribute import get_attribute
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
-	code_attribute,
+	attribute,
+	constant_pool,
 	instructions,
-	constant_pool
+	get_method,
+	get_attribute,
+	get_utf8_at
 )
 
 def apply(side_name):
@@ -17,13 +18,14 @@ def apply(side_name):
 
 	c_name = ['vl', 'no'][side]
 	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
+	xcp = constant_pool.use_helper(cf)
 
-	m = get_method(cf, cf[0x04], 'b', ['(Lfd;IIILsn;)V', '(Ldj;IIILlq;)V'][side])
-	a = get_attribute(m[0x04], cf[0x04], 'Code')
+	m = get_method(cf, xcp, 'b', ['(Lfd;IIILsn;)V', '(Ldj;IIILlq;)V'][side])
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
-	a_code[0x03] = instructions.make(0, [
+	a_code[0x03] = instructions.assemble(0, [
 		'return'
 	])
 
@@ -34,17 +36,17 @@ def apply(side_name):
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if constant_pool.get_utf8(cf[0x04], int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
 	with open(mod.config.path(f'stage/{side_name}/{c_name}.class'), 'wb') as file:
-		file.write(class_file.make(cf))
+		file.write(class_file.assemble(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.block.FarmlandBlock')

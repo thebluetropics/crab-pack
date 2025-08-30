@@ -1,25 +1,20 @@
 import mod
 
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
-	utf8
+	constant_pool,
+	i2cpx_c,
 )
 
 def apply():
-	cf = class_file.create_template()
-	cp = cf[0x04]
-
-	cf[0x03] = (5).to_bytes(2)
-	cp.append([1, b"\x01", len(utf8.encode("com/thebluetropics/crabpack/CommanderScreen")).to_bytes(2), utf8.encode("com/thebluetropics/crabpack/CommanderScreen")])
-	cp.append([2, b"\x07", (1).to_bytes(2)])
-	cp.append([3, b"\x01", len(utf8.encode("java/lang/Object")).to_bytes(2), utf8.encode("java/lang/Object")])
-	cp.append([4, b"\x07", (3).to_bytes(2)])
+	cf = class_file.create_new()
+	xcp = constant_pool.use_helper(cf)
 
 	cf[0x05] = (0x0001).to_bytes(2)
-	cf[0x06] = (2).to_bytes(2)
-	cf[0x07] = (4).to_bytes(2)
+	cf[0x06] = i2cpx_c(xcp, 'com/thebluetropics/crabpack/CommanderScreen')
+	cf[0x07] = i2cpx_c(xcp, 'java/lang/Object')
 
-	with open(mod.config.path("stage/client/CommanderScreen.class"), "wb") as file:
-		file.write(class_file.make(cf))
+	with open(mod.config.path('stage/client/CommanderScreen.class'), 'wb') as file:
+		file.write(class_file.assemble(cf))
 
-	print("Created CommanderScreen.class")
+	print('Created CommanderScreen.class')

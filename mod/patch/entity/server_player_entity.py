@@ -1,19 +1,16 @@
 import mod
 
-from mod.bytecode.method import (make_method)
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
-	code_attribute,
+	attribute,
 	instructions,
-	constant_pool
-)
-from mod.bytecode.constant_pool import (
-	icpx_utf8,
-	i2cpx_utf8,
-	icpx_f,
-	icpx_m,
+	constant_pool,
+	create_method,
 	icpx_c,
-	icpx_string
+	icpx_f,
+	icpx_utf8,
+	icpx_m,
+	i2cpx_utf8
 )
 
 def apply():
@@ -24,17 +21,17 @@ def apply():
 	xcp = constant_pool.use_helper(cf)
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].append(_make_update_hunger_method(xcp))
+	cf[0x0d].append(_create_update_hunger_method(xcp))
 
 	with open('stage/server/dl.class', 'wb') as file:
-		file.write(class_file.make(cf))
+		file.write(class_file.assemble(cf))
 
 	print('Patched server:dl.class → net.minecraft.entity.ServerPlayerEntity')
 
-def _make_update_hunger_method(xcp):
-	m = make_method(['protected'], icpx_utf8(xcp, 'updateHunger'), icpx_utf8(xcp, '(II)V'))
+def _create_update_hunger_method(xcp):
+	m = create_method(xcp, ['protected'], 'updateHunger', '(II)V')
 
-	code = instructions.make(0, [
+	code = instructions.assemble(0, [
 		'aload_0',
 		['getfield', icpx_f(xcp, 'dl', 'a', 'Lha;')],
 		['new', icpx_c(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
@@ -45,7 +42,7 @@ def _make_update_hunger_method(xcp):
 		['invokevirtual', icpx_m(xcp, 'ha', 'b', '(Lgt;)V')],
 		'return'
 	])
-	a_code = code_attribute.assemble([
+	a_code = attribute.code.assemble([
 		(5).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),

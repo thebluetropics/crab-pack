@@ -1,4 +1,5 @@
-from .constant_pool import vcp_utf8_get
+from .constant_pool import i2cpx_utf8, get_utf8_at
+from sys import exit, stderr
 
 method_access_flags = {
 	'public': 0x0001,
@@ -15,7 +16,7 @@ method_access_flags = {
 	'synthetic': 0x1000,
 }
 
-def make_method(acc_flags, name, desc):
+def create_method(xcp, acc_flags, name, desc):
 	acc = 0x0000
 
 	for flag in acc_flags:
@@ -24,19 +25,20 @@ def make_method(acc_flags, name, desc):
 	m = [None] * 5
 
 	m[0x00] = acc.to_bytes(2)
-	m[0x01] = name.to_bytes(2)
-	m[0x02] = desc.to_bytes(2)
+	m[0x01] = i2cpx_utf8(xcp, name)
+	m[0x02] = i2cpx_utf8(xcp, desc)
 
 	m[0x03] = bytes(2)
 	m[0x04] = []
 
 	return m
 
-def get_method(cf, cp, name, desc):
+def get_method(cf, xcp, name, desc):
 	for m in cf[0x0d]:
-		if not vcp_utf8_get(cp, int.from_bytes(m[0x01])).__eq__(name) or not vcp_utf8_get(cp, int.from_bytes(m[0x02])).__eq__(desc):
+		if not get_utf8_at(xcp, int.from_bytes(m[0x01])).__eq__(name) or not get_utf8_at(xcp, int.from_bytes(m[0x02])).__eq__(desc):
 			continue
 
 		return m
 
-	return None
+	print('Err: unknown.', file=stderr)
+	exit(1)

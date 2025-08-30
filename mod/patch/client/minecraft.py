@@ -1,52 +1,35 @@
 import mod
 
-from operator import eq
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
-	constant_pool,
-	code_attribute,
+	attribute,
 	instructions,
-	utf8
+	constant_pool,
+	get_method,
+	get_attribute,
+	icpx_f,
+	icpx_m,
+	icpx_string,
+	get_utf8_at,
 )
 
 def apply():
-	if not mod.config.is_feature_enabled("log_version"):
+	if not mod.config.is_feature_enabled('log_version'):
 		return
 
-	cf = class_file.load(mod.config.path("stage/client/net/minecraft/client/Minecraft.class"))
-	cp = cf[0x04]
+	cf = class_file.load(mod.config.path('stage/client/net/minecraft/client/Minecraft.class'))
+	xcp = constant_pool.use_helper(cf)
 
-	# push new constant pool entries
-	cp.append([1552, b"\x01", len(f"Crab Pack {mod.version}").to_bytes(2), utf8.encode(f"Crab Pack {mod.version}")])
-	cp.append([1553, b"\x08", (1552).to_bytes(2)])
+	m = get_method(cf, xcp, 'a', '()V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	# update constant pool count
-	cf[0x03] = (int.from_bytes(cf[0x03]) + 2).to_bytes(2)
-
-	m = None
-	for _m in cf[0x0d]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_m[0x01]))
-		desc = constant_pool.get_utf8(cp, int.from_bytes(_m[0x02]))
-
-		if eq(name, "a") and eq(desc, "()V"):
-			m = _m
-			break
-
-	a = None
-	for _a in m[0x04]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if name.__eq__("Code"):
-			a = _a
-			break
-
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
 	# modify code
-	a_code[0x03] = instructions.make(0, [
-		['getstatic', 245],
-		['ldc_w', 1553],
-		['invokevirtual', 457]
+	a_code[0x03] = instructions.assemble(0, [
+		['getstatic', icpx_f(xcp, 'java/lang/System', 'out', 'Ljava/io/PrintStream;')],
+		['ldc_w', icpx_string(xcp, f'Crab Pack {mod.version}')],
+		['invokevirtual', icpx_m(xcp, 'java/io/PrintStream', 'println', '(Ljava/lang/String;)V')]
 	]) + a_code[0x03]
 
 	# update code length
@@ -61,20 +44,18 @@ def apply():
 	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
-	for i, _a in a_code[0x07]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if eq(name, "LineNumberTable"):
+	for i, a in a_code[0x07]:
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	with open(mod.config.path("stage/client/net/minecraft/client/Minecraft.class"), "wb") as f:
-		f.write(class_file.make(cf))
+	with open(mod.config.path('stage/client/net/minecraft/client/Minecraft.class'), 'wb') as f:
+		f.write(class_file.assemble(cf))
 
-	print("Patched net.minecraft.client.Minecraft")
+	print('Patched net.minecraft.client.Minecraft')

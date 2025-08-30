@@ -1,44 +1,44 @@
 import mod
 
-from operator import eq
-from mod.bytecode.fields import make_field
-from mod.bytecode.method import (make_method, get_method)
-from mod.bytecode.attribute import get_attribute
-from mod.bytecode import (
+from mod.jvm import (
 	class_file,
-	code_attribute,
+	attribute,
 	instructions,
-	constant_pool
-)
-from mod.bytecode.constant_pool import (
-	icpx_utf8,
+	constant_pool,
+	create_field,
+	create_method,
+	get_method,
+	get_attribute,
 	icpx_f,
+	icpx_utf8,
 	icpx_m,
+	get_utf8_at,
 	i2cpx_utf8
 )
 
 def apply_client():
-	if not mod.config.is_feature_enabled("hunger_and_thirst"):
+	if not mod.config.is_feature_enabled('hunger_and_thirst'):
 		return
 
-	cf = class_file.load(mod.config.path("stage/client/gs.class"))
+	cf = class_file.load(mod.config.path('stage/client/gs.class'))
 	xcp = constant_pool.use_helper(cf)
-	cp = cf[0x04]
 
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 6).to_bytes(2)
-	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'hunger'), icpx_utf8(xcp, 'I')))
-	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'maxHunger'), icpx_utf8(xcp, 'I')))
-	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'thirst'), icpx_utf8(xcp, 'I')))
-	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'maxThirst'), icpx_utf8(xcp, 'I')))
-	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'hungerTick'), icpx_utf8(xcp, 'I')))
-	cf[0x0b].append(make_field(['public'], icpx_utf8(xcp, 'thirstTick'), icpx_utf8(xcp, 'I')))
+	cf[0x0b].extend([
+		create_field(xcp, ['public'], 'hunger', 'I'),
+		create_field(xcp, ['public'], 'maxHunger', 'I'),
+		create_field(xcp, ['public'], 'thirst', 'I'),
+		create_field(xcp, ['public'], 'maxThirst', 'I'),
+		create_field(xcp, ['public'], 'hungerTick', 'I'),
+		create_field(xcp, ['public'], 'thirstTick', 'I')
+	])
 
-	m = get_method(cf, cp, '<init>', '(Lfd;)V')
-	a = get_attribute(m[0x04], cp, 'Code')
+	m = get_method(cf, xcp, '<init>', '(Lfd;)V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(0, [
+	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(0, [
 		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'gs', 'hunger', 'I')],
 		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'gs', 'maxHunger', 'I')],
 		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'gs', 'thirst', 'I')],
@@ -54,36 +54,34 @@ def apply_client():
 	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
-	for i, _a in a_code[0x07]:
-		name = constant_pool.get_utf8(cp, int.from_bytes(_a[0x00]))
-
-		if eq(name, "LineNumberTable"):
+	for i, a in a_code[0x07]:
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	_modify_player_tick_client(cf, cp, xcp)
+	_modify_tick_client(cf, xcp)
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].extend([_add_update_hunger_method(cf, cp, xcp)])
+	cf[0x0d].extend([_create_update_hunger_method_client(cf, xcp)])
 
-	with open("stage/client/gs.class", "wb") as f:
-		f.write(class_file.make(cf))
+	with open('stage/client/gs.class', 'wb') as file:
+		file.write(class_file.assemble(cf))
 
-	print("Patched client:gs.class → net.minecraft.entity.player.PlayerEntity")
+	print('Patched client:gs.class → net.minecraft.entity.player.PlayerEntity')
 
-def _modify_player_tick_client(cf, cp, xcp):
+def _modify_tick_client(cf, xcp):
 	# gs.w_()V → PlayerEntity.tick
-	m = get_method(cf, cp, 'w_', '()V')
-	a = get_attribute(m[0x04], cp, 'Code')
+	m = get_method(cf, xcp, 'w_', '()V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	a_code = code_attribute.load(a[0x02])
-	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(402, [
+	a_code = attribute.code.load(a[0x02])
+	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(402, [
 		'aload_0', ['getfield', icpx_f(xcp, 'gs', 'aI', 'Lfd;')], ['getfield', icpx_f(xcp, 'fd', 'B', 'Z')], ['ifne*', 'a06'],
 		'aload_0', ['getfield', icpx_f(xcp, 'gs', 'hungerTick', 'I')], 'iconst_5', ['if_icmpge*', 'a02'],
 
@@ -141,23 +139,23 @@ def _modify_player_tick_client(cf, cp, xcp):
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if constant_pool.get_utf8(cp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-def _add_update_hunger_method(cf, cp, xcp):
-	m = make_method(['protected'], icpx_utf8(xcp, 'updateHunger'), icpx_utf8(xcp, '(II)V'))
+def _create_update_hunger_method_client(cf, xcp):
+	m = create_method(xcp, ['protected'], 'updateHunger', '(II)V')
 
-	code = instructions.make(0, [
+	code = instructions.assemble(0, [
 		'return'
 	])
-	a_code = code_attribute.assemble([
+	a_code = attribute.code.assemble([
 		(0).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),
@@ -167,38 +165,35 @@ def _add_update_hunger_method(cf, cp, xcp):
 		(0).to_bytes(2),
 		[]
 	])
-	a = [i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [a]
+	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
 def apply_server():
-	if not mod.config.is_feature_enabled("hunger_and_thirst"):
+	if not mod.config.is_feature_enabled('hunger_and_thirst'):
 		return
 
-	cf = class_file.load(mod.config.path("stage/server/em.class"))
-	cp = cf[0x04]
-
+	cf = class_file.load(mod.config.path('stage/server/em.class'))
 	xcp = constant_pool.use_helper(cf)
 
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 6).to_bytes(2)
 	cf[0x0b].extend([
-		make_field(['public'], icpx_utf8(xcp, 'hunger'), icpx_utf8(xcp, 'I')),
-		make_field(['public'], icpx_utf8(xcp, 'maxHunger'), icpx_utf8(xcp, 'I')),
-		make_field(['public'], icpx_utf8(xcp, 'thirst'), icpx_utf8(xcp, 'I')),
-		make_field(['public'], icpx_utf8(xcp, 'maxThirst'), icpx_utf8(xcp, 'I')),
-		make_field(['public'], icpx_utf8(xcp, 'hungerTick'), icpx_utf8(xcp, 'I')),
-		make_field(['public'], icpx_utf8(xcp, 'thirstTick'), icpx_utf8(xcp, 'I'))
+		create_field(xcp, ['public'], 'hunger', 'I'),
+		create_field(xcp, ['public'], 'maxHunger', 'I'),
+		create_field(xcp, ['public'], 'thirst', 'I'),
+		create_field(xcp, ['public'], 'maxThirst', 'I'),
+		create_field(xcp, ['public'], 'hungerTick', 'I'),
+		create_field(xcp, ['public'], 'thirstTick', 'I')
 	])
 
-	m = get_method(cf, cp, '<init>', '(Ldj;)V')
-	a = get_attribute(m[0x04], cp, 'Code')
+	m = get_method(cf, xcp, '<init>', '(Ldj;)V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	a_code = code_attribute.load(a[0x02])
+	a_code = attribute.code.load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(0, [
+	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(0, [
 		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'em', 'hunger', 'I')],
 		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'em', 'maxHunger', 'I')],
 		'aload_0', ['bipush', 100], ['putfield', icpx_f(xcp, 'em', 'thirst', 'I')],
@@ -213,33 +208,33 @@ def apply_server():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if constant_pool.get_utf8(cp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-	_modify_tick_server(cf, cp, xcp)
+	_modify_tick_server(cf, xcp)
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].extend([_make_update_hunger_method_server(cf, cp, xcp)])
+	cf[0x0d].extend([_create_update_hunger_method_server(cf, xcp)])
 
-	with open("stage/server/em.class", "wb") as f:
-		f.write(class_file.make(cf))
+	with open('stage/server/em.class', 'wb') as file:
+		file.write(class_file.assemble(cf))
 
-	print("Patched server:em.class → net.minecraft.entity.PlayerEntity")
+	print('Patched server:em.class → net.minecraft.entity.PlayerEntity')
 
-def _modify_tick_server(cf, cp, xcp):
+def _modify_tick_server(cf, xcp):
 	# em.m_()V → PlayerEntity.tick
-	m = get_method(cf, cp, 'm_', '()V')
-	a = get_attribute(m[0x04], cp, 'Code')
+	m = get_method(cf, xcp, 'm_', '()V')
+	a = get_attribute(m[0x04], xcp, 'Code')
 
-	a_code = code_attribute.load(a[0x02])
-	a_code[0x03] = a_code[0x03][0:-1] + instructions.make(402, [
+	a_code = attribute.code.load(a[0x02])
+	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(402, [
 		'aload_0', ['getfield', icpx_f(xcp, 'em', 'aL', 'Ldj;')], ['getfield', icpx_f(xcp, 'dj', 'B', 'Z')], ['ifne*', 'a06'],
 		'aload_0', ['getfield', icpx_f(xcp, 'em', 'hungerTick', 'I')], 'iconst_5', ['if_icmpge*', 'a02'],
 
@@ -297,23 +292,23 @@ def _modify_tick_server(cf, cp, xcp):
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if constant_pool.get_utf8(cp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
 	# update code attribute
-	a[0x02] = code_attribute.assemble(a_code)
+	a[0x02] = attribute.code.assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-def _make_update_hunger_method_server(cf, cp, xcp):
-	m = make_method(['protected'], icpx_utf8(xcp, 'updateHunger'), icpx_utf8(xcp, '(II)V'))
+def _create_update_hunger_method_server(cf, xcp):
+	m = create_method(xcp, ['protected'], 'updateHunger', '(II)V')
 
-	code = instructions.make(0, [
+	code = instructions.assemble(0, [
 		'return'
 	])
-	a_code = code_attribute.assemble([
+	a_code = attribute.code.assemble([
 		(0).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),
@@ -323,9 +318,8 @@ def _make_update_hunger_method_server(cf, cp, xcp):
 		(0).to_bytes(2),
 		[]
 	])
-	a = [i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [a]
+	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
