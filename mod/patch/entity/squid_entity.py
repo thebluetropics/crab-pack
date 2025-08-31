@@ -1,16 +1,18 @@
 import mod
 
-from mod.jvm import (
+from mod.attribute import get_attribute
+from mod.method import get_method
+from mod import (
 	class_file,
 	attribute,
 	instructions,
-	constant_pool,
-	get_method,
-	get_attribute,
-	icpx_c,
+	constant_pool
+)
+from mod.constant_pool import (
 	icpx_f,
 	icpx_m,
-	get_utf8_at
+	get_utf8_at,
+	icpx_c
 )
 
 def apply_client():

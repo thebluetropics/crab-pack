@@ -1,12 +1,12 @@
 import mod
 
-from mod.jvm import (
+from mod.attribute import get_attribute
+from mod.method import get_method
+from mod.constant_pool import get_utf8_at
+from mod import (
 	class_file,
 	attribute,
-	constant_pool,
-	get_method,
-	get_attribute,
-	get_utf8_at
+	constant_pool
 )
 
 def apply_client():

@@ -1,12 +1,14 @@
 import mod
 
-from mod.jvm import (
+from mod.attribute import get_attribute
+from mod.method import get_method
+from mod import (
 	class_file,
 	attribute,
-	constant_pool,
 	instructions,
-	get_method,
-	get_attribute,
+	constant_pool
+)
+from mod.constant_pool import (
 	get_utf8_at
 )
 

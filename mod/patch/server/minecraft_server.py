@@ -1,9 +1,5 @@
+from mod import class_file, utf8
 import mod
-
-from mod.jvm import (
-	class_file,
-	utf8
-)
 
 def apply():
 	if not mod.config.is_feature_enabled('log_version'):

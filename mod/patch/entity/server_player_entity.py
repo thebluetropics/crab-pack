@@ -1,16 +1,17 @@
 import mod
 
-from mod.jvm import (
+from mod.method import create_method
+from mod import (
 	class_file,
 	attribute,
 	instructions,
-	constant_pool,
-	create_method,
-	icpx_c,
+	constant_pool
+)
+from mod.constant_pool import (
 	icpx_f,
-	icpx_utf8,
 	icpx_m,
-	i2cpx_utf8
+	i2cpx_utf8,
+	icpx_c
 )
 
 def apply():

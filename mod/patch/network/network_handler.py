@@ -1,12 +1,12 @@
 import mod
 
-from mod.jvm import (
+from mod.method import create_method
+from mod.constant_pool import i2cpx_utf8
+from mod import (
 	class_file,
 	attribute,
 	instructions,
-	constant_pool,
-	create_method,
-	i2cpx_utf8,
+	constant_pool
 )
 
 def apply_client():

@@ -1,13 +1,3 @@
-def gen(label, a, b):
-	out = []
-
-	j = 0
-	for opcode in range(a, b + 1):
-		out.append([label[0] + str(label[1] + j), opcode])
-		j += 1
-
-	return out
-
 def generate_table(entries):
 	out = {}
 
@@ -17,7 +7,7 @@ def generate_table(entries):
 
 		operands_info = None
 
-		if len(l) > 1: # has operands
+		if len(l) > 1:
 			operands_info = l[1:]
 			for x in l[1:]:
 				total_sz += x
@@ -26,27 +16,26 @@ def generate_table(entries):
 
 	return out
 
-# check if given instruction is jump instruction with two byte jump offset opcode
+# Determine if the given instruction is a jump with a two-byte branch offset.
 def is_jump_instruction(opcode):
 	return opcode[0:2].__eq__('if') or opcode.__eq__('goto') or opcode.__eq__('goto_w')
 
-# get fixed-length instruction length
-def istrf_len(opcode):
-	pass
-
-# get variable-length instruction length
-def istrv_len(opcode):
-	pass
-
-# this information table are only for fixed-size instructions. Variable-length instructions
-# should be handled specially
+# This table contains only fixed-size instructions. Variable-length instructions
+# must be handled separately.
 istr_info = generate_table([
 	['nop', 0x00],
 	['aconst_null', 0x01],
-	*gen(('iconst_', 0), 0x03, 0x08), # iconst_0 .. iconst_5
+	['iconst_0', 0x03],
+	['iconst_1', 0x04],
+	['iconst_2', 0x05],
+	['iconst_3', 0x06],
+	['iconst_4', 0x07],
+	['iconst_5', 0x08],
 	['lconst_0', 0x09],
 	['lconst_1', 0x0a],
-	*gen(('fconst_', 0), 0x0b, 0x0d), # fconst_0 .. fconst_2
+	['fconst_0', 0x0b],
+	['fconst_1', 0x0c],
+	['fconst_2', 0x0d],
 	['dconst_0', 0x0e],
 	['dconst_1', 0x0f],
 	['bipush', 0x10, 1],
@@ -120,8 +109,7 @@ istr_info = generate_table([
 	['bastore', 0x54],
 	['castore', 0x55],
 	['sastore', 0x56],
-	['pop', 0x57],
-	['pop2', 0x58],
+	['pop', 0x57], ['pop2', 0x58],
 	['dup', 0x59],
 	['dup_x1', 0x5a],
 	['dup_x2', 0x5b],
@@ -165,9 +153,7 @@ istr_info = generate_table([
 	['lor', 0x81],
 	['ixor', 0x82],
 	['lxor', 0x83],
-
 	['iinc', 0x84, 2],
-
 	['i2l', 0x85],
 	['i2f', 0x86],
 	['i2d', 0x87],
@@ -183,7 +169,6 @@ istr_info = generate_table([
 	['i2b', 0x91],
 	['i2c', 0x92],
 	['i2s', 0x93],
-
 	['lcmp', 0x94],
 	['fcmpl', 0x95],
 	['fcmpg', 0x96],
@@ -204,14 +189,12 @@ istr_info = generate_table([
 	['if_acmpeq', 0xa5, 2],
 	['if_acmpne', 0xa6, 2],
 	['goto', 0xa7, 2],
-
 	['ireturn', 0xac],
 	['lreturn', 0xad],
 	['freturn', 0xae],
 	['dreturn', 0xaf],
 	['areturn', 0xb0],
 	['return', 0xb1],
-
 	['getstatic', 0xb2, 2],
 	['putstatic', 0xb3, 2],
 	['getfield', 0xb4, 2],
@@ -219,11 +202,9 @@ istr_info = generate_table([
 	['invokevirtual', 0xb6, 2],
 	['invokespecial', 0xb7, 2],
 	['invokestatic', 0xb8, 2],
-
 	['new', 0xbb, 2],
 	['newarray', 0xbc, 1],
 	['anewarray', 0xbd, 2],
-
 	['arraylength', 0xbe],
 	['athrow', 0xbf],
 	['checkcast', 0xc0, 2],
@@ -236,3 +217,62 @@ istr_info = generate_table([
 	['goto_w', 0xc8, 4],
 	['breakpoint', 0xca],
 ])
+
+def assemble(pc_begin, code):
+	out = []
+	target_table = {}
+
+	i = pc_begin
+
+	for istr in code:
+		if type(istr) is str:
+			opcode_byte, *_ = istr_info.get(istr)
+			out.append(opcode_byte)
+
+			i = i + 1
+			continue
+
+		if type(istr) is list and not istr[0][-1].__eq__('*'):
+			opcode, *operands = istr
+			opcode_byte, operands_info, sz = istr_info[opcode]
+
+			out.append(opcode_byte + bytes().join(
+				v.to_bytes(operands_info[j]) for j, v in enumerate(operands)
+			))
+
+			i = i + sz
+			continue
+
+		if type(istr) is list and istr[0][-1].__eq__('*'):
+			opcode, *operands = istr
+
+			if opcode[0:-1] in istr_info:
+				*_, sz = istr_info[opcode[0:-1]]
+				out.append(istr)
+				i = i + sz
+			else:
+				if opcode[0:-1].__eq__('jump_target'):
+					target_table[operands[0]] = i
+
+			continue
+
+	i = pc_begin
+
+	for j, istr in enumerate(out):
+		if type(istr) is bytes:
+			i = i + len(istr)
+			continue
+
+		if type(istr) is list and istr[0][-1].__eq__('*'):
+			opcode, *operands = istr
+			opcode_byte, _, sz = istr_info[opcode[0:-1]]
+
+			target_pc = target_table[operands[0]]
+			offset_pc = target_pc - i
+
+			out[j] = opcode_byte + offset_pc.to_bytes(2)
+			i = i + sz
+
+			continue
+
+	return bytes().join(out)

@@ -1,10 +1,10 @@
 import mod
 
-from mod.jvm import (
+from mod import (
 	class_file,
-	constant_pool,
-	i2cpx_c,
+	constant_pool
 )
+from mod.constant_pool import i2cpx_c
 
 def apply():
 	cf = class_file.create_new()

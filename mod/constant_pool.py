@@ -34,8 +34,8 @@ def use_helper(cf):
 
 		if entry[1].__eq__(b'\x0c'):
 			i = entry[0]
-			ecp_name = cp['idx_cache'][int.from_bytes(entry[2][0:2])]
-			ecp_type = cp['idx_cache'][int.from_bytes(entry[2][2:4])]
+			ecp_name = cp['idx_cache'][int.from_bytes(entry[2])]
+			ecp_type = cp['idx_cache'][int.from_bytes(entry[3])]
 			name_string = utf8.decode(ecp_name[3])
 			type_string = utf8.decode(ecp_type[3])
 			cp['cache'][(0x0c, name_string, type_string)] = i
@@ -44,11 +44,11 @@ def use_helper(cf):
 	for entry in cf[0x04]:
 		if entry[1].__eq__(b'\x09'):
 			i = entry[0]
-			ecp_class = cp['idx_cache'][int.from_bytes(entry[2][0:2])]
-			ecp_name_and_type = cp['idx_cache'][int.from_bytes(entry[2][2:4])]
+			ecp_class = cp['idx_cache'][int.from_bytes(entry[2])]
+			ecp_name_and_type = cp['idx_cache'][int.from_bytes(entry[3])]
 			ecp_class_utf8 = cp['idx_cache'][int.from_bytes(ecp_class[2])]
-			ecp_name_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[2][0:2])]
-			ecp_type_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[2][2:4])]
+			ecp_name_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[2])]
+			ecp_type_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[3])]
 
 			class_string = utf8.decode(ecp_class_utf8[3])
 			name_string = utf8.decode(ecp_name_utf8[3])
@@ -58,11 +58,11 @@ def use_helper(cf):
 
 		if entry[1].__eq__(b'\x0a'):
 			i = entry[0]
-			ecp_class = cp['idx_cache'][int.from_bytes(entry[2][0:2])]
-			ecp_name_and_type = cp['idx_cache'][int.from_bytes(entry[2][2:4])]
+			ecp_class = cp['idx_cache'][int.from_bytes(entry[2])]
+			ecp_name_and_type = cp['idx_cache'][int.from_bytes(entry[3])]
 			ecp_class_utf8 = cp['idx_cache'][int.from_bytes(ecp_class[2])]
-			ecp_name_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[2][0:2])]
-			ecp_type_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[2][2:4])]
+			ecp_name_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[2])]
+			ecp_type_utf8 = cp['idx_cache'][int.from_bytes(ecp_name_and_type[3])]
 
 			class_string = utf8.decode(ecp_class_utf8[3])
 			name_string = utf8.decode(ecp_name_utf8[3])
@@ -223,7 +223,7 @@ def icpx_name_and_type(xcp, name, desc):
 		else:
 			i = i + 1
 
-	rcp.append([i, b'\x0c', icp_name.to_bytes(2) + icp_type.to_bytes(2)])
+	rcp.append([i, b'\x0c', icp_name.to_bytes(2), icp_type.to_bytes(2)])
 	xcp['idx_cache'][i] = rcp[-1]
 	xcp['cf'][0x03] = (i + 1).to_bytes(2)
 	xcp['cache'][(0x0c, name, desc)] = i
@@ -250,7 +250,7 @@ def icpx_f(xcp, c_name, name, desc):
 		else:
 			i = i + 1
 
-	rcp.append([i, b'\x09', icp_class.to_bytes(2) + icp_name_and_type.to_bytes(2)])
+	rcp.append([i, b'\x09', icp_class.to_bytes(2), icp_name_and_type.to_bytes(2)])
 	xcp['idx_cache'][i] = rcp[-1]
 	xcp['cf'][0x03] = (i + 1).to_bytes(2)
 	xcp['cache'][(0x09, c_name, name, desc)] = i
@@ -277,7 +277,7 @@ def icpx_m(xcp, c_name, name, desc):
 		else:
 			i = i + 1
 
-	rcp.append([i, b'\x0a', icp_class.to_bytes(2) + icp_name_and_type.to_bytes(2)])
+	rcp.append([i, b'\x0a', icp_class.to_bytes(2), icp_name_and_type.to_bytes(2)])
 	xcp['idx_cache'][i] = rcp[-1]
 	xcp['cf'][0x03] = (i + 1).to_bytes(2)
 	xcp['cache'][(0x0a, c_name, name, desc)] = i
