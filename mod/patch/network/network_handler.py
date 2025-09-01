@@ -14,18 +14,18 @@ def apply_client():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/ti.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].append(_on_hunger_update_client(xcp))
+	cf[0x0d].append(_on_hunger_update_client(cf, cp_cache))
 
 	with open('stage/client/ti.class', 'wb') as file:
 		file.write(class_file.assemble(cf))
 
 	print('Patched client:ti.class → net.minecraft.network.NetworkHandler')
 
-def _on_hunger_update_client(xcp):
-	m = create_method(xcp, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
+def _on_hunger_update_client(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
 
 	code = instructions.assemble(0, [
 		'return'
@@ -42,7 +42,7 @@ def _on_hunger_update_client(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
@@ -51,18 +51,18 @@ def apply_server():
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/me.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].append(_on_hunger_update_client(xcp))
+	cf[0x0d].append(_on_hunger_update_client(cf, cp_cache))
 
 	with open('stage/server/me.class', 'wb') as file:
 		file.write(class_file.assemble(cf))
 
 	print('Patched server:me.class → net.minecraft.network.NetworkHandler')
 
-def _on_hunger_update_client(xcp):
-	m = create_method(xcp, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
+def _on_hunger_update_client(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
 
 	code = instructions.assemble(0, [
 		'return'
@@ -79,6 +79,6 @@ def _on_hunger_update_client(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m

@@ -18,10 +18,10 @@ def apply():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/lr.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, 'a', '(IZ)V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, 'a', '(IZ)V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
@@ -33,10 +33,10 @@ def apply():
 		'iload_2',
 		['ifeq*', 'a03'],
 
-		['getstatic', icpx_f(xcp, 'px', 'useDebugFov', 'Z')],
+		['getstatic', icpx_f(cf, cp_cache, 'px', 'useDebugFov', 'Z')],
 		['iconst_1'],
 		'ixor',
-		['putstatic', icpx_f(xcp, 'px', 'useDebugFov', 'Z')],
+		['putstatic', icpx_f(cf, cp_cache, 'px', 'useDebugFov', 'Z')],
 		'return',
 
 		['jump_target*', 'a03']
@@ -49,7 +49,7 @@ def apply():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

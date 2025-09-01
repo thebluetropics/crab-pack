@@ -16,7 +16,7 @@ method_access_flags = {
 	'synthetic': 0x1000,
 }
 
-def create_method(xcp, acc_flags, name, desc):
+def create_method(cf, cp_cache, acc_flags, name, desc):
 	acc = 0x0000
 
 	for flag in acc_flags:
@@ -25,17 +25,17 @@ def create_method(xcp, acc_flags, name, desc):
 	m = [None] * 5
 
 	m[0x00] = acc.to_bytes(2)
-	m[0x01] = i2cpx_utf8(xcp, name)
-	m[0x02] = i2cpx_utf8(xcp, desc)
+	m[0x01] = i2cpx_utf8(cf, cp_cache, name)
+	m[0x02] = i2cpx_utf8(cf, cp_cache, desc)
 
 	m[0x03] = bytes(2)
 	m[0x04] = []
 
 	return m
 
-def get_method(cf, xcp, name, desc):
+def get_method(cf, cp_cache, name, desc):
 	for m in cf[0x0d]:
-		if not get_utf8_at(xcp, int.from_bytes(m[0x01])).__eq__(name) or not get_utf8_at(xcp, int.from_bytes(m[0x02])).__eq__(desc):
+		if not get_utf8_at(cp_cache, int.from_bytes(m[0x01])).__eq__(name) or not get_utf8_at(cp_cache, int.from_bytes(m[0x02])).__eq__(desc):
 			continue
 
 		return m

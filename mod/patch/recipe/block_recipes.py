@@ -21,48 +21,48 @@ def apply_client():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/jy.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, 'a', '(Lhk;)V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, 'a', '(Lhk;)V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:178] + instructions.assemble(178, [
 		'aload_1',
-		['new', icpx_c(xcp, 'iz')],
+		['new', icpx_c(cf, cp_cache, 'iz')],
 		'dup',
-		['getstatic', icpx_f(xcp, 'uu', 'fortress_bricks', 'Luu;')],
-		['invokespecial', icpx_m(xcp, 'iz', '<init>', '(Luu;)V')],
+		['getstatic', icpx_f(cf, cp_cache, 'uu', 'fortress_bricks', 'Luu;')],
+		['invokespecial', icpx_m(cf, cp_cache, 'iz', '<init>', '(Luu;)V')],
 		['bipush', 6],
 		['anewarray', 7],
 		'dup',
 		'iconst_0',
-		['ldc', icpx_string(xcp, 'ab')],
+		['ldc', icpx_string(cf, cp_cache, 'ab')],
 		'aastore',
 		'dup',
 		'iconst_1',
-		['ldc',  icpx_string(xcp, 'ba')],
+		['ldc',  icpx_string(cf, cp_cache, 'ba')],
 		'aastore',
 		'dup',
 		'iconst_2',
 		['bipush', 97],
-		['invokestatic', icpx_m(xcp, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
 		'aastore',
 		'dup',
 		'iconst_3',
-		['getstatic', icpx_f(xcp, 'uu', 'x', 'Luu;')],
+		['getstatic', icpx_f(cf, cp_cache, 'uu', 'x', 'Luu;')],
 		'aastore',
 		'dup',
 		'iconst_4',
 		['bipush', 98],
-		['invokestatic', icpx_m(xcp, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
 		'aastore',
 		'dup',
 		'iconst_5',
-		['getstatic', icpx_f(xcp, 'uu', 'u', 'Luu;')],
+		['getstatic', icpx_f(cf, cp_cache, 'uu', 'u', 'Luu;')],
 		'aastore',
-		['invokevirtual', icpx_m(xcp, 'hk', 'a', '(Liz;[Ljava/lang/Object;)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'hk', 'a', '(Liz;[Ljava/lang/Object;)V')],
 		'return'
 	])
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
@@ -71,7 +71,7 @@ def apply_client():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
@@ -91,48 +91,48 @@ def apply_server():
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/gp.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, 'a', '(Ley;)V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, 'a', '(Ley;)V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:178] + instructions.assemble(178, [
 		'aload_1',
-		['new', icpx_c(xcp, 'fy')],
+		['new', icpx_c(cf, cp_cache, 'fy')],
 		'dup',
-		['getstatic', icpx_f(xcp, 'na', 'fortress_bricks', 'Lna;')],
-		['invokespecial', icpx_m(xcp, 'fy', '<init>', '(Lna;)V')],
+		['getstatic', icpx_f(cf, cp_cache, 'na', 'fortress_bricks', 'Lna;')],
+		['invokespecial', icpx_m(cf, cp_cache, 'fy', '<init>', '(Lna;)V')],
 		['bipush', 6],
-		['anewarray', icpx_c(xcp, 'java/lang/Object')],
+		['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
 		'dup',
 		'iconst_0',
-		['ldc', icpx_string(xcp, 'ab')],
+		['ldc', icpx_string(cf, cp_cache, 'ab')],
 		'aastore',
 		'dup',
 		'iconst_1',
-		['ldc', icpx_string(xcp, 'ba')],
+		['ldc', icpx_string(cf, cp_cache, 'ba')],
 		'aastore',
 		'dup',
 		'iconst_2',
 		['bipush', 97],
-		['invokestatic', icpx_m(xcp, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
 		'aastore',
 		'dup',
 		'iconst_3',
-		['getstatic', icpx_f(xcp, 'na', 'x', 'Lna;')],
+		['getstatic', icpx_f(cf, cp_cache, 'na', 'x', 'Lna;')],
 		'aastore',
 		'dup',
 		'iconst_4',
 		['bipush', 98],
-		['invokestatic', icpx_m(xcp, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
 		'aastore',
 		'dup',
 		'iconst_5',
-		['getstatic', icpx_f(xcp, 'na', 'u', 'Lna;')],
+		['getstatic', icpx_f(cf, cp_cache, 'na', 'u', 'Lna;')],
 		'aastore',
-		['invokevirtual', icpx_m(xcp, 'ey', 'a', '(Lfy;[Ljava/lang/Object;)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'ey', 'a', '(Lfy;[Ljava/lang/Object;)V')],
 		'return'
 	])
 
@@ -143,7 +143,7 @@ def apply_server():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

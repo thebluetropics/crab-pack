@@ -19,28 +19,28 @@ def apply():
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/dl.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].append(_create_update_hunger_method(xcp))
+	cf[0x0d].append(_create_update_hunger_method(cf, cp_cache))
 
 	with open('stage/server/dl.class', 'wb') as file:
 		file.write(class_file.assemble(cf))
 
 	print('Patched server:dl.class → net.minecraft.entity.ServerPlayerEntity')
 
-def _create_update_hunger_method(xcp):
-	m = create_method(xcp, ['protected'], 'updateHunger', '(II)V')
+def _create_update_hunger_method(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['protected'], 'updateHunger', '(II)V')
 
 	code = instructions.assemble(0, [
 		'aload_0',
-		['getfield', icpx_f(xcp, 'dl', 'a', 'Lha;')],
-		['new', icpx_c(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
+		['getfield', icpx_f(cf, cp_cache, 'dl', 'a', 'Lha;')],
+		['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
 		'dup',
 		'iload_1',
 		'iload_2',
-		['invokespecial', icpx_m(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', '<init>', '(II)V')],
-		['invokevirtual', icpx_m(xcp, 'ha', 'b', '(Lgt;)V')],
+		['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', '<init>', '(II)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'ha', 'b', '(Lgt;)V')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -53,7 +53,7 @@ def _create_update_hunger_method(xcp):
 		(0).to_bytes(2),
 		[]
 	])
-	a = [i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]
+	a = [i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]
 
 	m[0x03] = (1).to_bytes(2)
 	m[0x04] = [a]

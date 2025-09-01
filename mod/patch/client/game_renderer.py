@@ -19,23 +19,23 @@ def apply():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/px.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x03] = (int.from_bytes(cf[0x03]) + 3).to_bytes(2)
 
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 1).to_bytes(2)
-	cf[0x0b].append(create_field(xcp, ['public', 'static'], 'useDebugFov', 'Z'))
+	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'useDebugFov', 'Z'))
 
-	_modify_static_initializer(cf, xcp)
+	_modify_static_initializer(cf, cp_cache)
 
-	m = get_method(cf, xcp, 'd', '(F)F') # → getFov
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, 'd', '(F)F') # → getFov
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	# modify code
 	a_code[0x03] = a_code[0x03][0:57] + instructions.assemble(57, [
-		['getstatic', icpx_f(xcp, 'px', 'useDebugFov', 'Z')],
+		['getstatic', icpx_f(cf, cp_cache, 'px', 'useDebugFov', 'Z')],
 		['ifeq*', 'a'],
 		['bipush', 30],
 		'i2f',
@@ -50,7 +50,7 @@ def apply():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(cf[0x04], int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
@@ -65,9 +65,9 @@ def apply():
 
 	print('Patched client:px.class → net.minecraft.client.render.GameRenderer')
 
-def _modify_static_initializer(cf, xcp):
-	m = get_method(cf, xcp, '<clinit>', '()V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+def _modify_static_initializer(cf, cp_cache):
+	m = get_method(cf, cp_cache, '<clinit>', '()V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	# load code attribute
 	a_code = attribute.code.load(a[0x02])
@@ -85,7 +85,7 @@ def _modify_static_initializer(cf, xcp):
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

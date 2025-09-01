@@ -20,27 +20,27 @@ def apply():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/uq.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, 'a', '(FZII)V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, 'a', '(FZII)V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	a_code[0x01] = (26).to_bytes(2)
 	a_code[0x03] = a_code[0x03][0:943] + instructions.assemble(0, [
 		['sipush', 2929],
-		['invokestatic', icpx_m(xcp, 'org/lwjgl/opengl/GL11', 'glDisable', '(I)V')], # → GL11.glEnable(GL11.GL_DEPTH_TEST)
+		['invokestatic', icpx_m(cf, cp_cache, 'org/lwjgl/opengl/GL11', 'glDisable', '(I)V')], # → GL11.glEnable(GL11.GL_DEPTH_TEST)
 
     'aload_0',
-    ['getfield', icpx_f(xcp, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
-    ['getfield', icpx_f(xcp, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
-    ['getfield', icpx_f(xcp, 'dc', 'hunger', 'I')], # → int hunger
+    ['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
+    ['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
+    ['getfield', icpx_f(cf, cp_cache, 'dc', 'hunger', 'I')], # → int hunger
     'i2f',
     'aload_0',
-    ['getfield', icpx_f(xcp, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
-    ['getfield', icpx_f(xcp, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
-    ['getfield', icpx_f(xcp, 'dc', 'maxHunger', 'I')], # → int maxHunger
+    ['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
+    ['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
+    ['getfield', icpx_f(cf, cp_cache, 'dc', 'maxHunger', 'I')], # → int maxHunger
     'i2f',
     'fdiv',
 		['bipush', 10],
@@ -59,8 +59,8 @@ def apply():
 		['iload', 7], ['bipush', 33], 'isub', # → y0
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 90], 'iadd', # → x1
 		['iload', 7], ['bipush', 23], ['iload', 24], ['iadd'], 'isub', # → y1
-		['ldc_w', icpx_int(xcp, 0x40000000)], # → color
-		['invokevirtual', icpx_m(xcp, 'uq', 'a', '(IIIII)V')], # → fill box for hunger (upper)
+		['ldc_w', icpx_int(cf, cp_cache, 0x40000000)], # → color
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for hunger (upper)
 
 		# 00
 		'aload_0',
@@ -68,8 +68,8 @@ def apply():
 		['iload', 7], ['bipush', 23], ['iload', 24], ['iadd'], 'isub', # → y0
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 90], 'iadd', # → x1
 		['iload', 7], ['bipush', 23], 'isub', # → y1
-		['ldc_w', icpx_int(xcp, 0x40ff9966)], # → color
-		['invokevirtual', icpx_m(xcp, 'uq', 'a', '(IIIII)V')], # → fill box for hunger (lower)
+		['ldc_w', icpx_int(cf, cp_cache, 0x40ff9966)], # → color
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for hunger (lower)
 
 		# 00
 		'aload_0',
@@ -79,8 +79,8 @@ def apply():
 		['iload', 7],
 		['bipush', 23], # → y1
 		'isub',
-		['ldc_w', icpx_int(xcp, 0x400099cc)],
-		['invokevirtual', icpx_m(xcp, 'uq', 'a', '(IIIII)V')], # → fill box for thirst (lower)
+		['ldc_w', icpx_int(cf, cp_cache, 0x400099cc)],
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for thirst (lower)
 
 		# 00
 		'aload_0',
@@ -100,8 +100,8 @@ def apply():
 		['iload', 7],
 		['bipush', 23], # → y1
 		'isub',
-		['ldc_w', icpx_int(xcp, 0xff224400)], # color
-		['invokevirtual', icpx_m(xcp, 'uq', 'a', '(IIIII)V')], # → fill box for hunger bar (background)
+		['ldc_w', icpx_int(cf, cp_cache, 0xff224400)], # color
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for hunger bar (background)
 
 		# 00
 		'aload_0',
@@ -109,8 +109,8 @@ def apply():
 		['iload', 7], ['bipush', 23], ['iload', 24], ['iadd'], 'isub',  # → y0
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 91], 'iadd', # → x1
 		['iload', 7], ['bipush', 23], 'isub', # → y1
-		['ldc_w', icpx_int(xcp, 0xff33cc00)], # color
-		['invokevirtual', icpx_m(xcp, 'uq', 'a', '(IIIII)V')], # → fill box for hunger bar (percentage)
+		['ldc_w', icpx_int(cf, cp_cache, 0xff33cc00)], # color
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for hunger bar (percentage)
 
 		'aload_0',
 		['iload', 6],
@@ -129,8 +129,8 @@ def apply():
 		['iload', 7],
 		['bipush', 23], # → y1
 		'isub',
-		['ldc_w', icpx_int(xcp, 0xff004466)],
-		['invokevirtual', icpx_m(xcp, 'uq', 'a', '(IIIII)V')], # → fill box for thirst bar (background)
+		['ldc_w', icpx_int(cf, cp_cache, 0xff004466)],
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for thirst bar (background)
 
 		# 00
 		'aload_0',
@@ -138,14 +138,14 @@ def apply():
 		['iload', 7], ['bipush', 33], 'isub', # → y0
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 78], 'iadd', # → x1
 		['iload', 7], ['bipush', 23], 'isub', # → y1
-		['ldc_w', icpx_int(xcp, 0xff00ffff)], # color
-		['invokevirtual', icpx_m(xcp, 'uq', 'a', '(IIIII)V')], # → fill box for thirst bar (percentage)
+		['ldc_w', icpx_int(cf, cp_cache, 0xff00ffff)], # color
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for thirst bar (percentage)
 
 		'fconst_1',
 		'fconst_1',
 		'fconst_1',
 		'fconst_1',
-		['invokestatic', icpx_m(xcp, 'org/lwjgl/opengl/GL11', 'glColor4f', '(FFFF)V')],
+		['invokestatic', icpx_m(cf, cp_cache, 'org/lwjgl/opengl/GL11', 'glColor4f', '(FFFF)V')],
 
 		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 80], 'iadd', # → x
@@ -154,7 +154,7 @@ def apply():
 		['bipush', 27], # → v
 		['bipush', 10], # → width
 		['iload', 25], # → height
-		['invokevirtual', icpx_m(xcp, 'uq', 'b', '(IIIIII)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'b', '(IIIIII)V')],
 
 		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 80], 'iadd', # → x
@@ -163,7 +163,7 @@ def apply():
 		['bipush', 27], ['iload', 25], 'iadd', # → v
 		['bipush', 10], # → width
 		['iload', 24], # → height
-		['invokevirtual', icpx_m(xcp, 'uq', 'b', '(IIIIII)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'b', '(IIIIII)V')],
 
 		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 70], 'iadd', # → x
@@ -172,10 +172,10 @@ def apply():
 		['bipush', 37], # → v
 		['bipush', 7], # → width
 		['bipush', 10], # → height
-		['invokevirtual', icpx_m(xcp, 'uq', 'b', '(IIIIII)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'b', '(IIIIII)V')],
 
 		['sipush', 2929],
-		['invokestatic', icpx_m(xcp, 'org/lwjgl/opengl/GL11', 'glEnable', '(I)V')] # → GL11.glEnable(GL11.GL_DEPTH_TEST)
+		['invokestatic', icpx_m(cf, cp_cache, 'org/lwjgl/opengl/GL11', 'glEnable', '(I)V')] # → GL11.glEnable(GL11.GL_DEPTH_TEST)
 	]) + a_code[0x03][943:2102]
 
 	# update code length
@@ -185,7 +185,7 @@ def apply():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

@@ -19,10 +19,10 @@ def apply_client():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/ki.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, '<clinit>', '()V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, '<clinit>', '()V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
@@ -30,8 +30,8 @@ def apply_client():
 		['sipush', 201],
 		'iconst_1',
 		'iconst_1',
-		['ldc_w', icpx_c(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
-		['invokestatic', icpx_m(xcp, 'ki', 'a', '(IZZLjava/lang/Class;)V')]
+		['ldc_w', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
+		['invokestatic', icpx_m(cf, cp_cache, 'ki', 'a', '(IZZLjava/lang/Class;)V')]
 	]) + a_code[0x03][552:567]
 
 	# update code length
@@ -41,7 +41,7 @@ def apply_client():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cf, cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
@@ -61,10 +61,10 @@ def apply_server():
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/gt.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, '<clinit>', '()V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, '<clinit>', '()V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
@@ -72,8 +72,8 @@ def apply_server():
 		['sipush', 201],
 		'iconst_1',
 		'iconst_1',
-		['ldc_w', icpx_c(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
-		['invokestatic', icpx_m(xcp, 'gt', 'a', '(IZZLjava/lang/Class;)V')]
+		['ldc_w', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
+		['invokestatic', icpx_m(cf, cp_cache, 'gt', 'a', '(IZZLjava/lang/Class;)V')]
 	]) + a_code[0x03][541:566]
 
 	# update code length
@@ -83,7 +83,7 @@ def apply_server():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

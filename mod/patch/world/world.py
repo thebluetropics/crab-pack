@@ -17,17 +17,17 @@ def apply_client():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/fd.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, 'l', '()V') # → tick
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, 'l', '()V') # → tick
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	code = bytearray(a_code[0x03])
 	del code[184]
 	code[184:184] = bytes().join([
-		b'\x14' + i2cpx_long(xcp, 6000)
+		b'\x14' + i2cpx_long(cf, cp_cache, 6000)
 	])
 	a_code[0x03] = bytes(code)
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
@@ -36,7 +36,7 @@ def apply_client():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
@@ -56,17 +56,17 @@ def apply_server():
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/dj.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, 'h', '()V') # → tick
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, 'h', '()V') # → tick
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	code = bytearray(a_code[0x03])
 	del code[184]
 	code[184:184] = bytes().join([
-		b'\x14' + i2cpx_long(xcp, 6000)
+		b'\x14' + i2cpx_long(cf, cp_cache, 6000)
 	])
 	a_code[0x03] = bytes(code)
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
@@ -75,7 +75,7 @@ def apply_server():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

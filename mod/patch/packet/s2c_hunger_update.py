@@ -17,25 +17,25 @@ from mod.constant_pool import (
 
 def apply_client():
 	cf = class_file.create_new()
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x05] = (0x0001.__or__(0x0020)).to_bytes(2)
-	cf[0x06] = i2cpx_c(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket')
-	cf[0x07] = i2cpx_c(xcp, 'ki')
+	cf[0x06] = i2cpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')
+	cf[0x07] = i2cpx_c(cf, cp_cache, 'ki')
 
 	fields = [
-		create_field(xcp, ['public'], 'hunger', 'I'),
-		create_field(xcp, ['public'], 'maxHunger', 'I')
+		create_field(cf, cp_cache, ['public'], 'hunger', 'I'),
+		create_field(cf, cp_cache, ['public'], 'maxHunger', 'I')
 	]
 	cf[0x0a], cf[0x0b] = (len(fields).to_bytes(2), fields)
 
 	methods = [
-		_client_empty_constructor(xcp),
-		_client_constructor(xcp),
-		_client_read(xcp),
-		_client_write(xcp),
-		_client_apply(xcp),
-		_client_size(xcp)
+		_client_empty_constructor(cf, cp_cache),
+		_client_constructor(cf, cp_cache),
+		_client_read(cf, cp_cache),
+		_client_write(cf, cp_cache),
+		_client_apply(cf, cp_cache),
+		_client_size(cf, cp_cache)
 	]
 	cf[0x0c], cf[0x0d] = (len(methods).to_bytes(2), methods)
 
@@ -47,11 +47,11 @@ def apply_client():
 
 	print('Created client:HungerUpdatePacket.class')
 
-def _client_empty_constructor(xcp):
-	m = create_method(xcp, ['public'], '<init>', '()V')
+def _client_empty_constructor(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], '<init>', '()V')
 
 	code = instructions.assemble(0, [
-		'aload_0', ['invokespecial', icpx_m(xcp, 'ki', '<init>', '()V')],
+		'aload_0', ['invokespecial', icpx_m(cf, cp_cache, 'ki', '<init>', '()V')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -66,17 +66,17 @@ def _client_empty_constructor(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _client_constructor(xcp):
-	m = create_method(xcp, ['public'], '<init>', '(II)V')
+def _client_constructor(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], '<init>', '(II)V')
 
 	code = instructions.assemble(0, [
-		'aload_0', ['invokespecial', icpx_m(xcp, 'ki', '<init>', '()V')],
-		'aload_0', ['iload_1'], ['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
-		'aload_0', ['iload_2'], ['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
+		'aload_0', ['invokespecial', icpx_m(cf, cp_cache, 'ki', '<init>', '()V')],
+		'aload_0', ['iload_1'], ['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
+		'aload_0', ['iload_2'], ['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -91,20 +91,20 @@ def _client_constructor(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _client_read(xcp):
-	m = create_method(xcp, ['public'], 'a', '(Ljava/io/DataInputStream;)V')
+def _client_read(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '(Ljava/io/DataInputStream;)V')
 
 	code = instructions.assemble(0, [
 		'aload_0',
-		'aload_1', ['invokevirtual', icpx_m(xcp, 'java/io/DataInputStream', 'readShort', '()S')],
-		['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
+		'aload_1', ['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataInputStream', 'readShort', '()S')],
+		['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
 		'aload_0',
-		'aload_1', ['invokevirtual', icpx_m(xcp, 'java/io/DataInputStream', 'readShort', '()S')],
-		['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
+		'aload_1', ['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataInputStream', 'readShort', '()S')],
+		['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -119,20 +119,20 @@ def _client_read(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _client_write(xcp):
-	m = create_method(xcp, ['public'], 'a', '(Ljava/io/DataOutputStream;)V')
+def _client_write(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '(Ljava/io/DataOutputStream;)V')
 
 	code = instructions.assemble(0, [
 		'aload_1',
-		'aload_0', ['getfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
-		['invokevirtual', icpx_m(xcp, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
 		'aload_1',
-		'aload_0', ['getfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
-		['invokevirtual', icpx_m(xcp, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -147,17 +147,17 @@ def _client_write(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _client_apply(xcp):
-	m = create_method(xcp, ['public'], 'a', '(Lti;)V')
+def _client_apply(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '(Lti;)V')
 
 	code = instructions.assemble(0, [
 		'aload_1',
 		'aload_0',
-		['invokevirtual', icpx_m(xcp, 'ti', 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'ti', 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -172,12 +172,12 @@ def _client_apply(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _client_size(xcp):
-	m = create_method(xcp, ['public'], 'a', '()I')
+def _client_size(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '()I')
 
 	code = instructions.assemble(0, [
 		'iconst_4',
@@ -195,31 +195,31 @@ def _client_size(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
 def apply_server():
 	cf = class_file.create_new()
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x05] = (0x0001.__or__(0x0020)).to_bytes(2)
-	cf[0x06] = i2cpx_c(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket')
-	cf[0x07] = i2cpx_c(xcp, 'gt')
+	cf[0x06] = i2cpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')
+	cf[0x07] = i2cpx_c(cf, cp_cache, 'gt')
 
 	fields = [
-		create_field(xcp, ['public'], 'hunger', 'I'),
-		create_field(xcp, ['public'], 'maxHunger', 'I')
+		create_field(cf, cp_cache, ['public'], 'hunger', 'I'),
+		create_field(cf, cp_cache, ['public'], 'maxHunger', 'I')
 	]
 	cf[0x0a], cf[0x0b] = (len(fields).to_bytes(2), fields)
 
 	methods = [
-		_server_empty_constructor(xcp),
-		_server_constructor(xcp),
-		_server_read(xcp),
-		_server_write(xcp),
-		_server_apply(xcp),
-		_server_size(xcp)
+		_server_empty_constructor(cf, cp_cache),
+		_server_constructor(cf, cp_cache),
+		_server_read(cf, cp_cache),
+		_server_write(cf, cp_cache),
+		_server_apply(cf, cp_cache),
+		_server_size(cf, cp_cache)
 	]
 	cf[0x0c], cf[0x0d] = (len(methods).to_bytes(2), methods)
 
@@ -231,11 +231,11 @@ def apply_server():
 
 	print('Created server:HungerUpdatePacket.class')
 
-def _server_empty_constructor(xcp):
-	m = create_method(xcp, ['public'], '<init>', '()V')
+def _server_empty_constructor(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], '<init>', '()V')
 
 	code = instructions.assemble(0, [
-		'aload_0', ['invokespecial', icpx_m(xcp, 'gt', '<init>', '()V')],
+		'aload_0', ['invokespecial', icpx_m(cf, cp_cache, 'gt', '<init>', '()V')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -250,17 +250,17 @@ def _server_empty_constructor(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _server_constructor(xcp):
-	m = create_method(xcp, ['public'], '<init>', '(II)V')
+def _server_constructor(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], '<init>', '(II)V')
 
 	code = instructions.assemble(0, [
-		'aload_0', ['invokespecial', icpx_m(xcp, 'gt', '<init>', '()V')],
-		'aload_0', ['iload_1'], ['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
-		'aload_0', ['iload_2'], ['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
+		'aload_0', ['invokespecial', icpx_m(cf, cp_cache, 'gt', '<init>', '()V')],
+		'aload_0', ['iload_1'], ['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
+		'aload_0', ['iload_2'], ['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -275,20 +275,20 @@ def _server_constructor(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _server_read(xcp):
-	m = create_method(xcp, ['public'], 'a', '(Ljava/io/DataInputStream;)V')
+def _server_read(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '(Ljava/io/DataInputStream;)V')
 
 	code = instructions.assemble(0, [
 		'aload_0',
-		'aload_1', ['invokevirtual', icpx_m(xcp, 'java/io/DataInputStream', 'readShort', '()S')],
-		['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
+		'aload_1', ['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataInputStream', 'readShort', '()S')],
+		['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
 		'aload_0',
-		'aload_1', ['invokevirtual', icpx_m(xcp, 'java/io/DataInputStream', 'readShort', '()S')],
-		['putfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
+		'aload_1', ['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataInputStream', 'readShort', '()S')],
+		['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -303,20 +303,20 @@ def _server_read(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _server_write(xcp):
-	m = create_method(xcp, ['public'], 'a', '(Ljava/io/DataOutputStream;)V')
+def _server_write(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '(Ljava/io/DataOutputStream;)V')
 
 	code = instructions.assemble(0, [
 		'aload_1',
-		'aload_0', ['getfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
-		['invokevirtual', icpx_m(xcp, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
 		'aload_1',
-		'aload_0', ['getfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
-		['invokevirtual', icpx_m(xcp, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -331,17 +331,17 @@ def _server_write(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _server_apply(xcp):
-	m = create_method(xcp, ['public'], 'a', '(Lme;)V')
+def _server_apply(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '(Lme;)V')
 
 	code = instructions.assemble(0, [
 		'aload_1',
 		'aload_0',
-		['invokevirtual', icpx_m(xcp, 'me', 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'me', 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
@@ -356,12 +356,12 @@ def _server_apply(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
 
-def _server_size(xcp):
-	m = create_method(xcp, ['public'], 'a', '()I')
+def _server_size(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '()I')
 
 	code = instructions.assemble(0, [
 		'iconst_4',
@@ -379,6 +379,6 @@ def _server_size(xcp):
 	])
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [[i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m

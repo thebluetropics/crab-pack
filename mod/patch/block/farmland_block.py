@@ -17,13 +17,13 @@ def apply(side_name):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1
-
 	c_name = ['vl', 'no'][side]
-	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
-	xcp = constant_pool.use_helper(cf)
 
-	m = get_method(cf, xcp, 'b', ['(Lfd;IIILsn;)V', '(Ldj;IIILlq;)V'][side])
-	a = get_attribute(m[0x04], xcp, 'Code')
+	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+
+	m = get_method(cf, cp_cache, 'b', ['(Lfd;IIILsn;)V', '(Ldj;IIILlq;)V'][side])
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
@@ -38,7 +38,7 @@ def apply(side_name):
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

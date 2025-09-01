@@ -12,7 +12,7 @@ field_access_flags = {
 	'enum': 0x4000,
 }
 
-def create_field(xcp, acc_flags, name, desc):
+def create_field(cf, cp_cache, acc_flags, name, desc):
 	acc = 0x0000
 
 	for flag in acc_flags:
@@ -21,8 +21,8 @@ def create_field(xcp, acc_flags, name, desc):
 	f = [None] * 5
 
 	f[0x00] = acc.to_bytes(2)
-	f[0x01] = i2cpx_utf8(xcp, name)
-	f[0x02] = i2cpx_utf8(xcp, desc)
+	f[0x01] = i2cpx_utf8(cf, cp_cache, name)
+	f[0x02] = i2cpx_utf8(cf, cp_cache, desc)
 
 	f[0x03] = bytes(2)
 	f[0x04] = []

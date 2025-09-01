@@ -20,24 +20,24 @@ def apply_client():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/ey.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, '<init>', '()V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, '<init>', '()V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:219] + instructions.assemble(219, [
 		'aload_0',
-		['getstatic', icpx_f(xcp, 'gm', 'raw_squid', 'Lgm;')],
-		['getfield', icpx_f(xcp, 'gm', 'bf', 'I')],
-		['new', icpx_c(xcp, 'iz')],
+		['getstatic', icpx_f(cf, cp_cache, 'gm', 'raw_squid', 'Lgm;')],
+		['getfield', icpx_f(cf, cp_cache, 'gm', 'bf', 'I')],
+		['new', icpx_c(cf, cp_cache, 'iz')],
 		'dup',
-		['getstatic', icpx_f(xcp, 'gm', 'calamari', 'Lgm;')],
+		['getstatic', icpx_f(cf, cp_cache, 'gm', 'calamari', 'Lgm;')],
 		'iconst_1',
 		'iconst_1',
-		['invokespecial', icpx_m(xcp, 'iz', '<init>', '(Lgm;II)V')],
-		['invokevirtual', icpx_m(xcp, 'ey', 'a', '(ILiz;)V')],
+		['invokespecial', icpx_m(cf, cp_cache, 'iz', '<init>', '(Lgm;II)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'ey', 'a', '(ILiz;)V')],
 		'return'
 	])
 
@@ -48,7 +48,7 @@ def apply_client():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 
@@ -68,24 +68,24 @@ def apply_server():
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/de.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	m = get_method(cf, xcp, '<init>', '()V')
-	a = get_attribute(m[0x04], xcp, 'Code')
+	m = get_method(cf, cp_cache, '<init>', '()V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:219] + instructions.assemble(219, [
 		'aload_0',
-		['getstatic', icpx_f(xcp, 'ej', 'raw_squid', 'Lej;')],
-		['getfield', icpx_f(xcp, 'ej', 'bf', 'I')],
-		['new', icpx_c(xcp, 'fy')],
+		['getstatic', icpx_f(cf, cp_cache, 'ej', 'raw_squid', 'Lej;')],
+		['getfield', icpx_f(cf, cp_cache, 'ej', 'bf', 'I')],
+		['new', icpx_c(cf, cp_cache, 'fy')],
 		'dup',
-		['getstatic', icpx_f(xcp, 'ej', 'calamari', 'Lej;')],
+		['getstatic', icpx_f(cf, cp_cache, 'ej', 'calamari', 'Lej;')],
 		'iconst_1',
 		'iconst_1',
-		['invokespecial', icpx_m(xcp, 'fy', '<init>', '(Lej;II)V')],
-		['invokevirtual', icpx_m(xcp, 'de', 'a', '(ILfy;)V')],
+		['invokespecial', icpx_m(cf, cp_cache, 'fy', '<init>', '(Lej;II)V')],
+		['invokevirtual', icpx_m(cf, cp_cache, 'de', 'a', '(ILfy;)V')],
 		'return'
 	])
 
@@ -96,7 +96,7 @@ def apply_server():
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
-		if get_utf8_at(xcp, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
 

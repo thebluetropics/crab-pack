@@ -17,33 +17,33 @@ def apply():
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/nb.class'))
-	xcp = constant_pool.use_helper(cf)
+	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].append(_on_hunger_update(xcp))
+	cf[0x0d].append(_on_hunger_update(cf, cp_cache))
 
 	with open('stage/client/nb.class', 'wb') as file:
 		file.write(class_file.assemble(cf))
 
 	print('Patched client:nb.class → net.minecraft.client.network.ClientNetworkHandler')
 
-def _on_hunger_update(xcp):
-	m = create_method(xcp, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
+def _on_hunger_update(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
 
 	code = instructions.assemble(0, [
 		'aload_0',
-		['getfield', icpx_f(xcp, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
-		['getfield', icpx_f(xcp, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
+		['getfield', icpx_f(cf, cp_cache, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
+		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
 		'aload_1',
-		['getfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
-		['putfield', icpx_f(xcp, 'dc', 'hunger', 'I')],
+		['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
+		['putfield', icpx_f(cf, cp_cache, 'dc', 'hunger', 'I')],
 
 		'aload_0',
-		['getfield', icpx_f(xcp, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
-		['getfield', icpx_f(xcp, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
+		['getfield', icpx_f(cf, cp_cache, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
+		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
 		'aload_1',
-		['getfield', icpx_f(xcp, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
-		['putfield', icpx_f(xcp, 'dc', 'maxHunger', 'I')],
+		['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
+		['putfield', icpx_f(cf, cp_cache, 'dc', 'maxHunger', 'I')],
 
 		'return'
 	])
@@ -57,7 +57,7 @@ def _on_hunger_update(xcp):
 		(0).to_bytes(2),
 		[]
 	])
-	a = [i2cpx_utf8(xcp, 'Code'), len(a_code).to_bytes(4), a_code]
+	a = [i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]
 
 	m[0x03] = (1).to_bytes(2)
 	m[0x04] = [a]
