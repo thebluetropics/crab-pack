@@ -9,7 +9,7 @@ from pathlib import Path
 root_dir = str(Path(__file__).parent.parent.resolve(True))
 
 def path(*path):
-	return os.path.join(root_dir, *path)
+	return os.path.abspath(os.path.join(root_dir, *path))
 
 is_debug = True
 
