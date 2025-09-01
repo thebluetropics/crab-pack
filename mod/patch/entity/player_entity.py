@@ -40,8 +40,8 @@ def apply(side_name):
 	_modify_constructor(cf, cp_cache, side, c_name)
 	_modify_tick_method(cf, cp_cache, side_name, side)
 
-	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 1).to_bytes(2)
-	cf[0x0d].extend([_create_update_hunger_method(cf, cp_cache)])
+	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 2).to_bytes(2)
+	cf[0x0d].extend([_create_update_hunger_method(cf, cp_cache), _create_restore_hunger_method(cf, cp_cache, c_name)])
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
 		file.write(class_file.assemble(cf))
@@ -232,6 +232,37 @@ def _create_update_hunger_method(cf, cp_cache):
 	a_code = attribute.code.assemble([
 		(0).to_bytes(2),
 		(3).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_restore_hunger_method(cf, cp_cache, c_name):
+	m = create_method(cf, cp_cache, ['public'], 'restoreHunger', '(I)V')
+
+	code = instructions.assemble(0, [
+		'aload_0',
+		'dup',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		'iload_1',
+		'iadd',
+		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Math', 'min', '(II)I')],
+		['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		'return'
+	])
+	a_code = attribute.code.assemble([
+		(4).to_bytes(2),
+		(2).to_bytes(2),
 		len(code).to_bytes(4),
 		code,
 		(0).to_bytes(2),
