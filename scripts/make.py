@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from sys import (exit, stderr)
 
-root_dir = str(Path(__file__).parent.resolve(True))
+root_dir = str(Path(__file__).parent.parent.resolve(True))
 
 def requires_dir(*segments):
 	path = os.path.join(root_dir, *segments)

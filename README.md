@@ -20,7 +20,7 @@ make TARGET=windows all
 py -m mod make_client
 
 # Build portable user distribution (for Windows)
-py make.py
+py ./scripts/make.py
 
 # Project cleanup
 git clean -Xdf
