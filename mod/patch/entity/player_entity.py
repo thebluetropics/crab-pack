@@ -92,6 +92,9 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 
 	a_code = attribute.code.load(a[0x02])
 
+	hunger_reduce_every = ['sipush', 200]
+	thirst_reduce_every = ['sipush', 160]
+
 	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(402, [
 		'aload_0',
 		['getfield', icpx_f(cf, cp_cache, c_name, ['aI', 'aL'][side], ['Lfd;', 'Ldj;'][side])],
@@ -100,7 +103,7 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 
 		'aload_0',
 		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
-		'iconst_5',
+		hunger_reduce_every,
 		['if_icmpge*', 'a'],
 
 		'aload_0',
@@ -113,7 +116,7 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 		['jump_target*', 'a'],
 		'aload_0',
 		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
-		'iconst_5',
+		hunger_reduce_every,
 		['if_icmplt*', 'end_hunger_tick'],
 
 		'aload_0',
@@ -155,7 +158,7 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 
 		'aload_0',
 		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
-		'iconst_5',
+		thirst_reduce_every,
 		['if_icmpge*', 'd'],
 
 		'aload_0',
@@ -168,7 +171,7 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 		['jump_target*', 'd'],
 		'aload_0',
 		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
-		'iconst_5',
+		thirst_reduce_every,
 		['if_icmplt*', 'end_thirst_tick'],
 
 		'aload_0',
