@@ -9,3 +9,4 @@ fortress_bricks = true
 fixed_time = false
 debug_fov = false
 hunger_and_thirst = false
+debug_recipes = false
