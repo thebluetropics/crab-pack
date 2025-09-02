@@ -27,10 +27,11 @@ def apply(side_name):
 	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 2).to_bytes(2)
+	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 3).to_bytes(2)
 	cf[0x0b].extend([
 		create_field(cf, cp_cache, ['public', 'static'], 'raw_squid', f'L{c_name};'),
-		create_field(cf, cp_cache, ['public', 'static'], 'calamari', f'L{c_name};')
+		create_field(cf, cp_cache, ['public', 'static'], 'calamari', f'L{c_name};'),
+		create_field(cf, cp_cache, ['public', 'static'], 'BOTTLE', f'L{c_name};')
 	])
 
 	_modify_static_initializer(cf, cp_cache, side_name)
@@ -72,7 +73,18 @@ def _modify_static_initializer(cf, cp_cache, side_name):
 			['invokevirtual', icpx_m(cf, cp_cache, 'yw', 'a', '(II)Lgm;')],
 			['ldc_w', icpx_string(cf, cp_cache, 'raw_squid')],
 			['invokevirtual', icpx_m(cf, cp_cache, 'gm', 'a', '(Ljava/lang/String;)Lgm;')],
-			['putstatic', icpx_f(cf, cp_cache, 'gm', 'calamari', 'Lgm;')]
+			['putstatic', icpx_f(cf, cp_cache, 'gm', 'calamari', 'Lgm;')],
+
+			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem')],
+			'dup',
+			['sipush', 1026],
+			['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem', '<init>', '(I)V')],
+			'iconst_4',
+			['bipush', 15],
+			['invokevirtual', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem', 'a', '(II)Lgm;')],
+			['ldc_w', icpx_string(cf, cp_cache, 'bottle')],
+			['invokevirtual', icpx_m(cf, cp_cache, 'gm', 'a', '(Ljava/lang/String;)Lgm;')],
+			['putstatic', icpx_f(cf, cp_cache, 'gm', 'BOTTLE', 'Lgm;')]
 		]) + a_code[0x03][2664:2668]
 
 	if side_name.__eq__('server'):
@@ -101,7 +113,19 @@ def _modify_static_initializer(cf, cp_cache, side_name):
 			['invokevirtual', icpx_m(cf, cp_cache, 'px', 'a', '(II)Lej;')],
 			['ldc_w', icpx_string(cf, cp_cache, 'calamari')],
 			['invokevirtual', icpx_m(cf, cp_cache, 'ej', 'a', '(Ljava/lang/String;)Lej;')],
-			['putstatic', icpx_f(cf, cp_cache, 'ej', 'calamari', 'Lej;')]
+			['putstatic', icpx_f(cf, cp_cache, 'ej', 'calamari', 'Lej;')],
+
+			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem')],
+			'dup',
+			['sipush', 1026],
+			['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem', '<init>', '(I)V')],
+			'iconst_4',
+			['bipush', 15],
+			['invokevirtual', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem', 'a', '(II)Lej;')],
+			['ldc_w', icpx_string(cf, cp_cache, 'bottle')],
+			['invokevirtual', icpx_m(cf, cp_cache, 'ej', 'a', '(Ljava/lang/String;)Lej;')],
+			['putstatic', icpx_f(cf, cp_cache, 'ej', 'BOTTLE', 'Lej;')]
+
 		]) + a_code[0x03][2664:2668]
 
 	# update code length

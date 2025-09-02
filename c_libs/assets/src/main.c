@@ -137,6 +137,39 @@ _exit:
 	return code;
 }
 
+uint8_t apply_bottle(char* source, char* target) {
+	uint8_t code = 0;
+
+	struct _image_t items;
+	items.ptr = stbi_load(target, &items.w, &items.h, &items._n, 4);
+
+	if (!items.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t bottle;
+	bottle.ptr = stbi_load(source, &bottle.w, &bottle.h, &bottle._n, 4);
+
+	if (!bottle.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	overlay(bottle.ptr, items.ptr, bottle.w, bottle.h, items.w, 64, 240);
+
+	if (!stbi_write_png(target, items.w, items.h, 4, items.ptr, items.w * 4)) {
+		code = 1;
+		goto _exit;
+	}
+
+_exit:
+	stbi_image_free(items.ptr);
+	stbi_image_free(bottle.ptr);
+
+	return code;
+}
+
 uint8_t apply_single_pixel_crosshair(char* source, char* target) {
 	uint8_t code = 0;
 

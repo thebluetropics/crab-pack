@@ -43,6 +43,12 @@ def _modify_static_initializer(cf, cp_cache, side_name):
 			'iconst_1',
 			'iconst_1',
 			['ldc_w', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
+			['invokestatic', icpx_m(cf, cp_cache, 'ki', 'a', '(IZZLjava/lang/Class;)V')],
+
+			['sipush', 202],
+			'iconst_1',
+			'iconst_1',
+			['ldc_w', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket')],
 			['invokestatic', icpx_m(cf, cp_cache, 'ki', 'a', '(IZZLjava/lang/Class;)V')]
 		]) + a_code[0x03][552:567]
 
@@ -52,6 +58,12 @@ def _modify_static_initializer(cf, cp_cache, side_name):
 			'iconst_1',
 			'iconst_1',
 			['ldc_w', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
+			['invokestatic', icpx_m(cf, cp_cache, 'gt', 'a', '(IZZLjava/lang/Class;)V')],
+
+			['sipush', 202],
+			'iconst_1',
+			'iconst_1',
+			['ldc_w', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket')],
 			['invokestatic', icpx_m(cf, cp_cache, 'gt', 'a', '(IZZLjava/lang/Class;)V')]
 		]) + a_code[0x03][541:566]
 

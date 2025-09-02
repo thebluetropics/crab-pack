@@ -27,25 +27,25 @@ def apply():
 
 	a_code = attribute.code.load(a[0x02])
 
-	a_code[0x01] = (26).to_bytes(2)
+	a_code[0x01] = (28).to_bytes(2)
 	a_code[0x03] = a_code[0x03][0:943] + instructions.assemble(0, [
 		['sipush', 2929],
 		['invokestatic', icpx_m(cf, cp_cache, 'org/lwjgl/opengl/GL11', 'glDisable', '(I)V')], # → GL11.glEnable(GL11.GL_DEPTH_TEST)
 
-    'aload_0',
-    ['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
-    ['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
-    ['getfield', icpx_f(cf, cp_cache, 'dc', 'hunger', 'I')], # → int hunger
-    'i2f',
-    'aload_0',
-    ['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
-    ['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
-    ['getfield', icpx_f(cf, cp_cache, 'dc', 'maxHunger', 'I')], # → int maxHunger
-    'i2f',
-    'fdiv',
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
+		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
+		['getfield', icpx_f(cf, cp_cache, 'dc', 'hunger', 'I')], # → int hunger
+		'i2f',
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
+		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
+		['getfield', icpx_f(cf, cp_cache, 'dc', 'maxHunger', 'I')], # → int maxHunger
+		'i2f',
+		'fdiv',
 		['bipush', 10],
 		'i2f',
-    'fmul',
+		'fmul',
 		'f2i',
 		['istore', 24],
 
@@ -53,6 +53,28 @@ def apply():
 		['iload', 24],
 		'isub',
 		['istore', 25],
+
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
+		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
+		['getfield', icpx_f(cf, cp_cache, 'dc', 'thirst', 'I')], # → int thirst
+		'i2f',
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, 'uq', 'g', 'Lnet/minecraft/client/Minecraft;')], # → this.minecraft
+		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')], # → this.minecraft.player
+		['getfield', icpx_f(cf, cp_cache, 'dc', 'maxThirst', 'I')], # → int maxThirst
+		'i2f',
+		'fdiv',
+		['bipush', 10],
+		'i2f',
+		'fmul',
+		'f2i',
+		['istore', 26],
+
+		['bipush', 10],
+		['iload', 26],
+		'isub',
+		['istore', 27],
 
 		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 79], 'iadd', # → x0
@@ -71,14 +93,20 @@ def apply():
 		['ldc_w', icpx_int(cf, cp_cache, 0x40ff9966)], # → color
 		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for hunger (lower)
 
-		# 00
 		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 69], 'iadd', # → x0
 		['iload', 7], ['bipush', 33], 'isub', # → y0
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 77], 'iadd', # → x1
-		['iload', 7],
-		['bipush', 23], # → y1
-		'isub',
+		['iload', 7], ['bipush', 23], ['iload', 26], ['iadd'], 'isub', # → y1
+		['ldc_w', icpx_int(cf, cp_cache, 0x40000000)], # → color
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for thirst (upper)
+
+		# 00
+		'aload_0',
+		['iload', 6], 'iconst_2', 'idiv', ['bipush', 69], 'iadd', # → x0
+		['iload', 7], ['bipush', 23], ['iload', 26], ['iadd'], 'isub', # → y0
+		['iload', 6], 'iconst_2', 'idiv', ['bipush', 77], 'iadd', # → x1
+		['iload', 7], ['bipush', 23], 'isub', # → y1
 		['ldc_w', icpx_int(cf, cp_cache, 0x400099cc)],
 		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'a', '(IIIII)V')], # → fill box for thirst (lower)
 
@@ -135,7 +163,7 @@ def apply():
 		# 00
 		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 77], 'iadd', # → x0
-		['iload', 7], ['bipush', 33], 'isub', # → y0
+		['iload', 7], ['bipush', 23], ['iload', 26], ['iadd'], 'isub',  # → y0
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 78], 'iadd', # → x1
 		['iload', 7], ['bipush', 23], 'isub', # → y1
 		['ldc_w', icpx_int(cf, cp_cache, 0xff00ffff)], # color
@@ -157,6 +185,15 @@ def apply():
 		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'b', '(IIIIII)V')],
 
 		'aload_0',
+		['iload', 6], 'iconst_2', 'idiv', ['bipush', 70], 'iadd', # → x
+		['iload', 7], ['bipush', 33], 'isub', # → y
+		['bipush', 16], # → u
+		['bipush', 37], # → v
+		['bipush', 7], # → width
+		['iload', 27], # → height
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'b', '(IIIIII)V')], # for thirst
+
+		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 80], 'iadd', # → x
 		['iload', 7], ['bipush', 33], 'isub', ['iload', 25], 'iadd', # → y
 		['bipush', 26], # → u
@@ -167,12 +204,12 @@ def apply():
 
 		'aload_0',
 		['iload', 6], 'iconst_2', 'idiv', ['bipush', 70], 'iadd', # → x
-		['iload', 7], ['bipush', 33], 'isub', # → y
+		['iload', 7], ['bipush', 33], 'isub', ['iload', 27], 'iadd', # → y
 		['bipush', 23], # → u
-		['bipush', 37], # → v
+		['bipush', 37], ['iload', 27], 'iadd', # → v
 		['bipush', 7], # → width
-		['bipush', 10], # → height
-		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'b', '(IIIIII)V')],
+		['iload', 26], # → height
+		['invokevirtual', icpx_m(cf, cp_cache, 'uq', 'b', '(IIIIII)V')], # for thirst
 
 		['sipush', 2929],
 		['invokestatic', icpx_m(cf, cp_cache, 'org/lwjgl/opengl/GL11', 'glEnable', '(I)V')] # → GL11.glEnable(GL11.GL_DEPTH_TEST)

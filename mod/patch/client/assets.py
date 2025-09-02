@@ -15,6 +15,9 @@ def apply():
 
 	lib = ctypes.CDLL(lib_path)
 
+	lib.apply_bottle.argtypes = [ctypes.c_char_p] * 2
+	lib.apply_bottle.restype = ctypes.c_uint8
+
 	lib.apply_raw_squid_and_calamari.argtypes = [ctypes.c_char_p] * 3
 	lib.apply_raw_squid_and_calamari.restype = ctypes.c_uint8
 
@@ -52,6 +55,16 @@ def apply():
 		ret_code = lib.apply_hunger_and_thirst(
 			os.path.join(mod.config.path('assets'), 'hunger_and_thirst.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'gui', 'icons.png').encode('utf-8'),
+		)
+
+		if not ret_code.__eq__(0):
+			print('Err: unknown.', file=stderr)
+			exit(1)
+
+	if mod.config.is_feature_enabled('hunger_and_thirst'):
+		ret_code = lib.apply_bottle(
+			os.path.join(mod.config.path('assets'), 'bottle.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'gui', 'items.png').encode('utf-8'),
 		)
 
 		if not ret_code.__eq__(0):

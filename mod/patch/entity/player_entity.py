@@ -38,10 +38,15 @@ def apply(side_name):
 	cf[0x0b].extend(add_fields)
 
 	_modify_constructor(cf, cp_cache, side, c_name)
-	_modify_tick_method(cf, cp_cache, side_name, side)
+	_modify_tick_method(cf, cp_cache, side_name, side, c_name)
 
-	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 2).to_bytes(2)
-	cf[0x0d].extend([_create_update_hunger_method(cf, cp_cache), _create_restore_hunger_method(cf, cp_cache, c_name)])
+	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 4).to_bytes(2)
+	cf[0x0d].extend([
+		_create_update_hunger_method(cf, cp_cache),
+		_create_restore_hunger_method(cf, cp_cache, c_name),
+		_create_update_thirst_method(cf, cp_cache),
+		_create_restore_thirst_method(cf, cp_cache, c_name)
+	])
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
 		file.write(class_file.assemble(cf))
@@ -81,130 +86,125 @@ def _modify_constructor(cf, cp_cache, side, c_name):
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-def _modify_tick_method(cf, cp_cache, side_name, side):
-	# gs.w_()V → PlayerEntity.tick
+def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 	m = get_method(cf, cp_cache, ['w_', 'm_'][side], '()V')
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = attribute.code.load(a[0x02])
 
-	if side_name.__eq__('client'):
-		a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(402, [
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'gs', 'aI', 'Lfd;')],
-			['getfield', icpx_f(cf, cp_cache, 'fd', 'B', 'Z')],
-			['ifne*', 'end'],
+	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(402, [
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, ['aI', 'aL'][side], ['Lfd;', 'Ldj;'][side])],
+		['getfield', icpx_f(cf, cp_cache, ['fd', 'dj'][side], 'B', 'Z')],
+		['ifne*', 'end_hunger_tick'],
 
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'gs', 'hungerTick', 'I')],
-			'iconst_5',
-			['if_icmpge*', 'a'],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		'iconst_5',
+		['if_icmpge*', 'a'],
 
-			'aload_0',
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'gs', 'hungerTick', 'I')],
-			'iconst_1',
-			'iadd',
-			['putfield', icpx_f(cf, cp_cache, 'gs', 'hungerTick', 'I')],
+		'aload_0',
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		'iconst_1',
+		'iadd',
+		['putfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
 
-			['jump_target*', 'a'],
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'gs', 'hungerTick', 'I')],
-			'iconst_5',
-			['if_icmplt*', 'end'],
+		['jump_target*', 'a'],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		'iconst_5',
+		['if_icmplt*', 'end_hunger_tick'],
 
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'gs', 'hunger', 'I')],
-			['ifle*', 'b'],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		['ifle*', 'b'],
 
-			'aload_0',
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'gs', 'hunger', 'I')],
-			'iconst_1',
-			'isub',
-			['putfield', icpx_f(cf, cp_cache, 'gs', 'hunger', 'I')],
+		'aload_0',
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		'iconst_1',
+		'isub',
+		['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
 
-			'aload_0',
-			'aload_0', ['getfield', icpx_f(cf, cp_cache, 'gs', 'hunger', 'I')],
-			'aload_0', ['getfield', icpx_f(cf, cp_cache, 'gs', 'maxHunger', 'I')],
-			['invokevirtual', icpx_m(cf, cp_cache, 'gs', 'updateHunger', '(II)V')],
+		'aload_0',
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'updateHunger', '(II)V')],
 
-			['goto*', 'c'],
+		['goto*', 'c'],
 
-			['jump_target*', 'b'],
-			'aload_0',
-			'aconst_null',
-			'iconst_1',
-			['invokevirtual', icpx_m(cf, cp_cache, 'gs', 'a', '(Lsn;I)Z')],
-			'pop',
+		['jump_target*', 'b'],
+		'aload_0',
+		'aconst_null',
+		'iconst_1',
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lsn;I)Z', '(Llq;I)Z'][side])],
+		'pop',
 
-			['jump_target*', 'c'],
-			'aload_0',
-			'iconst_0',
-			['putfield', icpx_f(cf, cp_cache, 'gs', 'hungerTick', 'I')],
+		['jump_target*', 'c'],
+		'aload_0',
+		'iconst_0',
+		['putfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
 
-			['jump_target*', 'end'],
-			'return'
-		])
+		['jump_target*', 'end_hunger_tick'],
 
-	if side_name.__eq__('server'):
-		a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(402, [
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'em', 'aL', 'Ldj;')],
-			['getfield', icpx_f(cf, cp_cache, 'dj', 'B', 'Z')],
-			['ifne*', 'end'],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, ['aI', 'aL'][side], ['Lfd;', 'Ldj;'][side])],
+		['getfield', icpx_f(cf, cp_cache, ['fd', 'dj'][side], 'B', 'Z')],
+		['ifne*', 'end_thirst_tick'],
 
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'em', 'hungerTick', 'I')],
-			'iconst_5',
-			['if_icmpge*', 'a'],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		'iconst_5',
+		['if_icmpge*', 'd'],
 
-			'aload_0',
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'em', 'hungerTick', 'I')],
-			'iconst_1',
-			'iadd',
-			['putfield', icpx_f(cf, cp_cache, 'em', 'hungerTick', 'I')],
+		'aload_0',
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		'iconst_1',
+		'iadd',
+		['putfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
 
-			['jump_target*', 'a'],
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'em', 'hungerTick', 'I')],
-			'iconst_5',
-			['if_icmplt*', 'end'],
+		['jump_target*', 'd'],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		'iconst_5',
+		['if_icmplt*', 'end_thirst_tick'],
 
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'em', 'hunger', 'I')],
-			['ifle*', 'b'],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		['ifle*', 'e'],
 
-			'aload_0',
-			'aload_0',
-			['getfield', icpx_f(cf, cp_cache, 'em', 'hunger', 'I')],
-			'iconst_1',
-			'isub',
-			['putfield', icpx_f(cf, cp_cache, 'em', 'hunger', 'I')],
+		'aload_0',
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		'iconst_1',
+		'isub',
+		['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
 
-			'aload_0',
-			'aload_0', ['getfield', icpx_f(cf, cp_cache, 'em', 'hunger', 'I')],
-			'aload_0', ['getfield', icpx_f(cf, cp_cache, 'em', 'maxHunger', 'I')],
-			['invokevirtual', icpx_m(cf, cp_cache, 'em', 'updateHunger', '(II)V')],
+		'aload_0',
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'updateThirst', '(II)V')],
 
-			['goto*', 'c'],
+		['goto*', 'f'],
 
-			['jump_target*', 'b'],
-			'aload_0',
-			'aconst_null',
-			'iconst_1',
-			['invokevirtual', icpx_m(cf, cp_cache, 'em', 'a', '(Llq;I)Z')],
-			'pop',
+		['jump_target*', 'e'],
+		'aload_0',
+		'aconst_null',
+		'iconst_1',
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lsn;I)Z', '(Llq;I)Z'][side])],
+		'pop',
 
-			['jump_target*', 'c'],
-			'aload_0',
-			'iconst_0',
-			['putfield', icpx_f(cf, cp_cache, 'em', 'hungerTick', 'I')],
+		['jump_target*', 'f'],
+		'aload_0',
+		'iconst_0',
+		['putfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
 
-			['jump_target*', 'end'],
-			'return'
-		])
+		['jump_target*', 'end_thirst_tick'],
+
+		'return'
+	])
 
 	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
@@ -258,6 +258,59 @@ def _create_restore_hunger_method(cf, cp_cache, c_name):
 		'iadd',
 		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Math', 'min', '(II)I')],
 		['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		'return'
+	])
+	a_code = attribute.code.assemble([
+		(4).to_bytes(2),
+		(2).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_update_thirst_method(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['protected'], 'updateThirst', '(II)V')
+
+	code = instructions.assemble(0, [
+		'return'
+	])
+	a_code = attribute.code.assemble([
+		(0).to_bytes(2),
+		(3).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_restore_thirst_method(cf, cp_cache, c_name):
+	m = create_method(cf, cp_cache, ['public'], 'restoreThirst', '(I)V')
+
+	code = instructions.assemble(0, [
+		'aload_0',
+		'dup',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		'iload_1',
+		'iadd',
+		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Math', 'min', '(II)I')],
+		['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
 		'return'
 	])
 	a_code = attribute.code.assemble([
