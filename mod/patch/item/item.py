@@ -31,16 +31,19 @@ def apply(side_name):
 	if mod.config.is_feature_enabled('hunger_and_thirst'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'BOTTLE', f'L{c_name};'))
 
+	if mod.config.is_feature_enabled('cloth'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'CLOTH', f'L{c_name};'))
+
 	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
 
-	_modify_static_initializer(cf, cp_cache, side_name)
+	_modify_static_initializer(cf, cp_cache, side_name, side)
 
 	with open(mod.config.path(f'stage/{side_name}/{c_name}.class'), 'wb') as f:
 		f.write(class_file.assemble(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.item.Item')
 
-def _modify_static_initializer(cf, cp_cache, side_name):
+def _modify_static_initializer(cf, cp_cache, side_name, side):
 	m = get_method(cf, cp_cache, '<clinit>', '()V')
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
@@ -88,6 +91,20 @@ def _modify_static_initializer(cf, cp_cache, side_name):
 			['putstatic', icpx_f(cf, cp_cache, 'gm', 'BOTTLE', 'Lgm;')]
 		])
 
+		if mod.config.is_feature_enabled('cloth'):
+			patch_code.extend([
+				['new', icpx_c(cf, cp_cache, 'gm')],
+				'dup',
+				['sipush', 1027],
+				['invokespecial', icpx_m(cf, cp_cache, 'gm', '<init>', '(I)V')],
+				'iconst_5',
+				['bipush', 15],
+				['invokevirtual', icpx_m(cf, cp_cache, 'gm', 'a', '(II)Lgm;')],
+				['ldc_w', icpx_string(cf, cp_cache, 'cloth')],
+				['invokevirtual', icpx_m(cf, cp_cache, 'gm', 'a', '(Ljava/lang/String;)Lgm;')],
+				['putstatic', icpx_f(cf, cp_cache, 'gm', 'CLOTH', 'Lgm;')]
+			])
+
 		a_code[0x03] = a_code[0x03][0:2664] + instructions.assemble(2664, patch_code) + a_code[0x03][2664:2668]
 
 	if side_name.__eq__('server'):
@@ -130,6 +147,20 @@ def _modify_static_initializer(cf, cp_cache, side_name):
 			['invokevirtual', icpx_m(cf, cp_cache, 'ej', 'a', '(Ljava/lang/String;)Lej;')],
 			['putstatic', icpx_f(cf, cp_cache, 'ej', 'BOTTLE', 'Lej;')]
 		])
+
+		if mod.config.is_feature_enabled('cloth'):
+			patch_code.extend([
+				['new', icpx_c(cf, cp_cache, 'ej')],
+				'dup',
+				['sipush', 1027],
+				['invokespecial', icpx_m(cf, cp_cache, 'ej', '<init>', '(I)V')],
+				'iconst_5',
+				['bipush', 15],
+				['invokevirtual', icpx_m(cf, cp_cache, 'ej', 'a', '(II)Lej;')],
+				['ldc_w', icpx_string(cf, cp_cache, 'cloth')],
+				['invokevirtual', icpx_m(cf, cp_cache, 'ej', 'a', '(Ljava/lang/String;)Lej;')],
+				['putstatic', icpx_f(cf, cp_cache, 'ej', 'CLOTH', 'Lej;')]
+			])
 
 		a_code[0x03] = a_code[0x03][0:2664] + instructions.assemble(2664, patch_code) + a_code[0x03][2664:2668]
 

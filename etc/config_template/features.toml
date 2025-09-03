@@ -6,6 +6,7 @@ log_version = true
 single_pixel_crosshair = true
 raw_squid_and_calamari = true
 fortress_bricks = true
+cloth = true
 fixed_time = false
 debug_fov = false
 hunger_and_thirst = false # do not enable, this is unfinished

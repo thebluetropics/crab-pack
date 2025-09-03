@@ -71,6 +71,39 @@ _exit:
 	return code;
 }
 
+uint8_t apply_cloth(char* source, char* target) {
+	uint8_t code = 0;
+
+	struct _image_t items;
+	items.ptr = stbi_load(target, &items.w, &items.h, &items._n, 4);
+
+	if (!items.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t cloth;
+	cloth.ptr = stbi_load(source, &cloth.w, &cloth.h, &cloth._n, 4);
+
+	if (!cloth.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	overlay(cloth.ptr, items.ptr, cloth.w, cloth.h, items.w, 80, 240);
+
+	if (!stbi_write_png(target, items.w, items.h, 4, items.ptr, items.w * 4)) {
+		code = 1;
+		goto _exit;
+	}
+
+_exit:
+	stbi_image_free(items.ptr);
+	stbi_image_free(cloth.ptr);
+
+	return code;
+}
+
 uint8_t apply_fortress_bricks(char* source, char* target) {
 	uint8_t code = 0;
 
