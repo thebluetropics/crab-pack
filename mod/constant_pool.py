@@ -17,8 +17,14 @@ def init_constant_pool_cache(cp):
 		if entry[1].__eq__(b'\x03'):
 			cp_cache['lookup'][(0x03, int.from_bytes(entry[2]))] = entry[0]
 
+		if entry[1].__eq__(b'\x04'):
+			cp_cache['lookup'][(0x04, entry[2])] = entry[0]
+
 		if entry[1].__eq__(b'\x05'):
 			cp_cache['lookup'][(0x05, int.from_bytes(entry[2]))] = entry[0]
+
+		if entry[1].__eq__(b'\x06'):
+			cp_cache['lookup'][(0x06, entry[2])] = entry[0]
 
 	for entry in cp:
 		if entry[1].__eq__(b'\x07'):
@@ -77,6 +83,66 @@ def init_constant_pool_cache(cp):
 			continue
 
 	return cp_cache
+
+def get_etcp_at(cp_cache, i):
+	entry = cp_cache['index'][i]
+	tag = entry[1]
+
+	return tag
+
+def get_float_at(cp_cache, i):
+	entry = cp_cache['index'][i]
+
+	if not entry[1].__eq__(b'\x04'):
+		print('Err: no float found.', file=stderr)
+		exit(1)
+
+	return entry[2]
+
+def get_double_at(cp_cache, i):
+	entry = cp_cache['index'][i]
+
+	if not entry[1].__eq__(b'\x06'):
+		print('Err: no double found.', file=stderr)
+		exit(1)
+
+	return entry[2]
+
+def get_field_reference_at(cp_cache, i):
+	entry = cp_cache['index'][i]
+
+	if not entry[1].__eq__(b'\x09'):
+		print('Err: no field reference found.', file=stderr)
+		exit(1)
+
+	ecp_class = cp_cache['index'][int.from_bytes(entry[2])]
+	ecp_name_and_type = cp_cache['index'][int.from_bytes(entry[3])]
+	ecp_class_utf8 = cp_cache['index'][int.from_bytes(ecp_class[2])]
+	ecp_name_utf8 = cp_cache['index'][int.from_bytes(ecp_name_and_type[2])]
+	ecp_type_utf8 = cp_cache['index'][int.from_bytes(ecp_name_and_type[3])]
+	class_name = utf8.decode(ecp_class_utf8[3])
+	name = utf8.decode(ecp_name_utf8[3])
+	desc = utf8.decode(ecp_type_utf8[3])
+
+	return (class_name, name, desc)
+
+def get_method_reference_at(cp_cache, i):
+	entry = cp_cache['index'][i]
+
+	if not entry[1].__eq__(b'\x0a'):
+		print('Err: no method reference found.', file=stderr)
+		exit(1)
+
+	ecp_class = cp_cache['index'][int.from_bytes(entry[2])]
+	ecp_name_and_type = cp_cache['index'][int.from_bytes(entry[3])]
+	ecp_class_utf8 = cp_cache['index'][int.from_bytes(ecp_class[2])]
+	ecp_name_utf8 = cp_cache['index'][int.from_bytes(ecp_name_and_type[2])]
+	ecp_type_utf8 = cp_cache['index'][int.from_bytes(ecp_name_and_type[3])]
+	class_name = utf8.decode(ecp_class_utf8[3])
+	name = utf8.decode(ecp_name_utf8[3])
+	desc = utf8.decode(ecp_type_utf8[3])
+
+	return (class_name, name, desc)
 
 def get_utf8_at(cp_cache, i):
 	entry = cp_cache['index'][i]
@@ -291,3 +357,51 @@ def icpx_m(cf, cp_cache, c_name, name, desc):
 	return i
 
 def i2cpx_m(cf, cp_cache, c_name, name, desc): return icpx_m(cf, cp_cache, c_name, name, desc).to_bytes(2)
+
+def icpx_float(cf, cp_cache, float_bytes):
+	if (0x04, float_bytes) in cp_cache['lookup']:
+		return cp_cache['lookup'][(0x04, float_bytes)]
+
+	cp = cf[0x04]
+	i = 1
+
+	if cp:
+		i = cp[-1][0]
+
+		if cp[-1][1].__eq__(b'\x05') or cp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
+
+	cp.append([i, b'\x04', float_bytes])
+	cp_cache['index'][i] = cp[-1]
+	cf[0x03] = (i + 1).to_bytes(2)
+	cp_cache['lookup'][(0x04, float_bytes)] = i
+
+	return i
+
+def i2cpx_float(cf, cp_cache, float_bytes): return icpx_float(cf, cp_cache, float_bytes).to_bytes(2)
+
+def icpx_double(cf, cp_cache, double_bytes):
+	if (0x06, double_bytes) in cp_cache['lookup']:
+		return cp_cache['lookup'][(0x06, double_bytes)]
+
+	cp = cf[0x04]
+	i = 1
+
+	if cp:
+		i = cp[-1][0]
+
+		if cp[-1][1].__eq__(b'\x05') or cp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
+
+	cp.append([i, b'\x06', double_bytes])
+	cp_cache['index'][i] = cp[-1]
+	cf[0x03] = (i + 2).to_bytes(2)
+	cp_cache['lookup'][(0x06, double_bytes)] = i
+
+	return i
+
+def i2cpx_double(cf, cp_cache, double_bytes): return icpx_double(cf, cp_cache, double_bytes).to_bytes(2)
