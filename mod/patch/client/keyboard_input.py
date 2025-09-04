@@ -27,7 +27,7 @@ def apply():
 
 	a_code[0x03] = instructions.assemble(0, [
 		'iload_1',
-		['bipush', 79],
+		['bipush', 41],
 		['if_icmpne*', 'a03'],
 
 		'iload_2',
