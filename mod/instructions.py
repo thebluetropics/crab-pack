@@ -276,3 +276,35 @@ def assemble(pc_begin, code):
 			continue
 
 	return bytes().join(out)
+
+def load_instructions(code_bytes):
+	i = 0
+	out = []
+	code_len = len(code_bytes)
+
+	rev = {}
+	for k, v in istr_info.items():
+		opcode_byte, operands_info, total_sz = v
+		rev[opcode_byte[0]] = (k, operands_info)
+
+	while i < code_len:
+		op = code_bytes[i]
+		if op not in rev:
+			raise ValueError(f"Unknown opcode {op:#x} at {i}")
+
+		mnemonic, operands_info = rev[op]
+		i += 1
+
+		if not operands_info:
+			out.append(mnemonic)
+			continue
+
+		operands = []
+		for sz in operands_info:
+			val = int.from_bytes(code_bytes[i:i+sz], byteorder='big', signed=False)
+			operands.append(val)
+			i += sz
+
+		out.append([mnemonic, *operands])
+
+	return out
