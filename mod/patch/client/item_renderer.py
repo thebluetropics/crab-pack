@@ -40,9 +40,32 @@ def _modify_render_item_decoration_method(cf, cp_cache):
 		'GL_TEXTURE_2D': 3553
 	}
 
+	a_code[0x01] = (13).to_bytes(2)
 	a_code[0x03] = a_code[0x03][0:288] + instructions.assemble(0, [
 		['aload', 3],
 		['ifnull*', 'end'],
+
+		['aload', 3],
+		['invokevirtual', icpx_m(cf, cp_cache, 'iz', 'a', '()Lgm;')],
+		['getstatic', icpx_f(cf, cp_cache, 'gm', 'BOTTLE', 'Lgm;')],
+		['if_acmpne*', 'end'],
+
+		['aload', 3],
+		['invokevirtual', icpx_m(cf, cp_cache, 'iz', 'i', '()I')],
+		['bipush', 100],
+		['if_icmpge*', 'end'],
+
+		['aload', 3],
+		['invokevirtual', icpx_m(cf, cp_cache, 'iz', 'i', '()I')],
+		'i2f',
+		['sipush', 100],
+		'i2f',
+		'fdiv',
+		['bipush', 13],
+		'i2f',
+		'fmul',
+		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Math', 'round', '(F)I')],
+		['istore', 12],
 
 		['sipush', const['GL_LIGHTING']],
 		['invokestatic', icpx_m(cf, cp_cache, 'org/lwjgl/opengl/GL11', 'glDisable', '(I)V')],
@@ -61,6 +84,15 @@ def _modify_render_item_decoration_method(cf, cp_cache):
 		['bipush', 13],
 		'iconst_2',
 		'iconst_0',
+		['invokevirtual', icpx_m(cf, cp_cache, 'bb', 'a', '(Lnw;IIIII)V')],
+
+		['aload', 0],
+		['aload', 8],
+		['iload', 4], 'iconst_2', 'iadd',
+		['iload', 5], ['bipush', 13], 'iadd',
+		['iload', 12],
+		'iconst_1',
+		['ldc_w', icpx_int(cf, cp_cache, 0xff66cccc)],
 		['invokevirtual', icpx_m(cf, cp_cache, 'bb', 'a', '(Lnw;IIIII)V')],
 
 		['sipush', 3553],
