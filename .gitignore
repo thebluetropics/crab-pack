@@ -1,15 +1,12 @@
-# Intellij IDEA
-/.idea/
-
-# Visual Studio Code
+# vscode
 /.vscode/*
 !settings.json
 
-# Python
+# python
 __pycache__/
 *.pyc
 
-# Temporary files
+# temp files
 /dist/
 /artifacts/
 /out/
@@ -17,5 +14,5 @@ __pycache__/
 /jars/
 /opts.json
 
-# Mod configuration
+# mod config
 /config/
