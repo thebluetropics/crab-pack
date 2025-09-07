@@ -18,7 +18,7 @@ from mod.constant_pool import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('fortress_bricks'):
+	if not mod.config.is_feature_enabled('block.fortress_bricks'):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1

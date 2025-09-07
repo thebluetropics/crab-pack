@@ -24,14 +24,14 @@ def apply(side_name):
 	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	if mod.config.is_feature_enabled('raw_squid_and_calamari'):
+	if mod.config.is_feature_enabled('food.raw_squid_and_calamari'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'raw_squid', f'L{c_name};'))
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'calamari', f'L{c_name};'))
 
-	if mod.config.is_feature_enabled('hunger_and_thirst'):
+	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'BOTTLE', f'L{c_name};'))
 
-	if mod.config.is_feature_enabled('cloth'):
+	if mod.config.is_feature_enabled('experimental.cloth'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'CLOTH', f'L{c_name};'))
 
 	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
@@ -51,7 +51,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 	patch_code = []
 
 	if side_name.__eq__('client'):
-		if mod.config.is_feature_enabled('raw_squid_and_calamari'): patch_code.extend([
+		if mod.config.is_feature_enabled('food.raw_squid_and_calamari'): patch_code.extend([
 			['new', icpx_c(cf, cp_cache, 'yw')],
 			'dup',
 			['sipush', 1024],
@@ -78,7 +78,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 			['putstatic', icpx_f(cf, cp_cache, 'gm', 'calamari', 'Lgm;')],
 		])
 
-		if mod.config.is_feature_enabled('hunger_and_thirst'): patch_code.extend([
+		if mod.config.is_feature_enabled('experimental.hunger_and_thirst'): patch_code.extend([
 			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem')],
 			'dup',
 			['sipush', 1026],
@@ -91,7 +91,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 			['putstatic', icpx_f(cf, cp_cache, 'gm', 'BOTTLE', 'Lgm;')]
 		])
 
-		if mod.config.is_feature_enabled('cloth'):
+		if mod.config.is_feature_enabled('experimental.cloth'):
 			patch_code.extend([
 				['new', icpx_c(cf, cp_cache, 'gm')],
 				'dup',
@@ -108,7 +108,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 		a_code[0x03] = a_code[0x03][0:2664] + instructions.assemble(2664, patch_code) + a_code[0x03][2664:2668]
 
 	if side_name.__eq__('server'):
-		if mod.config.is_feature_enabled('raw_squid_and_calamari'): patch_code.extend([
+		if mod.config.is_feature_enabled('food.raw_squid_and_calamari'): patch_code.extend([
 			['new', icpx_c(cf, cp_cache, 'px')],
 			'dup',
 			['sipush', 1024],
@@ -135,7 +135,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 			['putstatic', icpx_f(cf, cp_cache, 'ej', 'calamari', 'Lej;')],
 		])
 
-		if mod.config.is_feature_enabled('hunger_and_thirst'): patch_code.extend([
+		if mod.config.is_feature_enabled('experimental.hunger_and_thirst'): patch_code.extend([
 			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem')],
 			'dup',
 			['sipush', 1026],
@@ -148,7 +148,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 			['putstatic', icpx_f(cf, cp_cache, 'ej', 'BOTTLE', 'Lej;')]
 		])
 
-		if mod.config.is_feature_enabled('cloth'):
+		if mod.config.is_feature_enabled('experimental.cloth'):
 			patch_code.extend([
 				['new', icpx_c(cf, cp_cache, 'ej')],
 				'dup',

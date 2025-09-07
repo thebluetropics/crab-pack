@@ -14,7 +14,7 @@ from mod.constant_pool import (
 )
 
 def apply():
-	if not mod.config.is_feature_enabled('debug_fov'):
+	if not mod.config.is_feature_enabled('debug.debug_fov'):
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/lr.class'))

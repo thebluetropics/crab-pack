@@ -17,7 +17,7 @@ from mod.constant_pool import (
 )
 
 def apply_client():
-	if not mod.config.is_feature_enabled('fortress_bricks'):
+	if not mod.config.is_feature_enabled('block.fortress_bricks'):
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/jy.class'))

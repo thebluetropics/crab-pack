@@ -13,7 +13,7 @@ from mod.constant_pool import (
 )
 
 def apply_client():
-	if not mod.config.is_feature_enabled('fixed_time'):
+	if not mod.config.is_feature_enabled('debug.fixed_time'):
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/fd.class'))
@@ -52,7 +52,7 @@ def apply_client():
 	print('Patched client:fd.class → net.minecraft.world.World')
 
 def apply_server():
-	if not mod.config.is_feature_enabled('fixed_time'):
+	if not mod.config.is_feature_enabled('debug.fixed_time'):
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/dj.class'))

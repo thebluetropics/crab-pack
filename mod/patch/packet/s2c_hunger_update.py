@@ -16,6 +16,9 @@ from mod.constant_pool import (
 )
 
 def apply_client():
+	if not mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
+		return
+
 	cf = class_file.create_new()
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
@@ -200,6 +203,9 @@ def _client_size(cf, cp_cache):
 	return m
 
 def apply_server():
+	if not mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
+		return
+
 	cf = class_file.create_new()
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 

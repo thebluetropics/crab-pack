@@ -11,7 +11,7 @@ from mod import (
 
 
 def apply():
-	if not mod.config.is_feature_enabled('minimal_title_screen'):
+	if not mod.config.is_feature_enabled('user_interface.minimal_title_screen'):
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/fu.class'))

@@ -2,7 +2,7 @@ from mod import class_file, utf8
 import mod
 
 def apply():
-	if not mod.config.is_feature_enabled('log_version'):
+	if not mod.config.is_feature_enabled('etc.log_version'):
 		return
 
 	cf = class_file.load(mod.config.path('stage/server/net/minecraft/server/MinecraftServer.class'))

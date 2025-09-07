@@ -16,7 +16,7 @@ from mod.constant_pool import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('no_crop_trampling'):
+	if not mod.config.is_feature_enabled('etc.no_crop_trampling'):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1

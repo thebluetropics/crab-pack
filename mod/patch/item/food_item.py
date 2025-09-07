@@ -27,7 +27,7 @@ def apply(side_name):
 
 	_modify_constructor(cf, cp_cache, c_name)
 
-	if mod.config.is_feature_enabled('hunger_and_thirst'):
+	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
 		_modify_use_method(cf, cp_cache, side, c_name)
 
 	with open(mod.config.path(f'stage/{side_name}/{c_name}.class'), 'wb') as file:
@@ -41,10 +41,10 @@ def _modify_constructor(cf, cp_cache, c_name):
 
 	a_code = attribute.code.load(a[0x02])
 
-	patch_code_0 = ['iconst_1'] if not mod.config.is_feature_enabled('stackable_food') else [['bipush', 16]]
+	patch_code_0 = ['iconst_1'] if not mod.config.is_feature_enabled('food.stackable_food') else [['bipush', 16]]
 	patch_code_1 = None
 
-	if mod.config.is_feature_enabled('hunger_and_thirst'):
+	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
 		patch_code_1 = [
 			'aload_0',
 			['bipush', 50],

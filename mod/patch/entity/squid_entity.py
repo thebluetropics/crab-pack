@@ -16,7 +16,7 @@ from mod.constant_pool import (
 )
 
 def apply_client():
-	if not mod.config.is_feature_enabled('raw_squid_and_calamari'):
+	if not mod.config.is_feature_enabled('food.raw_squid_and_calamari'):
 		return
 
 	cf = class_file.load(mod.config.path('stage/client/xt.class'))

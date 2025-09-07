@@ -1,4 +1,4 @@
-import tomllib
+import tomllib, configparser
 import shutil
 import os
 
@@ -39,22 +39,17 @@ _features = []
 if not os.path.exists(path('config')):
 	os.makedirs(path('config'), exist_ok=True)
 
-if not os.path.exists(path('config/features.toml')):
-	shutil.copy(path('etc/config_template/features.toml'), path('config/features.toml'))
+if not os.path.exists(path('config/features.conf')):
+	shutil.copy(path('etc/config_template/features.conf'), path('config/features.conf'))
 
-with open(os.path.join(root_dir, 'config', 'features.toml'), 'rb') as file:
-	toml = tomllib.load(file)
+with open(os.path.join(root_dir, 'config', 'features.conf'), 'r') as file:
+	conf = configparser.ConfigParser()
+	conf.read_file(file)
 
-	if 'features' in toml and type(toml['features']) is dict:
-		for k, v in toml['features'].items():
-			if type(v) is bool:
-				if v: _features.append(k)
-			else:
-				print('Err: unknown.', file=stderr)
-				exit(1)
-	else:
-		print('Err: unknown.', file=stderr)
-		exit(1)
+	for sec in conf.sections():
+		for k, v in conf[sec].items():
+			if v.__eq__('enabled'):
+				_features.append(f'{sec}.{k}')
 
 def is_feature_enabled(feature):
 	return feature in _features

@@ -1,7 +1,7 @@
 import mod
 
 def apply():
-	if mod.config.is_feature_enabled("raw_squid_and_calamari"):
+	if mod.config.is_feature_enabled("food.raw_squid_and_calamari"):
 		with open("stage/client/lang/en_US.lang", "a") as file:
 			file.write("\n".join([
 				"item.raw_squid.name=Raw Squid",
@@ -10,7 +10,7 @@ def apply():
 				"item.calamari.desc=Calamari"
 			]))
 
-	if mod.config.is_feature_enabled("fortress_bricks"):
+	if mod.config.is_feature_enabled("block.fortress_bricks"):
 		with open("stage/client/lang/en_US.lang", "a") as file:
 			file.write("\n".join([
 				"tile.fortress_bricks.name=Fortress Bricks",
