@@ -3,10 +3,13 @@ import mod
 from mod.attribute import get_attribute
 from mod.method import get_method
 from mod import (
-	class_file,
 	attribute,
 	instructions,
 	constant_pool
+)
+from mod.class_file import (
+	load_class_file,
+	assemble_class_file
 )
 from mod.constant_pool import (
 	get_utf8_at
@@ -19,7 +22,7 @@ def apply(side_name):
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['vl', 'no'][side]
 
-	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
+	cf = load_class_file(mod.config.path(f'stage/{side_name}/{c_name}.class'))
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	m = get_method(cf, cp_cache, 'b', ['(Lfd;IIILsn;)V', '(Ldj;IIILlq;)V'][side])
@@ -49,6 +52,6 @@ def apply(side_name):
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
 	with open(mod.config.path(f'stage/{side_name}/{c_name}.class'), 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(assemble_class_file(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.block.FarmlandBlock')
