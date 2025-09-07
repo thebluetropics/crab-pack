@@ -194,6 +194,9 @@ def load(path):
 	file.close()
 	return cf
 
+def load_class_file(cf_path):
+	return load(cf_path)
+
 # Assemble `.class` file back into byte array
 def assemble(cf):
 	out = bytearray()
@@ -236,6 +239,9 @@ def assemble(cf):
 		out.extend(b''.join(a))
 
 	return bytes(out)
+
+def assemble_class_file(cf):
+	return assemble(cf)
 
 # Construct a new empty in-memory `.class` file
 def create_new():
