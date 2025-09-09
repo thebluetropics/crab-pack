@@ -43,7 +43,7 @@ if not os.path.exists(path('config/features.conf')):
 	shutil.copy(path('etc/config_template/features.conf'), path('config/features.conf'))
 
 with open(os.path.join(root_dir, 'config', 'features.conf'), 'r') as file:
-	conf = configparser.ConfigParser()
+	conf = configparser.ConfigParser(delimiters=(':',))
 	conf.read_file(file)
 
 	for sec in conf.sections():
