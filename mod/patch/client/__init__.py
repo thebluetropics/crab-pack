@@ -7,7 +7,8 @@ from . import (
 	game_renderer,
 	i18n,
 	client_network_handler,
-	item_renderer
+	item_renderer,
+	world_renderer
 )
 
 def apply():
@@ -20,5 +21,6 @@ def apply():
 	i18n.apply()
 	client_network_handler.apply()
 	item_renderer.apply()
+	world_renderer.apply()
 
 __all__ = [title_screen.__name__]
