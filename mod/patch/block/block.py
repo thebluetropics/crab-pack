@@ -28,7 +28,7 @@ def apply(side_name):
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
 	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 2).to_bytes(2)
-	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'fortress_bricks', f'L{c_name};'))
+	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'FORTRESS_BRICKS', f'L{c_name};'))
 	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'LIGHT_FORTRESS_BRICKS', f'L{c_name};'))
 
 	_patch_static_initializer(cf, cp_cache, side, c_name)
@@ -59,7 +59,7 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
 		['ldc_w', icpx_string(cf, cp_cache, 'fortress_bricks')],
 		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
-		['putstatic', icpx_f(cf, cp_cache, c_name, 'fortress_bricks', ['Luu;', 'Lna;'][side])],
+		['putstatic', icpx_f(cf, cp_cache, c_name, 'FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
 
 		['new', icpx_c(cf, cp_cache, c_name)],
 		'dup',
