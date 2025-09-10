@@ -104,7 +104,7 @@ _exit:
 	return code;
 }
 
-uint8_t apply_fortress_bricks(char* source, char* target) {
+uint8_t apply_fortress_bricks(char* source_0, char* source_1, char* target) {
 	uint8_t code = 0;
 
 	struct _image_t terrain;
@@ -116,14 +116,23 @@ uint8_t apply_fortress_bricks(char* source, char* target) {
 	}
 
 	struct _image_t fortress_bricks;
-	fortress_bricks.ptr = stbi_load(source, &fortress_bricks.w, &fortress_bricks.h, &fortress_bricks._n, 4);
+	fortress_bricks.ptr = stbi_load(source_0, &fortress_bricks.w, &fortress_bricks.h, &fortress_bricks._n, 4);
 
 	if (!fortress_bricks.ptr) {
 		code = 1;
 		goto _exit;
 	}
 
+	struct _image_t light_fortress_bricks;
+	light_fortress_bricks.ptr = stbi_load(source_1, &light_fortress_bricks.w, &light_fortress_bricks.h, &light_fortress_bricks._n, 4);
+
+	if (!light_fortress_bricks.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
 	overlay(fortress_bricks.ptr, terrain.ptr, fortress_bricks.w, fortress_bricks.h, terrain.w, 96, 160);
+	overlay(light_fortress_bricks.ptr, terrain.ptr, light_fortress_bricks.w, light_fortress_bricks.h, terrain.w, 112, 160);
 
 	if (!stbi_write_png(target, terrain.w, terrain.h, 4, terrain.ptr, terrain.w * 4)) {
 		code = 1;

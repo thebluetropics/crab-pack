@@ -7,9 +7,9 @@ uint8_t apply_raw_squid_and_calamari(char* source_0, char* source_1, char* targe
 #endif
 
 #if defined(_WIN32)
-__declspec(dllexport) uint8_t apply_fortress_bricks(char* source, char* target);
+__declspec(dllexport) uint8_t apply_fortress_bricks(char* source_0, char* source_1, char* target);
 #else
-uint8_t apply_fortress_bricks(char* source, char* target);
+uint8_t apply_fortress_bricks(char* source_0, char* source_1, char* target);
 #endif
 
 #if defined(_WIN32)

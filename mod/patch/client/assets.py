@@ -24,7 +24,7 @@ def apply():
 	lib.apply_raw_squid_and_calamari.argtypes = [ctypes.c_char_p] * 3
 	lib.apply_raw_squid_and_calamari.restype = ctypes.c_uint8
 
-	lib.apply_fortress_bricks.argtypes = [ctypes.c_char_p] * 2
+	lib.apply_fortress_bricks.argtypes = [ctypes.c_char_p] * 3
 	lib.apply_fortress_bricks.restype = ctypes.c_uint8
 
 	lib.apply_hunger_and_thirst.argtypes = [ctypes.c_char_p] * 2
@@ -47,6 +47,7 @@ def apply():
 	if mod.config.is_feature_enabled('block.fortress_bricks'):
 		ret_code = lib.apply_fortress_bricks(
 			os.path.join(mod.config.path('assets'), 'fortress_bricks.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'light_fortress_bricks.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'terrain.png').encode('utf-8'),
 		)
 

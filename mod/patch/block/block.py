@@ -27,8 +27,9 @@ def apply(side_name):
 	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 1).to_bytes(2)
+	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 2).to_bytes(2)
 	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'fortress_bricks', f'L{c_name};'))
+	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'LIGHT_FORTRESS_BRICKS', f'L{c_name};'))
 
 	_patch_static_initializer(cf, cp_cache, side, c_name)
 
@@ -58,7 +59,23 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
 		['ldc_w', icpx_string(cf, cp_cache, 'fortress_bricks')],
 		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
-		['putstatic', icpx_f(cf, cp_cache, c_name, 'fortress_bricks', ['Luu;', 'Lna;'][side])]
+		['putstatic', icpx_f(cf, cp_cache, c_name, 'fortress_bricks', ['Luu;', 'Lna;'][side])],
+
+		['new', icpx_c(cf, cp_cache, c_name)],
+		'dup',
+		['bipush', 98],
+		['sipush', 167],
+		['getstatic', icpx_f(cf, cp_cache, ['ln', 'hj'][side], 'e', ['Lln;', 'Lhj;'][side])],
+		['invokespecial', icpx_m(cf, cp_cache, c_name, '<init>', ['(IILln;)V', '(IILhj;)V'][side])],
+		'fconst_2',
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'c', ['(F)Luu;', '(F)Lna;'][side])],
+		['ldc', 22],
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(F)Luu;', '(F)Lna;'][side])],
+		['getstatic', icpx_f(cf, cp_cache, c_name, 'h', ['Lct;', 'Lbu;'][side])],
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
+		['ldc_w', icpx_string(cf, cp_cache, 'light_fortress_bricks')],
+		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
+		['putstatic', icpx_f(cf, cp_cache, c_name, 'LIGHT_FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
 	]) + a_code[0x03][3398:3678]
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 

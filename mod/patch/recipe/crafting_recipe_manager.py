@@ -38,6 +38,42 @@ def _modify_constructor(cf, cp_cache, side_name, side, c_name):
 	a_code = attribute.code.load(a[0x02])
 	patch_code = []
 
+	if mod.config.is_feature_enabled('block.fortress_bricks'):
+		patch_code.extend([
+			'aload_0',
+			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			'dup',
+			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'LIGHT_FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
+			'iconst_4',
+			'iconst_1',
+			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', ['(Luu;II)V', '(Lna;II)V'][side])],
+			['bipush', 4],
+			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+
+			'dup',
+			'iconst_0',
+			['ldc_w', icpx_string(cf, cp_cache, 'aa')],
+			'aastore',
+
+			'dup',
+			'iconst_1',
+			['ldc_w', icpx_string(cf, cp_cache, 'aa')],
+			'aastore',
+
+			'dup',
+			'iconst_2',
+			['bipush', 97],
+			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+			'aastore',
+
+			'dup',
+			'iconst_3',
+			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'x', ['Luu;', 'Lna;'][side])],
+			'aastore',
+
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+		])
+
 	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
 		patch_code.extend([
 			'aload_0',

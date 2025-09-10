@@ -14,5 +14,7 @@ def apply():
 		with open("stage/client/lang/en_US.lang", "a") as file:
 			file.write("\n".join([
 				"tile.fortress_bricks.name=Fortress Bricks",
-				"tile.fortress_bricks.desc="
+				"tile.fortress_bricks.desc=",
+				"tile.light_fortress_bricks.name=Light Fortress Bricks",
+				"tile.light_fortress_bricks.desc="
 			]))
