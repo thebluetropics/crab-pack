@@ -5,12 +5,12 @@ from . import (
 )
 
 def apply_client():
-	s2c_hunger_update.apply_client()
+	s2c_hunger_update.apply('client')
 	packet.apply('client')
 	s2c_thirst_update.apply('client')
 
 def apply_server():
-	s2c_hunger_update.apply_server()
+	s2c_hunger_update.apply('server')
 	s2c_thirst_update.apply('server')
 	packet.apply('server')
 
