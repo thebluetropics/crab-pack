@@ -270,3 +270,6 @@ def create_new():
 	cf[0x0f] = []
 
 	return cf
+
+def create_class_file():
+	return create_new()
