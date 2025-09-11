@@ -25,11 +25,14 @@ if os.path.exists(path('opts.json')):
 
 _ver = None
 
-if not os.path.isfile(os.path.join(root_dir, 'mod.toml')):
+if not os.path.isfile(os.path.join(root_dir, 'mod.conf')):
 	exit(1)
 
-with open(os.path.join(root_dir, 'mod.toml'), 'rb') as file:
-	_ver = tomllib.load(file)['mod']['version']
+with open(os.path.join(root_dir, 'mod.conf'), 'r') as file:
+	conf = configparser.ConfigParser(delimiters=(':',))
+	conf.read_file(file)
+
+	_ver = conf['mod']['version']
 
 def get_version():
 	return _ver
