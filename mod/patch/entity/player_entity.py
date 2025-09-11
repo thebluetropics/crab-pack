@@ -13,6 +13,7 @@ from mod.constant_pool import (
 	icpx_f,
 	icpx_m,
 	i2cpx_utf8,
+	icpx_string,
 	get_utf8_at
 )
 
@@ -39,6 +40,8 @@ def apply(side_name):
 
 	_modify_constructor(cf, cp_cache, side, c_name)
 	_modify_tick_method(cf, cp_cache, side_name, side, c_name)
+	_modify_read_nbt_method(cf, cp_cache, side, c_name)
+	_modify_write_nbt_method(cf, cp_cache, side, c_name)
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 4).to_bytes(2)
 	cf[0x0d].extend([
@@ -331,3 +334,101 @@ def _create_restore_thirst_method(cf, cp_cache, c_name):
 	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
+
+def _modify_read_nbt_method(cf, cp_cache, side, c_name):
+	m = get_method(cf, cp_cache, 'a', ['(Lnu;)V', '(Liq;)V'][side])
+	a = get_attribute(m[0x04], cp_cache, 'Code')
+
+	a_code = attribute.code.load(a[0x02])
+
+	a_code[0x03] = a_code[0x03][0:152] + instructions.assemble(152, [
+		'aload_0',
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'Hunger')],
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
+		['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		'aload_0',
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'MaxHunger')],
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
+		['putfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
+		'aload_0',
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'Thirst')],
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
+		['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		'aload_0',
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'MaxThirst')],
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
+		['putfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		'return'
+	])
+
+	# update code length
+	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
+
+	# remove line number table
+	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
+
+	for i, a in a_code[0x07]:
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+			del a_code[0x07][i]
+			break
+
+	# update code attribute
+	a[0x02] = attribute.code.assemble(a_code)
+
+	# update code attribute length
+	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _modify_write_nbt_method(cf, cp_cache, side, c_name):
+	m = get_method(cf, cp_cache, 'b', ['(Lnu;)V', '(Liq;)V'][side])
+	a = get_attribute(m[0x04], cp_cache, 'Code')
+
+	a_code = attribute.code.load(a[0x02])
+
+	a_code[0x03] = a_code[0x03][0:102] + instructions.assemble(102, [
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'Hunger')],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		'i2s',
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'MaxHunger')],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
+		'i2s',
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'Thirst')],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		'i2s',
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		'aload_1',
+		['ldc_w', icpx_string(cf, cp_cache, 'MaxThirst')],
+		'aload_0',
+		['getfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		'i2s',
+		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		'return'
+	])
+
+	# update code length
+	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
+
+	# remove line number table
+	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
+
+	for i, a in a_code[0x07]:
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+			del a_code[0x07][i]
+			break
+
+	# update code attribute
+	a[0x02] = attribute.code.assemble(a_code)
+
+	# update code attribute length
+	a[0x01] = len(a[0x02]).to_bytes(4)
