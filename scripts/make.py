@@ -58,20 +58,20 @@ shutil.copytree(
 	ignore=shutil.ignore_patterns('__pycache__', '*.pyc')
 )
 shutil.copytree(os.path.join(root_dir, 'assets'), os.path.join(target_path, 'assets'))
-shutil.copy(os.path.join(root_dir, 'mod.toml'), os.path.join(target_path, 'mod.toml'))
+shutil.copy(os.path.join(root_dir, 'mod.conf'), os.path.join(target_path, 'mod.conf'))
 shutil.copy(os.path.join(root_dir, 'LICENSE'), os.path.join(target_path, 'LICENSE'))
 
 if not os.path.exists(os.path.join(target_path, 'config')):
 	os.mkdir(os.path.join(target_path, 'config'))
 
-shutil.copy(os.path.join(root_dir, 'etc', 'config_template', 'features.toml'), os.path.join(target_path, 'config', 'features.toml'))
+shutil.copy(os.path.join(root_dir, 'etc', 'config_template', 'features.conf'), os.path.join(target_path, 'config', 'features.conf'))
 
 with open(os.path.join(target_path, 'opts.json'), 'w', encoding='utf-8') as file:
 	json.dump({ 'is_debug': False }, file)
 
-with open(os.path.join(target_path, 'make_client.bat'), 'w', encoding='utf-8') as file:
+with open(os.path.join(target_path, 'make.bat'), 'w', encoding='utf-8') as file:
 	file.write(
-		'\r\n'.join(['@echo off', '.\\python-3.13.2\\python.exe -m mod make_client'])
+		'\r\n'.join(['@echo off', '.\\python-3.13.2\\python.exe -m mod make'])
 	)
 
 if not os.path.exists(os.path.join(target_path, 'lib')):
