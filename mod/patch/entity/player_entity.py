@@ -18,7 +18,7 @@ from mod.constant_pool import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
+	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1

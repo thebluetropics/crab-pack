@@ -55,7 +55,7 @@ def apply():
 			print('Err: unknown.', file=stderr)
 			exit(1)
 
-	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		ret_code = lib.apply_hunger_and_thirst(
 			os.path.join(mod.config.path('assets'), 'hunger_and_thirst.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'gui', 'icons.png').encode('utf-8'),
@@ -65,7 +65,7 @@ def apply():
 			print('Err: unknown.', file=stderr)
 			exit(1)
 
-	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		ret_code = lib.apply_bottle(
 			os.path.join(mod.config.path('assets'), 'bottle.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'gui', 'items.png').encode('utf-8'),

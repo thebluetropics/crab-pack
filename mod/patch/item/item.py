@@ -28,7 +28,7 @@ def apply(side_name):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'raw_squid', f'L{c_name};'))
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'calamari', f'L{c_name};'))
 
-	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'BOTTLE', f'L{c_name};'))
 
 	if mod.config.is_feature_enabled('experimental.cloth'):
@@ -78,7 +78,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 			['putstatic', icpx_f(cf, cp_cache, 'gm', 'calamari', 'Lgm;')],
 		])
 
-		if mod.config.is_feature_enabled('experimental.hunger_and_thirst'): patch_code.extend([
+		if mod.config.is_feature_enabled('etc.hunger_and_thirst'): patch_code.extend([
 			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem')],
 			'dup',
 			['sipush', 1026],
@@ -135,7 +135,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 			['putstatic', icpx_f(cf, cp_cache, 'ej', 'calamari', 'Lej;')],
 		])
 
-		if mod.config.is_feature_enabled('experimental.hunger_and_thirst'): patch_code.extend([
+		if mod.config.is_feature_enabled('etc.hunger_and_thirst'): patch_code.extend([
 			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/BottleItem')],
 			'dup',
 			['sipush', 1026],

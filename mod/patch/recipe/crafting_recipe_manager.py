@@ -119,7 +119,7 @@ def _modify_constructor(cf, cp_cache, side_name, side, c_name):
 			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
 		])
 
-	if mod.config.is_feature_enabled('experimental.hunger_and_thirst'):
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		patch_code.extend([
 			'aload_0',
 
