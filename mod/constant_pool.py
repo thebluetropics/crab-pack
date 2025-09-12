@@ -82,6 +82,20 @@ def init_constant_pool_cache(cp):
 
 			continue
 
+		if entry[1].__eq__(b'\x0b'):
+			i = entry[0]
+			ecp_class = cp_cache['index'][int.from_bytes(entry[2])]
+			ecp_name_and_type = cp_cache['index'][int.from_bytes(entry[3])]
+			ecp_class_utf8 = cp_cache['index'][int.from_bytes(ecp_class[2])]
+			ecp_name_utf8 = cp_cache['index'][int.from_bytes(ecp_name_and_type[2])]
+			ecp_type_utf8 = cp_cache['index'][int.from_bytes(ecp_name_and_type[3])]
+			class_string = utf8.decode(ecp_class_utf8[3])
+			name_string = utf8.decode(ecp_name_utf8[3])
+			type_string = utf8.decode(ecp_type_utf8[3])
+			cp_cache['lookup'][(0x0b, class_string, name_string, type_string)] = i
+
+			continue
+
 	return cp_cache
 
 def get_etcp_at(cp_cache, i):
@@ -357,6 +371,33 @@ def icpx_m(cf, cp_cache, c_name, name, desc):
 	return i
 
 def i2cpx_m(cf, cp_cache, c_name, name, desc): return icpx_m(cf, cp_cache, c_name, name, desc).to_bytes(2)
+
+def icpx_i(cf, cp_cache, c_name, name, desc):
+	if (0x0b, c_name, name, desc) in cp_cache['lookup']:
+		return cp_cache['lookup'][(0x0b, c_name, name, desc)]
+
+	icp_class = icpx_c(cf, cp_cache, c_name)
+	icp_name_and_type = icpx_name_and_type(cf, cp_cache, name, desc)
+
+	cp = cf[0x04]
+	i = 1
+
+	if cp:
+		i = cp[-1][0]
+
+		if cp[-1][1].__eq__(b'\x05') or cp[-1][1].__eq__(b'\x06'):
+			i = i + 2
+		else:
+			i = i + 1
+
+	cp.append([i, b'\x0b', icp_class.to_bytes(2), icp_name_and_type.to_bytes(2)])
+	cp_cache['index'][i] = cp[-1]
+	cf[0x03] = (i + 1).to_bytes(2)
+	cp_cache['lookup'][(0x0b, c_name, name, desc)] = i
+
+	return i
+
+def i2cpx_i(cf, cp_cache, c_name, name, desc): return icpx_i(cf, cp_cache, c_name, name, desc).to_bytes(2)
 
 def icpx_float(cf, cp_cache, float_bytes):
 	if (0x04, float_bytes) in cp_cache['lookup']:
