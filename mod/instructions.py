@@ -232,6 +232,12 @@ def assemble(pc_begin, code):
 			i = i + 1
 			continue
 
+		if type(istr) is list and istr[0].__eq__('invokeinterface'):
+			out.append(b'\xb9' + istr[1].to_bytes(2) + istr[2].to_bytes(1) + b'\x00')
+
+			i = i + 4
+			continue
+
 		if type(istr) is list and not istr[0][-1].__eq__('*'):
 			opcode, *operands = istr
 			opcode_byte, operands_info, sz = istr_info[opcode]
