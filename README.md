@@ -17,7 +17,7 @@ make TARGET=windows all
 
 ```sh
 # Build the mod
-py -m mod make_client
+py -m mod make
 
 # Build portable user distribution (for Windows)
 py ./scripts/make.py
