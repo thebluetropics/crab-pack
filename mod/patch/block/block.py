@@ -18,7 +18,7 @@ from mod.constant_pool import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('block.fortress_bricks'):
+	if not mod.config.is_feature_enabled('block.fortress_bricks') and not mod.config.is_feature_enabled('block.solid_grass_block'):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1
@@ -27,10 +27,14 @@ def apply(side_name):
 	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
 	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
 
-	cf[0x0a] = (int.from_bytes(cf[0x0a]) + 3).to_bytes(2)
-	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'FORTRESS_BRICKS', f'L{c_name};'))
-	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'LIGHT_FORTRESS_BRICKS', f'L{c_name};'))
-	cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'SOLID_GRASS_BLOCK', f'Lcom/thebluetropics/crabpack/SolidGrassBlock;'))
+	if mod.config.is_feature_enabled('block.fortress_bricks'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'FORTRESS_BRICKS', f'L{c_name};'))
+		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'LIGHT_FORTRESS_BRICKS', f'L{c_name};'))
+
+	if mod.config.is_feature_enabled('block.solid_grass_block'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'SOLID_GRASS_BLOCK', f'Lcom/thebluetropics/crabpack/SolidGrassBlock;'))
+
+	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
 
 	_patch_static_initializer(cf, cp_cache, side, c_name)
 
@@ -45,56 +49,64 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 
 	a_code = attribute.code.load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:3398] + instructions.assemble(3398, [
-		['new', icpx_c(cf, cp_cache, c_name)],
-		'dup',
-		['bipush', 97],
-		['sipush', 166],
-		['getstatic', icpx_f(cf, cp_cache, ['ln', 'hj'][side], 'e', ['Lln;', 'Lhj;'][side])],
-		['invokespecial', icpx_m(cf, cp_cache, c_name, '<init>', ['(IILln;)V', '(IILhj;)V'][side])],
-		'fconst_2',
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'c', ['(F)Luu;', '(F)Lna;'][side])],
-		['ldc', 22],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(F)Luu;', '(F)Lna;'][side])],
-		['getstatic', icpx_f(cf, cp_cache, c_name, 'h', ['Lct;', 'Lbu;'][side])],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
-		['ldc_w', icpx_string(cf, cp_cache, 'fortress_bricks')],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
-		['putstatic', icpx_f(cf, cp_cache, c_name, 'FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
+	code = []
 
-		['new', icpx_c(cf, cp_cache, c_name)],
-		'dup',
-		['bipush', 98],
-		['sipush', 167],
-		['getstatic', icpx_f(cf, cp_cache, ['ln', 'hj'][side], 'e', ['Lln;', 'Lhj;'][side])],
-		['invokespecial', icpx_m(cf, cp_cache, c_name, '<init>', ['(IILln;)V', '(IILhj;)V'][side])],
-		'fconst_2',
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'c', ['(F)Luu;', '(F)Lna;'][side])],
-		['ldc', 22],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(F)Luu;', '(F)Lna;'][side])],
-		['getstatic', icpx_f(cf, cp_cache, c_name, 'h', ['Lct;', 'Lbu;'][side])],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
-		['ldc_w', icpx_string(cf, cp_cache, 'light_fortress_bricks')],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
-		['putstatic', icpx_f(cf, cp_cache, c_name, 'LIGHT_FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
+	if mod.config.is_feature_enabled('block.fortress_bricks'):
+		code.extend([
+			['new', icpx_c(cf, cp_cache, c_name)],
+			'dup',
+			['bipush', 97],
+			['sipush', 166],
+			['getstatic', icpx_f(cf, cp_cache, ['ln', 'hj'][side], 'e', ['Lln;', 'Lhj;'][side])],
+			['invokespecial', icpx_m(cf, cp_cache, c_name, '<init>', ['(IILln;)V', '(IILhj;)V'][side])],
+			'fconst_2',
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'c', ['(F)Luu;', '(F)Lna;'][side])],
+			['ldc', 22],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(F)Luu;', '(F)Lna;'][side])],
+			['getstatic', icpx_f(cf, cp_cache, c_name, 'h', ['Lct;', 'Lbu;'][side])],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
+			['ldc_w', icpx_string(cf, cp_cache, 'fortress_bricks')],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
+			['putstatic', icpx_f(cf, cp_cache, c_name, 'FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
 
-		['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock')],
-		'dup',
-		['bipush', 99],
-		['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock', '<init>', '(I)V')],
-		'iconst_3',
-		'i2f',
-		'iconst_5',
-		'i2f',
-		'fdiv',
-		['invokevirtual', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock', 'c', ['(F)Luu;', '(F)Lna;'][side])],
-		['getstatic', icpx_f(cf, cp_cache, c_name, 'g', ['Lct;', 'Lbu;'][side])],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
-		['ldc_w', icpx_string(cf, cp_cache, 'solid_grass_block')],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
-		['checkcast', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock')],
-		['putstatic', icpx_f(cf, cp_cache, c_name, 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;')], # TODO FEATURES
-	]) + a_code[0x03][3398:3678]
+			['new', icpx_c(cf, cp_cache, c_name)],
+			'dup',
+			['bipush', 98],
+			['sipush', 167],
+			['getstatic', icpx_f(cf, cp_cache, ['ln', 'hj'][side], 'e', ['Lln;', 'Lhj;'][side])],
+			['invokespecial', icpx_m(cf, cp_cache, c_name, '<init>', ['(IILln;)V', '(IILhj;)V'][side])],
+			'fconst_2',
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'c', ['(F)Luu;', '(F)Lna;'][side])],
+			['ldc', 22],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(F)Luu;', '(F)Lna;'][side])],
+			['getstatic', icpx_f(cf, cp_cache, c_name, 'h', ['Lct;', 'Lbu;'][side])],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
+			['ldc_w', icpx_string(cf, cp_cache, 'light_fortress_bricks')],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
+			['putstatic', icpx_f(cf, cp_cache, c_name, 'LIGHT_FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])]
+		])
+
+	if mod.config.is_feature_enabled('block.solid_grass_block'):
+		code.extend([
+			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock')],
+			'dup',
+			['bipush', 99],
+			['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock', '<init>', '(I)V')],
+			'iconst_3',
+			'i2f',
+			'iconst_5',
+			'i2f',
+			'fdiv',
+			['invokevirtual', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock', 'c', ['(F)Luu;', '(F)Lna;'][side])],
+			['getstatic', icpx_f(cf, cp_cache, c_name, 'g', ['Lct;', 'Lbu;'][side])],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
+			['ldc_w', icpx_string(cf, cp_cache, 'solid_grass_block')],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
+			['checkcast', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock')],
+			['putstatic', icpx_f(cf, cp_cache, c_name, 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;')]
+		])
+
+	a_code[0x03] = a_code[0x03][0:3398] + instructions.assemble(3398, code) + a_code[0x03][3398:3678]
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	# remove line number table
