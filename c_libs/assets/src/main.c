@@ -146,6 +146,69 @@ _exit:
 	return code;
 }
 
+uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* target) {
+	uint8_t code = 0;
+
+	struct _image_t terrain;
+	terrain.ptr = stbi_load(target, &terrain.w, &terrain.h, &terrain._n, 4);
+
+	if (!terrain.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t top;
+	top.ptr = stbi_load(source_0, &top.w, &top.h, &top._n, 4);
+
+	if (!top.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t inner_top;
+	inner_top.ptr = stbi_load(source_1, &inner_top.w, &inner_top.h, &inner_top._n, 4);
+
+	if (!inner_top.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t bottom;
+	bottom.ptr = stbi_load(source_2, &bottom.w, &bottom.h, &bottom._n, 4);
+
+	if (!bottom.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t side;
+	side.ptr = stbi_load(source_3, &side.w, &side.h, &side._n, 4);
+
+	if (!side.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	overlay(top.ptr, terrain.ptr, top.w, top.h, terrain.w, 64, 176);
+	overlay(inner_top.ptr, terrain.ptr, inner_top.w, inner_top.h, terrain.w, 80, 176);
+	overlay(bottom.ptr, terrain.ptr, bottom.w, bottom.h, terrain.w, 96, 176);
+	overlay(side.ptr, terrain.ptr, side.w, side.h, terrain.w, 112, 176);
+
+	if (!stbi_write_png(target, terrain.w, terrain.h, 4, terrain.ptr, terrain.w * 4)) {
+		code = 1;
+		goto _exit;
+	}
+
+_exit:
+	stbi_image_free(terrain.ptr);
+	stbi_image_free(top.ptr);
+	stbi_image_free(inner_top.ptr);
+	stbi_image_free(bottom.ptr);
+	stbi_image_free(side.ptr);
+
+	return code;
+}
+
 uint8_t apply_hunger_and_thirst(char* source, char* target) {
 	uint8_t code = 0;
 

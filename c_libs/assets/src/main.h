@@ -13,6 +13,12 @@ uint8_t apply_fortress_bricks(char* source_0, char* source_1, char* target);
 #endif
 
 #if defined(_WIN32)
+__declspec(dllexport) uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* target);
+#else
+uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* target);
+#endif
+
+#if defined(_WIN32)
 __declspec(dllexport) uint8_t apply_hunger_and_thirst(char* source, char* target);
 #else
 uint8_t apply_hunger_and_thirst(char* source, char* target);

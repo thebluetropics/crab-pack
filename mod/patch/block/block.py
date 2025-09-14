@@ -18,7 +18,7 @@ from mod.constant_pool import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('block.fortress_bricks') and not mod.config.is_feature_enabled('block.solid_grass_block'):
+	if not mod.config.is_feature_enabled('block.fortress_bricks') and not mod.config.is_feature_enabled('block.solid_grass_block') or not mod.config.is_feature_enabled('block.mortar'):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1
@@ -33,6 +33,9 @@ def apply(side_name):
 
 	if mod.config.is_feature_enabled('block.solid_grass_block'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'SOLID_GRASS_BLOCK', f'Lcom/thebluetropics/crabpack/SolidGrassBlock;'))
+
+	if mod.config.is_feature_enabled('block.mortar'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'MORTAR', f'Lcom/thebluetropics/crabpack/MortarBlock;'))
 
 	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
 
@@ -104,6 +107,26 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
 			['checkcast', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock')],
 			['putstatic', icpx_f(cf, cp_cache, c_name, 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;')]
+		])
+
+	if mod.config.is_feature_enabled('block.mortar'):
+		code.extend([
+			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/MortarBlock')],
+			'dup',
+			['bipush', 100],
+			['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/MortarBlock', '<init>', '(I)V')],
+			'iconst_3',
+			'i2f',
+			'iconst_5',
+			'i2f',
+			'fdiv',
+			['invokevirtual', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/MortarBlock', 'c', ['(F)Luu;', '(F)Lna;'][side])],
+			['getstatic', icpx_f(cf, cp_cache, c_name, 'g', ['Lct;', 'Lbu;'][side])],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
+			['ldc_w', icpx_string(cf, cp_cache, 'mortar')],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
+			['checkcast', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/MortarBlock')],
+			['putstatic', icpx_f(cf, cp_cache, c_name, 'MORTAR', 'Lcom/thebluetropics/crabpack/MortarBlock;')]
 		])
 
 	a_code[0x03] = a_code[0x03][0:3398] + instructions.assemble(3398, code) + a_code[0x03][3398:3678]

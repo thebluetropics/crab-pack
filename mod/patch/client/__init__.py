@@ -9,7 +9,8 @@ from . import (
 	client_network_handler,
 	item_renderer,
 	world_renderer,
-	entity_renderer
+	entity_renderer,
+	block_render_manager
 )
 
 def apply():
@@ -24,5 +25,6 @@ def apply():
 	item_renderer.apply()
 	world_renderer.apply()
 	entity_renderer.apply()
+	block_render_manager.apply()
 
 __all__ = [title_screen.__name__]

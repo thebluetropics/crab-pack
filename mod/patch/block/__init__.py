@@ -1,4 +1,4 @@
-from . import (farmland_block, block, solid_grass_block, plant_block)
+from . import (farmland_block, block, solid_grass_block, plant_block, mortar)
 import mod
 
 def apply_client():
@@ -7,6 +7,7 @@ def apply_client():
 	block.apply('client')
 	solid_grass_block.apply('client')
 	plant_block.apply('client')
+	mortar.apply('client')
 
 def apply_server():
 	if mod.config.is_feature_enabled('etc.no_crop_trampling') or mod.config.is_feature_enabled('etc.extended_farmland_water_source'):
@@ -14,5 +15,6 @@ def apply_server():
 	block.apply('server')
 	solid_grass_block.apply('server')
 	plant_block.apply('server')
+	mortar.apply('server')
 
 __all__ = [apply_client.__name__, apply_server.__name__]

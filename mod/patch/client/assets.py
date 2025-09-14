@@ -27,6 +27,9 @@ def apply():
 	lib.apply_fortress_bricks.argtypes = [ctypes.c_char_p] * 3
 	lib.apply_fortress_bricks.restype = ctypes.c_uint8
 
+	lib.apply_mortar.argtypes = [ctypes.c_char_p] * 5
+	lib.apply_mortar.restype = ctypes.c_uint8
+
 	lib.apply_hunger_and_thirst.argtypes = [ctypes.c_char_p] * 2
 	lib.apply_hunger_and_thirst.restype = ctypes.c_uint8
 
@@ -48,6 +51,19 @@ def apply():
 		ret_code = lib.apply_fortress_bricks(
 			os.path.join(mod.config.path('assets'), 'fortress_bricks.png').encode('utf-8'),
 			os.path.join(mod.config.path('assets'), 'light_fortress_bricks.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'terrain.png').encode('utf-8'),
+		)
+
+		if not ret_code.__eq__(0):
+			print('Err: unknown.', file=stderr)
+			exit(1)
+
+	if mod.config.is_feature_enabled('block.mortar'):
+		ret_code = lib.apply_mortar(
+			os.path.join(mod.config.path('assets'), 'mortar_outer_top.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'mortar_inner_top.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'mortar_bottom.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'mortar_side.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'terrain.png').encode('utf-8'),
 		)
 
