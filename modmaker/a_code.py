@@ -1,7 +1,10 @@
 from sys import exit, stderr
 from .cp import (
 	i2cpx_f,
-	i2cpx_m
+	i2cpx_m,
+	i2cpx_double,
+	i2cpx_string,
+	i2cpx_float
 )
 
 def a_code_load(a_code_b):
@@ -297,6 +300,24 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 			i += 1
 		else:
 			k, *args = ins
+
+			if k.__eq__('ldc2_w.f64'):
+				opcode, sz, _ = _ins_info_table['ldc2_w']
+				temp.append(opcode + i2cpx_double(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('ldc_w.f32'):
+				opcode, sz, _ = _ins_info_table['ldc_w']
+				temp.append(opcode + i2cpx_float(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('ldc_w.string'):
+				opcode, sz, _ = _ins_info_table['ldc_w']
+				temp.append(opcode + i2cpx_string(cf, cp_cache, args[0]))
+				i += sz
+				continue
 
 			if is_jump(k):
 				opcode, sz, sz_operand = _ins_info_table[k]
