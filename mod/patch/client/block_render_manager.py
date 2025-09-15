@@ -341,6 +341,13 @@ def _fn_vertex(x, y, z, u_offset, v_offset):
 		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
 	]
 
+def _fn_set_tessellator_color(*color):
+	return [
+		['aload', 5],
+		*color,
+		['invokevirtual', 'nw', 'a', '(FFF)V']
+	]
+
 def _create_render_mortar_method(cf, cp_cache):
 	m = create_method(cf, cp_cache, ['public'], 'renderMortar', '(Luu;III)Z')
 
@@ -356,6 +363,111 @@ def _create_render_mortar_method(cf, cp_cache):
 		['iload', 4],
 		['invokevirtual', 'uu', 'd', '(Lxp;III)F'],
 		['fstore', 6],
+
+		['invokestatic', 'net/minecraft/client/Minecraft','v', '()Z'],
+		['ifeq', 'skip_smooth_rendering'],
+
+		*_texture_override(180, 'skip_1_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 1.0),
+		*_fn_vertex(1.0, 6.0, 15.0, 1.0, 15.0),
+		*_fn_vertex(15.0, 6.0, 15.0, 15.0, 15.0),
+		*_fn_vertex(15.0, 6.0, 1.0, 15.0, 1.0),
+
+		*_texture_override(181, 'skip_2_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 2.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 2.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 2.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 2.0, 3.0, 13.0, 3.0),
+
+		*_texture_override(182, 'skip_bottom_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(1.0, 0.0, 15.0, 1.0, 15.0),
+		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 1.0),
+		*_fn_vertex(15.0, 0.0, 1.0, 15.0, 1.0),
+		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 15.0),
+
+		*_texture_override(183, 'skip_north_1_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(1.0, 6.0, 15.0, 15.0, 10.0),
+		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_vertex(1.0, 0.0, 15.0, 15.0, 16.0),
+
+		*_texture_override(183, 'skip_north_2_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(13.0, 6.0, 15.0, 15.0, 10.0),
+		*_fn_vertex(13.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(13.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_vertex(13.0, 0.0, 15.0, 15.0, 16.0),
+
+		*_texture_override(183, 'skip_south_1_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 16.0),
+		*_fn_vertex(15.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(15.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(15.0, 6.0, 15.0, 15.0, 10.0),
+
+		*_texture_override(183, 'skip_south_2_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(3.0, 0.0, 15.0, 15.0, 16.0),
+		*_fn_vertex(3.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(3.0, 6.0, 15.0, 15.0, 10.0),
+
+		*_texture_override(183, 'skip_east_1_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(15.0, 6.0, 1.0, 15.0, 10.0),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(15.0, 0.0, 1.0, 15.0, 16.0),
+		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 16.0),
+
+		*_texture_override(183, 'skip_east_2_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(1.0, 6.0, 13.0, 1.0, 10.0),
+		*_fn_vertex(15.0, 6.0, 13.0, 15.0, 10.0),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(15.0, 0.0, 13.0, 15.0, 16.0),
+		*_fn_vertex(1.0, 0.0, 13.0, 1.0, 16.0),
+
+		*_texture_override(183, 'skip_west_1_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(1.0, 6.0, 15.0, 1.0, 10.0),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(1.0, 0.0, 15.0, 1.0, 16.0),
+		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 16.0),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(15.0, 6.0, 15.0, 15.0, 10.0),
+
+		*_texture_override(183, 'skip_west_2_smooth'),
+
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(1.0, 6.0, 3.0, 1.0, 10.0),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_vertex(1.0, 0.0, 3.0, 1.0, 16.0),
+		*_fn_vertex(15.0, 0.0, 3.0, 15.0, 16.0),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(15.0, 6.0, 3.0, 15.0, 10.0),
+
+		['goto', 'skip_else_block'],
+
+		['label', 'skip_smooth_rendering'],
 
 		['aload', 5], ['fload', 6], ['fload', 6], ['fload', 6],
 		['invokevirtual', 'nw', 'a', '(FFF)V'],
@@ -436,6 +548,8 @@ def _create_render_mortar_method(cf, cp_cache):
 		*_fn_vertex(1.0, 0.0, 3.0, 1.0, 16.0),
 		*_fn_vertex(15.0, 0.0, 3.0, 15.0, 16.0),
 		*_fn_vertex(15.0, 6.0, 3.0, 15.0, 10.0),
+
+		['label', 'skip_else_block'],
 
 		'iconst_1',
 		'ireturn'
