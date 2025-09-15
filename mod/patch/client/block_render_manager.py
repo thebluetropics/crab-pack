@@ -1,61 +1,72 @@
 import mod, struct
 
-from mod.attribute import get_attribute
-from mod.method import get_method, create_method
-from mod import (
-	class_file,
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a import (
+	get_attribute
 )
-from mod.constant_pool import (
-	icpx_f,
-	icpx_m,
-	icpx_double,
-	i2cpx_utf8,
-	get_utf8_at
+from modmaker.a_code import (
+	a_code_load,
+	a_code_assemble,
+	assemble_code
 )
-
-def to_double(value):
-	return struct.pack(">d", float(value))
+from modmaker.m import(
+	get_method
+)
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
+	get_utf8_at,
+	i2cpx_utf8
+)
+from modmaker.helper import (
+	as_f64,
+	as_f32
+)
+from modmaker.m import (
+	create_method
+)
 
 def apply():
 	if not mod.config.is_feature_enabled('block.mortar'):
 		return
 
-	cf = class_file.load(mod.config.path('stage/client/cv.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = load_class_file(mod.config.path('stage/client/cv.class'))
+	cp_cache = cp_init_cache(cf[0x04])
 
-	_modify_render_method(cf, cp_cache)
+	_modify_render_1_method(cf, cp_cache)
+	_modify_render_2_method(cf, cp_cache)
+	_modify_is_side_lit_method(cf, cp_cache)
 
 	cf[0x0d].append(_create_render_mortar_method(cf, cp_cache))
 	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
-	with open(mod.config.path('stage/client/cv.class'), 'wb') as f:
-		f.write(class_file.assemble(cf))
+	with open(mod.config.path('stage/client/cv.class'), 'wb') as file:
+		file.write(cf_assemble(cf))
 
 	print('Patched client:cv.class → net.minecraft.client.render.BlockRenderManager')
 
-def _modify_render_method(cf, cp_cache):
+def _modify_render_1_method(cf, cp_cache):
 	m = get_method(cf, cp_cache, 'b', '(Luu;III)Z')
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:18] + instructions.assemble(18, [
+	a_code[0x03] = a_code[0x03][0:18] + assemble_code(cf, cp_cache, 0, 18, [
 		['iload', 5],
 		['bipush', 50],
-		['if_icmpne*', 'skip'],
+		['if_icmpne', 'skip'],
 
 		'aload_0',
 		'aload_1',
 		['iload', 2],
 		['iload', 3],
 		['iload', 4],
-		['invokevirtual', icpx_m(cf, cp_cache, 'cv', 'renderMortar', '(Luu;III)Z')],
+		['invokevirtual', 'cv', 'renderMortar', '(Luu;III)Z'],
 		'ireturn',
 
-		['jump_target*', 'skip'],
+		['label', 'skip'],
 	]) + a_code[0x03][18:324]
 
 	# update code length
@@ -70,405 +81,370 @@ def _modify_render_method(cf, cp_cache):
 			break
 
 	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
+	a[0x02] = a_code_assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _render_face(
+		nx, ny, nz,
+		v0_x, v0_y, v0_z, v0_u, v0_v, v0_u_offset, v0_v_offset,
+    v1_x, v1_y, v1_z, v1_u, v1_v, v1_u_offset, v1_v_offset,
+    v2_x, v2_y, v2_z, v2_u, v2_v, v2_u_offset, v2_v_offset,
+    v3_x, v3_y, v3_z, v3_u, v3_v, v3_u_offset, v3_v_offset
+):
+	return [
+		['aload', 4],
+		['invokevirtual', 'nw', 'b', '()V'],
+
+		['aload', 4],
+		nx,
+		ny,
+		nz,
+		['invokevirtual', 'nw', 'b', '(FFF)V'],
+
+		['aload', 4],
+		['ldc2_w.f64', as_f64(v0_x / 16.0)],
+		['ldc2_w.f64', as_f64(v0_y / 16.0)],
+		['ldc2_w.f64', as_f64(v0_z / 16.0)],
+		['ldc2_w.f64', as_f64(v0_u / 256.0)], ['ldc2_w.f64', as_f64((v0_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', as_f64(v0_v / 256.0)], ['ldc2_w.f64', as_f64((v0_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
+
+		['aload', 4],
+		['ldc2_w.f64', as_f64(v1_x / 16.0)],
+		['ldc2_w.f64', as_f64(v1_y / 16.0)],
+		['ldc2_w.f64', as_f64(v1_z / 16.0)],
+		['ldc2_w.f64', as_f64(v1_u / 256.0)], ['ldc2_w.f64', as_f64((v1_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', as_f64(v1_v / 256.0)], ['ldc2_w.f64', as_f64((v1_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
+
+		['aload', 4],
+		['ldc2_w.f64', as_f64(v2_x / 16.0)],
+		['ldc2_w.f64', as_f64(v2_y / 16.0)],
+		['ldc2_w.f64', as_f64(v2_z / 16.0)],
+		['ldc2_w.f64', as_f64(v2_u / 256.0)], ['ldc2_w.f64', as_f64((v2_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', as_f64(v2_v / 256.0)], ['ldc2_w.f64', as_f64((v2_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
+
+		['aload', 4],
+		['ldc2_w.f64', as_f64(v3_x / 16.0)],
+		['ldc2_w.f64', as_f64(v3_y / 16.0)],
+		['ldc2_w.f64', as_f64(v3_z / 16.0)],
+		['ldc2_w.f64', as_f64(v3_u / 256.0)], ['ldc2_w.f64', as_f64((v3_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', as_f64(v3_v / 256.0)], ['ldc2_w.f64', as_f64((v3_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
+
+		['aload', 4],
+		['invokevirtual', 'nw', 'a', '()V']
+	]
+
+def _modify_render_2_method(cf, cp_cache):
+	m = get_method(cf, cp_cache, 'a', '(Luu;IF)V')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
+
+	a_code = a_code_load(a[0x02])
+
+	a_code[0x00] = (20).to_bytes(2)
+	a_code[0x03] = a_code[0x03][0:83] + assemble_code(cf, cp_cache, 0, 83, [
+		['iload', 5],
+		['bipush', 50],
+		['if_icmpne', 'skip_c'],
+
+		['ldc_w.f32', as_f32(-0.5)],
+		['ldc_w.f32', as_f32(-0.5)],
+		['ldc_w.f32', as_f32(-0.5)],
+		['invokestatic', 'org/lwjgl/opengl/GL11', 'glTranslatef', '(FFF)V'],
+
+		*_render_face(
+			'fconst_0', ['ldc_w.f32', as_f32(1.0)], 'fconst_0',
+			1.0, 6.0, 1.0, 64.0, 176.0, 1.0, 1.0,
+			1.0, 6.0, 15.0, 64.0, 176.0, 1.0, 15.0,
+			15.0, 6.0, 15.0, 64.0, 176.0, 15.0, 15.0,
+			15.0, 6.0, 1.0, 64.0, 176.0, 15.0, 1.0,
+		),
+
+		*_render_face(
+			'fconst_0', ['ldc_w.f32', as_f32(1.0)], 'fconst_0',
+			3.0, 2.0, 3.0, 80.0, 176.0, 3.0, 3.0,
+			3.0, 2.0, 13.0, 80.0, 176.0, 13.0, 13.0,
+			13.0, 2.0, 13.0, 80.0, 176.0, 13.0, 13.0,
+			13.0, 2.0, 3.0, 80.0, 176.0, 13.0, 3.0,
+		),
+
+		*_render_face(
+			'fconst_0', ['ldc_w.f32', as_f32(-1.0)], 'fconst_0',
+			1.0, 0.0, 15.0, 96.0, 176.0, 1.0, 15.0,
+			1.0, 0.0, 1.0, 96.0, 176.0, 1.0, 1.0,
+			15.0, 0.0, 1.0, 96.0, 176.0, 15.0, 1.0,
+			15.0, 0.0, 15.0, 96.0, 176.0, 15.0, 15.0,
+		),
+
+		*_render_face(
+			['ldc_w.f32', as_f32(-1.0)], 'fconst_0', 'fconst_0',
+			1.0, 6.0, 15.0, 112.0, 176.0, 15.0, 10.0,
+			1.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
+			1.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
+			1.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
+		),
+
+		*_render_face(
+			['ldc_w.f32', as_f32(-1.0)], 'fconst_0', 'fconst_0',
+			13.0, 6.0, 15.0, 112.0, 176.0, 15.0, 10.0,
+			13.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
+			13.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
+			13.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
+		),
+
+		*_render_face(
+			['ldc_w.f32', as_f32(1.0)], 'fconst_0', 'fconst_0',
+			15.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
+			15.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
+			15.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
+			15.0, 6.0, 15.0, 112.0, 176.0, 15.0, 10.0,
+		),
+
+		*_render_face(
+			['ldc_w.f32', as_f32(1.0)], 'fconst_0', 'fconst_0',
+			3.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
+			3.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
+			3.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
+			3.0, 6.0, 15.0, 112.0, 176.0, 15.0, 10.0,
+		),
+
+		*_render_face(
+			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(-1.0)],
+			1.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
+			15.0, 6.0, 1.0, 112.0, 176.0, 15.0, 10.0,
+			15.0, 0.0, 1.0, 112.0, 176.0, 15.0, 16.0,
+			1.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
+		),
+
+		*_render_face(
+			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(-1.0)],
+			1.0, 6.0, 13.0, 112.0, 176.0, 1.0, 10.0,
+			15.0, 6.0, 13.0, 112.0, 176.0, 15.0, 10.0,
+			15.0, 0.0, 13.0, 112.0, 176.0, 15.0, 16.0,
+			1.0, 0.0, 13.0, 112.0, 176.0, 1.0, 16.0,
+		),
+
+		*_render_face(
+			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(1.0)],
+			1.0, 6.0, 15.0, 112.0, 176.0, 1.0, 10.0,
+			1.0, 0.0, 15.0, 112.0, 176.0, 1.0, 16.0,
+			15.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
+			15.0, 6.0, 15.0, 112.0, 176.0, 15.0, 10.0,
+		),
+
+		*_render_face(
+			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(1.0)],
+			1.0, 6.0, 3.0, 112.0, 176.0, 1.0, 10.0,
+			1.0, 0.0, 3.0, 112.0, 176.0, 1.0, 16.0,
+			15.0, 0.0, 3.0, 112.0, 176.0, 15.0, 16.0,
+			15.0, 6.0, 3.0, 112.0, 176.0, 15.0, 10.0,
+		),
+
+		['ldc_w.f32', as_f32(0.5)],
+		['ldc_w.f32', as_f32(0.5)],
+		['ldc_w.f32', as_f32(0.5)],
+		['invokestatic', 'org/lwjgl/opengl/GL11', 'glTranslatef', '(FFF)V'],
+
+		'return',
+
+		['label', 'skip_c'],
+	]) + a_code[0x03][83:1411]
+
+	# update code length
+	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
+
+	# remove line number table
+	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
+
+	for i, a in a_code[0x07]:
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+			del a_code[0x07][i]
+			break
+
+	# update code attribute
+	a[0x02] = a_code_assemble(a_code)
+
+	# update code attribute length
+	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _modify_is_side_lit_method(cf, cp_cache):
+	m = get_method(cf, cp_cache, 'a', '(I)Z')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
+
+	a_code = a_code_load(a[0x02])
+
+	a_code[0x03] = assemble_code(cf, cp_cache, 0, 0, [
+		'iload_0',
+		['bipush', 50],
+		['if_icmpne', 'skip_a'],
+		'iconst_1',
+		'ireturn',
+		['label', 'skip_a']
+	]) + a_code[0x03][0:40]
+
+	# update code length
+	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
+
+	# remove line number table
+	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
+
+	for i, a in a_code[0x07]:
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+			del a_code[0x07][i]
+			break
+
+	# update code attribute
+	a[0x02] = a_code_assemble(a_code)
+
+	# update code attribute length
+	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _texture_override(index, label):
+	return [
+		['sipush', index],
+		['istore', 7],
+
+		'aload_0',
+		['getfield', 'cv', 'd', 'I'],
+		['iflt', label],
+
+		'aload_0',
+		['getfield', 'cv', 'd', 'I'],
+		['istore', 7],
+
+		['label', label],
+		['iload', 7],
+		['bipush', 15],
+		'iand',
+		'iconst_4',
+		'ishl',
+		['istore', 8],
+
+		['iload', 7],
+		['sipush', 240],
+		'iand',
+		['istore', 9]
+	]
+
+def _fn_vertex(x, y, z, u_offset, v_offset):
+	return [
+		['aload', 5],
+		['iload', 2], 'i2d', ['ldc2_w.f64', as_f64(x / 16.0)], 'dadd',
+		['iload', 3], 'i2d', ['ldc2_w.f64', as_f64(y / 16.0)], 'dadd',
+		['iload', 4], 'i2d', ['ldc2_w.f64', as_f64(z / 16.0)], 'dadd',
+		['iload', 8], 'i2d', ['ldc2_w.f64', as_f64(256.0)], 'ddiv', ['ldc2_w.f64', as_f64((u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['iload', 9], 'i2d', ['ldc2_w.f64', as_f64(256.0)], 'ddiv', ['ldc2_w.f64', as_f64((v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
+	]
 
 def _create_render_mortar_method(cf, cp_cache):
 	m = create_method(cf, cp_cache, ['public'], 'renderMortar', '(Luu;III)Z')
 
 	code = [
-		['getstatic', icpx_f(cf, cp_cache, 'nw', 'a', 'Lnw;')],
+		['getstatic', 'nw', 'a', 'Lnw;'],
 		['astore', 5],
 
 		['aload', 1],
-		['aload_0'],
-		['getfield', icpx_f(cf, cp_cache, 'cv', 'c', 'Lxp;')],
+		'aload_0',
+		['getfield', 'cv', 'c', 'Lxp;'],
 		['iload', 2],
 		['iload', 3],
 		['iload', 4],
-		['invokevirtual', icpx_m(cf, cp_cache, 'uu', 'd', '(Lxp;III)F')],
+		['invokevirtual', 'uu', 'd', '(Lxp;III)F'],
 		['fstore', 6],
 
 		['aload', 5], ['fload', 6], ['fload', 6], ['fload', 6],
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(FFF)V')],
+		['invokevirtual', 'nw', 'a', '(FFF)V'],
 
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(64.0 / 256.0))],
-		['dstore', 7],
+		*_texture_override(180, 'skip_1'),
 
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))],
-		['dstore', 9],
+		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 1.0),
+		*_fn_vertex(1.0, 6.0, 15.0, 1.0, 15.0),
+		*_fn_vertex(15.0, 6.0, 15.0, 15.0, 15.0),
+		*_fn_vertex(15.0, 6.0, 1.0, 15.0, 1.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['dload', 7], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['dload', 9], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(181, 'skip_2'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['dload', 7], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['dload', 9], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(3.0, 2.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 2.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 2.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 2.0, 3.0, 13.0, 3.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['dload', 7], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['dload', 9], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(182, 'skip_bottom'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['dload', 7], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['dload', 9], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(1.0, 0.0, 15.0, 1.0, 15.0),
+		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 1.0),
+		*_fn_vertex(15.0, 0.0, 1.0, 15.0, 1.0),
+		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 15.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(2.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(80.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((3.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((3.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_north_1'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(2.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(80.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((3.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((13.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(1.0, 6.0, 15.0, 15.0, 10.0),
+		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_vertex(1.0, 0.0, 15.0, 15.0, 16.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(2.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(80.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((13.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((13.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_north_2'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(2.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(80.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((13.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((3.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	]
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(96.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(13.0, 6.0, 15.0, 15.0, 10.0),
+		*_fn_vertex(13.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(13.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_vertex(13.0, 0.0, 15.0, 15.0, 16.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(96.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_south_1'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(96.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 16.0),
+		*_fn_vertex(15.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_vertex(15.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(15.0, 6.0, 15.0, 15.0, 10.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(96.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_south_2'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(3.0, 0.0, 15.0, 15.0, 16.0),
+		*_fn_vertex(3.0, 0.0, 1.0, 1.0, 16.0),
+		*_fn_vertex(3.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(3.0, 6.0, 15.0, 15.0, 10.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_east_1'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 10.0),
+		*_fn_vertex(15.0, 6.0, 1.0, 15.0, 10.0),
+		*_fn_vertex(15.0, 0.0, 1.0, 15.0, 16.0),
+		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 16.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_east_2'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(1.0, 6.0, 13.0, 1.0, 10.0),
+		*_fn_vertex(15.0, 6.0, 13.0, 15.0, 10.0),
+		*_fn_vertex(15.0, 0.0, 13.0, 15.0, 16.0),
+		*_fn_vertex(1.0, 0.0, 13.0, 1.0, 16.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_west_1'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(1.0, 6.0, 15.0, 1.0, 10.0),
+		*_fn_vertex(1.0, 0.0, 15.0, 1.0, 16.0),
+		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 16.0),
+		*_fn_vertex(15.0, 6.0, 15.0, 15.0, 10.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_texture_override(183, 'skip_west_2'),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
+		*_fn_vertex(1.0, 6.0, 3.0, 1.0, 10.0),
+		*_fn_vertex(1.0, 0.0, 3.0, 1.0, 16.0),
+		*_fn_vertex(15.0, 0.0, 3.0, 15.0, 16.0),
+		*_fn_vertex(15.0, 6.0, 3.0, 15.0, 10.0),
 
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(13.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(1.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((1.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(0.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((16.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-
-		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(15.0 / 16.0))], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(6.0 / 16.0))], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w', icpx_double(cf, cp_cache, to_double(3.0 / 16.0))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(112.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((15.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['ldc2_w', icpx_double(cf, cp_cache, to_double(176.0 / 256.0))], ['ldc2_w', icpx_double(cf, cp_cache, to_double((10.0 / 16.0) * (16.0 / 256.0)))], 'dadd',
-		['invokevirtual', icpx_m(cf, cp_cache, 'nw', 'a', '(DDDDD)V')],
-	])
-	code.extend([
 		'iconst_1',
 		'ireturn'
-	])
-	code = instructions.assemble(0, code)
-	a_code = attribute.code.assemble([
+	]
+
+	code = assemble_code(cf, cp_cache, 0, 0, code)
+	a_code = a_code_assemble([
 		(13).to_bytes(2),
-		(11).to_bytes(2),
+		(12).to_bytes(2),
 		len(code).to_bytes(4),
 		code,
 		(0).to_bytes(2),
