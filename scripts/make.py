@@ -57,6 +57,11 @@ shutil.copytree(
 	os.path.join(target_path, 'mod'),
 	ignore=shutil.ignore_patterns('__pycache__', '*.pyc')
 )
+shutil.copytree(
+	os.path.join(root_dir, 'modmaker'),
+	os.path.join(target_path, 'modmaker'),
+	ignore=shutil.ignore_patterns('__pycache__', '*.pyc')
+)
 shutil.copytree(os.path.join(root_dir, 'assets'), os.path.join(target_path, 'assets'))
 shutil.copy(os.path.join(root_dir, 'mod.conf'), os.path.join(target_path, 'mod.conf'))
 shutil.copy(os.path.join(root_dir, 'LICENSE'), os.path.join(target_path, 'LICENSE'))
