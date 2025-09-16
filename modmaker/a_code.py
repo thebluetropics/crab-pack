@@ -4,7 +4,8 @@ from .cp import (
 	i2cpx_m,
 	i2cpx_double,
 	i2cpx_string,
-	i2cpx_float
+	i2cpx_float,
+	i2cpx_i
 )
 
 def a_code_load(a_code_b):
@@ -317,6 +318,11 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 				opcode, sz, _ = _ins_info_table['ldc_w']
 				temp.append(opcode + i2cpx_string(cf, cp_cache, args[0]))
 				i += sz
+				continue
+
+			if k.__eq__('invokeinterface'):
+				temp.append(b'\xb9' + i2cpx_i(cf, cp_cache, args[0], args[1], args[2]) + args[3].to_bytes(1) + b'\x00')
+				i += 5
 				continue
 
 			if is_jump(k):
