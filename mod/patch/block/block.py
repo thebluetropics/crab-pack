@@ -125,6 +125,7 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
 			['ldc_w', icpx_string(cf, cp_cache, 'mortar')],
 			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, ['j', 'g'][side], ['()Luu;', '()Lna;'][side])],
 			['checkcast', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/MortarBlock')],
 			['putstatic', icpx_f(cf, cp_cache, c_name, 'MORTAR', 'Lcom/thebluetropics/crabpack/MortarBlock;')]
 		])

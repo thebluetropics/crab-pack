@@ -1,4 +1,4 @@
-import mod, struct
+import mod
 
 from modmaker.a import (
 	get_attribute
@@ -89,9 +89,9 @@ def _modify_render_1_method(cf, cp_cache):
 def _render_face(
 		nx, ny, nz,
 		v0_x, v0_y, v0_z, v0_u, v0_v, v0_u_offset, v0_v_offset,
-    v1_x, v1_y, v1_z, v1_u, v1_v, v1_u_offset, v1_v_offset,
-    v2_x, v2_y, v2_z, v2_u, v2_v, v2_u_offset, v2_v_offset,
-    v3_x, v3_y, v3_z, v3_u, v3_v, v3_u_offset, v3_v_offset
+		v1_x, v1_y, v1_z, v1_u, v1_v, v1_u_offset, v1_v_offset,
+		v2_x, v2_y, v2_z, v2_u, v2_v, v2_u_offset, v2_v_offset,
+		v3_x, v3_y, v3_z, v3_u, v3_v, v3_u_offset, v3_v_offset
 ):
 	return [
 		['aload', 4],
@@ -364,6 +364,14 @@ def _create_render_mortar_method(cf, cp_cache):
 		['invokevirtual', 'uu', 'd', '(Lxp;III)F'],
 		['fstore', 6],
 
+		'aload_0',
+		['getfield', 'cv', 'c', 'Lxp;'],
+		['iload', 2],
+		['iload', 3],
+		['iload', 4],
+		['invokeinterface', 'xp', 'e', '(III)I', 4],
+		['istore', 10],
+
 		['invokestatic', 'net/minecraft/client/Minecraft','v', '()Z'],
 		['ifeq', 'skip_smooth_rendering'],
 
@@ -465,6 +473,39 @@ def _create_render_mortar_method(cf, cp_cache):
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
 		*_fn_vertex(15.0, 6.0, 3.0, 15.0, 10.0),
 
+		['iload', 10],
+		'iconst_1',
+		['if_icmpne', 'skip_render_seeds_filling_1_smooth'],
+		*_texture_override(184, 'skip_seeds_filling_1_smooth'),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 3.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 3.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 3.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 3.0, 3.0, 13.0, 3.0),
+		['label', 'skip_render_seeds_filling_1_smooth'],
+
+		['iload', 10],
+		'iconst_2',
+		['if_icmpne', 'skip_render_seeds_filling_2_smooth'],
+		*_texture_override(184, 'skip_seeds_filling_2_smooth'),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 4.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 4.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 4.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 4.0, 3.0, 13.0, 3.0),
+		['label', 'skip_render_seeds_filling_2_smooth'],
+
+		['iload', 10],
+		'iconst_3',
+		['if_icmpne', 'skip_render_seeds_filling_3_smooth'],
+		*_texture_override(184, 'skip_seeds_filling_3_smooth'),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 5.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 5.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 5.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 5.0, 3.0, 13.0, 3.0),
+		['label', 'skip_render_seeds_filling_3_smooth'],
+
 		['goto', 'skip_else_block'],
 
 		['label', 'skip_smooth_rendering'],
@@ -549,6 +590,39 @@ def _create_render_mortar_method(cf, cp_cache):
 		*_fn_vertex(15.0, 0.0, 3.0, 15.0, 16.0),
 		*_fn_vertex(15.0, 6.0, 3.0, 15.0, 10.0),
 
+		['iload', 10],
+		'iconst_1',
+		['if_icmpne', 'skip_render_seeds_filling_1'],
+		*_texture_override(184, 'skip_seeds_filling_1'),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 3.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 3.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 3.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 3.0, 3.0, 13.0, 3.0),
+		['label', 'skip_render_seeds_filling_1'],
+
+		['iload', 10],
+		'iconst_2',
+		['if_icmpne', 'skip_render_seeds_filling_2'],
+		*_texture_override(184, 'skip_seeds_filling_2'),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 4.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 4.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 4.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 4.0, 3.0, 13.0, 3.0),
+		['label', 'skip_render_seeds_filling_2'],
+
+		['iload', 10],
+		'iconst_3',
+		['if_icmpne', 'skip_render_seeds_filling_3'],
+		*_texture_override(184, 'skip_seeds_filling_3'),
+		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
+		*_fn_vertex(3.0, 5.0, 3.0, 3.0, 3.0),
+		*_fn_vertex(3.0, 5.0, 13.0, 3.0, 13.0),
+		*_fn_vertex(13.0, 5.0, 13.0, 13.0, 13.0),
+		*_fn_vertex(13.0, 5.0, 3.0, 13.0, 3.0),
+		['label', 'skip_render_seeds_filling_3'],
+
 		['label', 'skip_else_block'],
 
 		'iconst_1',
@@ -558,7 +632,7 @@ def _create_render_mortar_method(cf, cp_cache):
 	code = assemble_code(cf, cp_cache, 0, 0, code)
 	a_code = a_code_assemble([
 		(13).to_bytes(2),
-		(12).to_bytes(2),
+		(11).to_bytes(2),
 		len(code).to_bytes(4),
 		code,
 		(0).to_bytes(2),

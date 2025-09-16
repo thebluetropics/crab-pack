@@ -13,9 +13,9 @@ uint8_t apply_fortress_bricks(char* source_0, char* source_1, char* target);
 #endif
 
 #if defined(_WIN32)
-__declspec(dllexport) uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* target);
+__declspec(dllexport) uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* source_4, char* target);
 #else
-uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* target);
+uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* source_4, char* target);
 #endif
 
 #if defined(_WIN32)

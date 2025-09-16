@@ -146,7 +146,7 @@ _exit:
 	return code;
 }
 
-uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* target) {
+uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* source_3, char* source_4, char* target) {
 	uint8_t code = 0;
 
 	struct _image_t terrain;
@@ -189,10 +189,19 @@ uint8_t apply_mortar(char* source_0, char* source_1, char* source_2, char* sourc
 		goto _exit;
 	}
 
+	struct _image_t seeds_filling;
+	seeds_filling.ptr = stbi_load(source_4, &seeds_filling.w, &seeds_filling.h, &seeds_filling._n, 4);
+
+	if (!seeds_filling.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
 	overlay(top.ptr, terrain.ptr, top.w, top.h, terrain.w, 64, 176);
 	overlay(inner_top.ptr, terrain.ptr, inner_top.w, inner_top.h, terrain.w, 80, 176);
 	overlay(bottom.ptr, terrain.ptr, bottom.w, bottom.h, terrain.w, 96, 176);
 	overlay(side.ptr, terrain.ptr, side.w, side.h, terrain.w, 112, 176);
+	overlay(seeds_filling.ptr, terrain.ptr, seeds_filling.w, seeds_filling.h, terrain.w, 128, 176);
 
 	if (!stbi_write_png(target, terrain.w, terrain.h, 4, terrain.ptr, terrain.w * 4)) {
 		code = 1;
@@ -205,6 +214,7 @@ _exit:
 	stbi_image_free(inner_top.ptr);
 	stbi_image_free(bottom.ptr);
 	stbi_image_free(side.ptr);
+	stbi_image_free(seeds_filling.ptr);
 
 	return code;
 }

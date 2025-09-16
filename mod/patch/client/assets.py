@@ -27,7 +27,7 @@ def apply():
 	lib.apply_fortress_bricks.argtypes = [ctypes.c_char_p] * 3
 	lib.apply_fortress_bricks.restype = ctypes.c_uint8
 
-	lib.apply_mortar.argtypes = [ctypes.c_char_p] * 5
+	lib.apply_mortar.argtypes = [ctypes.c_char_p] * 6
 	lib.apply_mortar.restype = ctypes.c_uint8
 
 	lib.apply_hunger_and_thirst.argtypes = [ctypes.c_char_p] * 2
@@ -64,6 +64,7 @@ def apply():
 			os.path.join(mod.config.path('assets'), 'mortar_inner_top.png').encode('utf-8'),
 			os.path.join(mod.config.path('assets'), 'mortar_bottom.png').encode('utf-8'),
 			os.path.join(mod.config.path('assets'), 'mortar_side.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'mortar_seeds_filling.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'terrain.png').encode('utf-8'),
 		)
 
