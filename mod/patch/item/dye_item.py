@@ -45,6 +45,10 @@ def _modify_use_on_block_method(cf, cp_cache, side):
 
 	a_code[0x03] = assemble_code(cf, cp_cache, side, 0, [
 		['aload', 3],
+		['getfield', ('fd', 'dj'), 'B', 'Z'],
+		['ifne', 'a'],
+
+		['aload', 3],
 		['iload', 4],
 		['iload', 5],
 		['iload', 6],
@@ -53,9 +57,12 @@ def _modify_use_on_block_method(cf, cp_cache, side):
 		['getfield', ('wp', 'oj'), 'bn', 'I'],
 		['if_icmpne', 'a'],
 
-		['aload', 3],
-		['getfield', ('fd', 'dj'), 'B', 'Z'],
-		['ifne', 'a'],
+		['iload', 7],
+		['ifeq', 'a'],
+
+		['iload', 7],
+		'iconst_1',
+		['if_icmpeq', 'a'],
 
 		['aload', 3],
 		['iload', 4],
