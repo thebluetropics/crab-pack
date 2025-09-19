@@ -1,17 +1,23 @@
 import mod
 
-from mod.attribute import get_attribute
-from mod.method import get_method
-from mod.constant_pool import get_utf8_at
-from mod import (
-	class_file,
-	attribute,
-	constant_pool,
-	instructions
+from modmaker.a import (
+	get_attribute
 )
-from mod.constant_pool import (
-	icpx_f,
-	icpx_m
+from modmaker.a_code import (
+	a_code_load,
+	a_code_assemble,
+	assemble_code
+)
+from modmaker.m import(
+	get_method
+)
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
+	get_utf8_at
 )
 
 def apply(side_name):
@@ -21,13 +27,13 @@ def apply(side_name):
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['km', 'gu'][side]
 
-	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = load_class_file(mod.config.path(f'stage/{side_name}/{c_name}.class'))
+	cp_cache = cp_init_cache(cf[0x04])
 
 	_modify_use_on_block_method(cf, cp_cache, side)
 
 	with open(mod.config.path(f'stage/{side_name}/{c_name}.class'), 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(cf_assemble(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.item.DyeItem')
 
@@ -35,42 +41,42 @@ def _modify_use_on_block_method(cf, cp_cache, side):
 	m = get_method(cf, cp_cache, 'a', ['(Liz;Lgs;Lfd;IIII)Z', '(Lfy;Lem;Ldj;IIII)Z'][side])
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = instructions.assemble(0, [
+	a_code[0x03] = assemble_code(cf, cp_cache, side, 0, [
 		['aload', 3],
 		['iload', 4],
 		['iload', 5],
 		['iload', 6],
-		['invokevirtual', icpx_m(cf, cp_cache, ['fd', 'dj'][side], 'a', '(III)I')],
-		['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'v', ['Lwp;', 'Loj;'][side])],
-		['getfield', icpx_f(cf, cp_cache, ['wp', 'oj'][side], 'bn', 'I')],
-		['if_icmpne*', 'a'],
+		['invokevirtual', ('fd', 'dj'), 'a', '(III)I'],
+		['getstatic', ('uu', 'na'), 'v', ('Lwp;', 'Loj;')],
+		['getfield', ('wp', 'oj'), 'bn', 'I'],
+		['if_icmpne', 'a'],
 
 		['aload', 3],
-		['getfield', icpx_f(cf, cp_cache, ['fd', 'dj'][side], 'B', 'Z')],
-		['ifne*', 'a'],
+		['getfield', ('fd', 'dj'), 'B', 'Z'],
+		['ifne', 'a'],
 
 		['aload', 3],
 		['iload', 4],
 		['iload', 5],
 		['iload', 6],
-		['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;')],
-		['getfield', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'bn', 'I')],
-		['invokevirtual', icpx_m(cf, cp_cache, ['fd', 'dj'][side], ['f', 'e'][side], '(IIII)Z')],
+		['getstatic', ('uu', 'na'), 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;'],
+		['getfield', ('uu', 'na'), 'bn', 'I'],
+		['invokevirtual', ('fd', 'dj'), ('f', 'e'), '(IIII)Z'],
 		'pop',
 
 		['aload', 1],
-		['dup'],
-		['getfield', icpx_f(cf, cp_cache, ['iz', 'fy'][side], 'a', 'I')],
+		'dup',
+		['getfield', ('iz', 'fy'), 'a', 'I'],
 		'iconst_1',
 		'isub',
-		['putfield', icpx_f(cf, cp_cache, ['iz', 'fy'][side], 'a', 'I')],
+		['putfield', ('iz', 'fy'), 'a', 'I'],
 
 		'iconst_1',
 		'ireturn',
 
-		['jump_target*', 'a']
+		['label', 'a']
 	]) + a_code[0x03][0:380]
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
@@ -83,7 +89,7 @@ def _modify_use_on_block_method(cf, cp_cache, side):
 			break
 
 	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
+	a[0x02] = a_code_assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
