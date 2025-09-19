@@ -18,5 +18,7 @@ def apply():
 				"tile.light_fortress_bricks.name=Light Fortress Bricks",
 				"tile.light_fortress_bricks.desc=",
 				"tile.mortar.name=Mortar",
-				"tile.mortar.desc="
+				"tile.mortar.desc=",
+				"tile.smelter.name=Smelter",
+				"tile.smelter.desc="
 			]))

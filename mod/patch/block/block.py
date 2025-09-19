@@ -18,7 +18,7 @@ from mod.constant_pool import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('block.fortress_bricks') and not mod.config.is_feature_enabled('block.solid_grass_block') and not mod.config.is_feature_enabled('block.mortar'):
+	if not mod.config.is_feature_enabled('block.fortress_bricks') and not mod.config.is_feature_enabled('block.solid_grass_block') and not mod.config.is_feature_enabled('block.mortar') and not mod.config.is_feature_enabled('block.smelter'):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1
@@ -36,6 +36,9 @@ def apply(side_name):
 
 	if mod.config.is_feature_enabled('block.mortar'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'MORTAR', f'Lcom/thebluetropics/crabpack/MortarBlock;'))
+
+	if mod.config.is_feature_enabled('block.smelter'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'SMELTER', f'Lcom/thebluetropics/crabpack/SmelterBlock;'))
 
 	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
 
@@ -128,6 +131,27 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 			['invokevirtual', icpx_m(cf, cp_cache, c_name, ['j', 'g'][side], ['()Luu;', '()Lna;'][side])],
 			['checkcast', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/MortarBlock')],
 			['putstatic', icpx_f(cf, cp_cache, c_name, 'MORTAR', 'Lcom/thebluetropics/crabpack/MortarBlock;')]
+		])
+
+	if mod.config.is_feature_enabled('block.smelter'):
+		code.extend([
+			['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/SmelterBlock')],
+			'dup',
+			['bipush', 101],
+			['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/SmelterBlock', '<init>', '(I)V')],
+			'iconst_3',
+			'i2f',
+			'iconst_5',
+			'i2f',
+			'fdiv',
+			['invokevirtual', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/SmelterBlock', 'c', ['(F)Luu;', '(F)Lna;'][side])],
+			['getstatic', icpx_f(cf, cp_cache, c_name, 'g', ['Lct;', 'Lbu;'][side])],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lct;)Luu;', '(Lbu;)Lna;'][side])],
+			['ldc_w', icpx_string(cf, cp_cache, 'mortar')],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;'][side])],
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, ['j', 'g'][side], ['()Luu;', '()Lna;'][side])],
+			['checkcast', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/SmelterBlock')],
+			['putstatic', icpx_f(cf, cp_cache, c_name, 'SMELTER', 'Lcom/thebluetropics/crabpack/SmelterBlock;')]
 		])
 
 	a_code[0x03] = a_code[0x03][0:3398] + instructions.assemble(3398, code) + a_code[0x03][3398:3678]

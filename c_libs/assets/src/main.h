@@ -41,3 +41,9 @@ __declspec(dllexport) uint8_t apply_single_pixel_crosshair(char* source, char* t
 #else
 uint8_t apply_single_pixel_crosshair(char* source, char* target);
 #endif
+
+#if defined(_WIN32)
+__declspec(dllexport) uint8_t apply_smelter(char* y_column_path, char* front_path, char* front_lit_path, char* side_path, char* target);
+#else
+uint8_t apply_smelter(char* y_column_path, char* front_path, char* front_lit_path, char* side_path, char* target);
+#endif

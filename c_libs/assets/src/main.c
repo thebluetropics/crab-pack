@@ -317,3 +317,66 @@ _exit:
 
 	return code;
 }
+
+uint8_t apply_smelter(char* y_column_path, char* front_path, char* front_lit_path, char* side_path, char* target) {
+	uint8_t code = 0;
+
+	struct _image_t items;
+	items.ptr = stbi_load(target, &items.w, &items.h, &items._n, 4);
+
+	if (!items.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t y_column;
+	y_column.ptr = stbi_load(y_column_path, &y_column.w, &y_column.h, &y_column._n, 4);
+
+	if (!y_column.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t front;
+	front.ptr = stbi_load(front_path, &front.w, &front.h, &front._n, 4);
+
+	if (!front.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t front_lit;
+	front_lit.ptr = stbi_load(front_lit_path, &front_lit.w, &front_lit.h, &front_lit._n, 4);
+
+	if (!front_lit.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t side;
+	side.ptr = stbi_load(side_path, &side.w, &side.h, &side._n, 4);
+
+	if (!side.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	overlay(y_column.ptr, items.ptr, y_column.w, y_column.h, items.w, 32, 224);
+	overlay(front.ptr, items.ptr, front.w, front.h, items.w, 48, 224);
+	overlay(front_lit.ptr, items.ptr, front_lit.w, front_lit.h, items.w, 64, 224);
+	overlay(side.ptr, items.ptr, side.w, side.h, items.w, 80, 224);
+
+	if (!stbi_write_png(target, items.w, items.h, 4, items.ptr, items.w * 4)) {
+		code = 1;
+		goto _exit;
+	}
+
+_exit:
+	stbi_image_free(items.ptr);
+	stbi_image_free(y_column.ptr);
+	stbi_image_free(front.ptr);
+	stbi_image_free(front_lit.ptr);
+	stbi_image_free(side.ptr);
+
+	return code;
+}

@@ -30,6 +30,9 @@ def apply():
 	lib.apply_mortar.argtypes = [ctypes.c_char_p] * 6
 	lib.apply_mortar.restype = ctypes.c_uint8
 
+	lib.apply_smelter.argtypes = [ctypes.c_char_p] * 5
+	lib.apply_smelter.restype = ctypes.c_uint8
+
 	lib.apply_hunger_and_thirst.argtypes = [ctypes.c_char_p] * 2
 	lib.apply_hunger_and_thirst.restype = ctypes.c_uint8
 
@@ -106,6 +109,19 @@ def apply():
 		ret_code = lib.apply_single_pixel_crosshair(
 			os.path.join(mod.config.path('assets'), 'single_pixel_crosshair.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'gui', 'icons.png').encode('utf-8'),
+		)
+
+		if not ret_code.__eq__(0):
+			print('Err: unknown.', file=stderr)
+			exit(1)
+
+	if mod.config.is_feature_enabled('block.smelter'):
+		ret_code = lib.apply_smelter(
+			os.path.join(mod.config.path('assets'), 'smelter_y_column.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'smelter_front.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'smelter_front_lit.png').encode('utf-8'),
+			os.path.join(mod.config.path('assets'), 'smelter_side.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'terrain.png').encode('utf-8')
 		)
 
 		if not ret_code.__eq__(0):
