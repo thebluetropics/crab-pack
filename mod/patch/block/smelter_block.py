@@ -27,11 +27,18 @@ def apply(side_name):
 	cf = cf_create()
 	cp_cache = cp_init_cache(cf[0x04])
 
+	cf[0x02] = (49).to_bytes(2)
+
 	cf[0x05] = (0x0001.__or__(0x0020)).to_bytes(2)
 	cf[0x06] = i2cpx_c(cf, cp_cache, c_name)
 	cf[0x07] = i2cpx_c(cf, cp_cache, ['uu', 'na'][side])
 
 	cf[0x0d].append(_create_constructor(cf, cp_cache, side, c_name))
+	cf[0x0d].append(_create_on_placed_method(cf, cp_cache, side))
+
+	if side_name.__eq__('client'):
+		cf[0x0d].append(_create_get_texture_id_method(cf, cp_cache))
+
 	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
 	if not os.path.exists(f'stage/{side_name}/com/thebluetropics/crabpack'):
@@ -58,6 +65,181 @@ def _create_constructor(cf, cp_cache, side, c_name):
 	a_code = a_code_assemble([
 		(3).to_bytes(2),
 		(2).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_on_placed_method(cf, cp_cache, side):
+	m = create_method(cf, cp_cache, ['public'], 'a', ['(Lfd;IIILls;)V', '(Ldj;IIILhl;)V'][side])
+
+	code = assemble_code(cf, cp_cache, side, 0, [
+		['aload', 5],
+		['getfield', ('ls', 'hl'), ('aS', 'aV'), 'F'],
+		['ldc.f32', 4.0],
+		'fmul',
+		['ldc.f32', 360.0],
+		'fdiv',
+		'f2d',
+		['ldc2_w.f64', 0.5],
+		'dadd',
+		['invokestatic', ('in', 'fq'), 'b', '(D)I'],
+		'iconst_3',
+		'iand',
+		['istore', 6],
+
+		['getstatic', 'java/lang/System', 'out', 'Ljava/io/PrintStream;'],
+		['iload', 6],
+		['invokevirtual', 'java/io/PrintStream', 'println', '(I)V'],
+
+		['iload', 6],
+		'iconst_0',
+		['if_icmpne', 'L1'],
+
+		'aload_1',
+		'iload_2', 'iload_3', ['iload', 4], 'iconst_0',
+		['invokevirtual', ('fd', 'dj'), ('d', 'c'), '(IIII)V'],
+		'return',
+
+		['label', 'L1'],
+		['iload', 6],
+		'iconst_1',
+		['if_icmpne', 'L2'],
+
+		'aload_1',
+		'iload_2',
+		'iload_3',
+		['iload', 4],
+		'iconst_1',
+		['invokevirtual', ('fd', 'dj'), ('d', 'c'), '(IIII)V'],
+		'return',
+
+		['label', 'L2'],
+		['iload', 6],
+		'iconst_2',
+		['if_icmpne', 'L3'],
+
+		'aload_1',
+		'iload_2',
+		'iload_3',
+		['iload', 4],
+		'iconst_2',
+		['invokevirtual', ('fd', 'dj'), ('d', 'c'), '(IIII)V'],
+		'return',
+
+		['label', 'L3'],
+		['iload', 6],
+		'iconst_3',
+		['if_icmpne', 'L4'],
+
+		'aload_1',
+		'iload_2',
+		'iload_3',
+		['iload', 4],
+		'iconst_3',
+		['invokevirtual', ('fd', 'dj'), ('d', 'c'), '(IIII)V'],
+		'return',
+
+		['label', 'L4'],
+
+		'return'
+	])
+	a_code = a_code_assemble([
+		(5).to_bytes(2),
+		(7).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_get_texture_id_method(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'a', '(Lxp;IIII)I')
+
+	code = assemble_code(cf, cp_cache, 0, 0, [
+		# ['sipush', 229],
+		# 'ireturn',
+
+		'aload_1',
+		'iload_2',
+		'iload_3',
+		['iload', 4],
+		['invokeinterface', 'xp', 'e', '(III)I', 4],
+		['istore', 6],
+
+		['iload', 5],
+		'iconst_2',
+		['if_icmpne', 'L1'],
+		['iload', 6],
+		'iconst_0',
+		['if_icmpne', 'L2'],
+		['sipush', 227],
+		'ireturn',
+		['label', 'L2'],
+		['sipush', 229],
+		'ireturn',
+		['label', 'L1'],
+
+		['iload', 5],
+		'iconst_3',
+		['if_icmpne', 'L3'],
+		['iload', 6],
+		'iconst_2',
+		['if_icmpne', 'L4'],
+		['sipush', 227],
+		'ireturn',
+		['label', 'L4'],
+		['sipush', 229],
+		'ireturn',
+		['label', 'L3'],
+
+		['iload', 5],
+		'iconst_5',
+		['if_icmpne', 'L5'],
+		['iload', 6],
+		'iconst_1',
+		['if_icmpne', 'L6'],
+		['sipush', 227],
+		'ireturn',
+		['label', 'L6'],
+		['sipush', 229],
+		'ireturn',
+		['label', 'L5'],
+
+		['iload', 5],
+		'iconst_4',
+		['if_icmpne', 'L7'],
+		['iload', 6],
+		'iconst_3',
+		['if_icmpne', 'L8'],
+		['sipush', 227],
+		'ireturn',
+		['label', 'L8'],
+		['sipush', 229],
+		'ireturn',
+		['label', 'L7'],
+
+		['sipush', 226],
+		'ireturn',
+	])
+	a_code = a_code_assemble([
+		(4).to_bytes(2),
+		(7).to_bytes(2),
 		len(code).to_bytes(4),
 		code,
 		(0).to_bytes(2),
