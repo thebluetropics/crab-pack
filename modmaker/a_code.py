@@ -1,3 +1,4 @@
+import struct
 from sys import exit, stderr
 from .cp import (
 	i2cpx_f,
@@ -5,7 +6,11 @@ from .cp import (
 	i2cpx_double,
 	i2cpx_string,
 	i2cpx_float,
-	i2cpx_i
+	i2cpx_i,
+	icpx_string,
+	i2cpx_c,
+	icpx_c,
+	icpx_float
 )
 
 def a_code_load(a_code_b):
@@ -302,6 +307,39 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 		else:
 			k, *args = ins
 
+			if k.__eq__('new') and type(args[0]) is str:
+				opcode, sz, _ = _ins_info_table['new']
+				temp.append(opcode + i2cpx_c(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('new') and type(args[0]) is tuple:
+				opcode, sz, _ = _ins_info_table['new']
+				temp.append(opcode + i2cpx_c(cf, cp_cache, args[0][select]))
+				i += sz
+				continue
+
+			if k.__eq__('checkcast'):
+				opcode, sz, _ = _ins_info_table['checkcast']
+				if type(args[0]) is tuple:
+					temp.append(opcode + i2cpx_c(cf, cp_cache, args[0][select]))
+				else:
+					temp.append(opcode + i2cpx_c(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('ldc2_w.f64') and isinstance(args[0], int):
+				opcode, sz, _ = _ins_info_table['ldc2_w']
+				temp.append(opcode + i2cpx_double(cf, cp_cache, struct.pack('>d', float(args[0]))))
+				i += sz
+				continue
+
+			if k.__eq__('ldc2_w.f64') and isinstance(args[0], float):
+				opcode, sz, _ = _ins_info_table['ldc2_w']
+				temp.append(opcode + i2cpx_double(cf, cp_cache, struct.pack('>d', args[0])))
+				i += sz
+				continue
+
 			if k.__eq__('ldc2_w.f64'):
 				opcode, sz, _ = _ins_info_table['ldc2_w']
 				temp.append(opcode + i2cpx_double(cf, cp_cache, args[0]))
@@ -317,6 +355,42 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 			if k.__eq__('ldc_w.string'):
 				opcode, sz, _ = _ins_info_table['ldc_w']
 				temp.append(opcode + i2cpx_string(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('ldc.f32') and isinstance(args[0], int):
+				opcode, sz, _ = _ins_info_table['ldc']
+				temp.append(opcode + icpx_float(cf, cp_cache, struct.pack('>f', float(args[0]))).to_bytes(1))
+				i += sz
+				continue
+
+			if k.__eq__('ldc.f32') and isinstance(args[0], float):
+				opcode, sz, _ = _ins_info_table['ldc']
+				temp.append(opcode + icpx_float(cf, cp_cache, struct.pack('>f', args[0])).to_bytes(1))
+				i += sz
+				continue
+
+			if k.__eq__('ldc.f32'):
+				opcode, sz, _ = _ins_info_table['ldc']
+				temp.append(opcode + icpx_float(cf, cp_cache, args[0]).to_bytes(1))
+				i += sz
+				continue
+
+			if k.__eq__('ldc.string'):
+				opcode, sz, _ = _ins_info_table['ldc']
+				temp.append(opcode + icpx_string(cf, cp_cache, args[0]).to_bytes(1))
+				i += sz
+				continue
+
+			if k.__eq__('ldc.class'):
+				opcode, sz, _ = _ins_info_table['ldc']
+				temp.append(opcode + icpx_c(cf, cp_cache, args[0]).to_bytes(1))
+				i += sz
+				continue
+
+			if k.__eq__('ldc_w.class'):
+				opcode, sz, _ = _ins_info_table['ldc_w']
+				temp.append(opcode + icpx_c(cf, cp_cache, args[0]).to_bytes(2))
 				i += sz
 				continue
 
