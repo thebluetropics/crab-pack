@@ -31,10 +31,12 @@ def apply(side_name):
 
 	cf[0x05] = (0x0001.__or__(0x0020)).to_bytes(2)
 	cf[0x06] = i2cpx_c(cf, cp_cache, c_name)
-	cf[0x07] = i2cpx_c(cf, cp_cache, ['uu', 'na'][side])
+	cf[0x07] = i2cpx_c(cf, cp_cache, ['rw', 'lb'][side])
 
 	cf[0x0d].append(_create_constructor(cf, cp_cache, side, c_name))
 	cf[0x0d].append(_create_on_placed_method(cf, cp_cache, side))
+	cf[0x0d].append(_create_create_block_entity_method(cf, cp_cache, side))
+	cf[0x0d].append(_create_on_use_method(cf, cp_cache, side))
 
 	if side_name.__eq__('client'):
 		cf[0x0d].append(_create_get_texture_id_method(cf, cp_cache))
@@ -56,7 +58,7 @@ def _create_constructor(cf, cp_cache, side, c_name):
 		'aload_0',
 		'iload_1',
 		['getstatic', ('ln', 'hj'), 'b', ('Lln;', 'Lhj;')],
-		['invokespecial', ('uu', 'na'), '<init>', ('(ILln;)V', '(ILhj;)V')],
+		['invokespecial', ('rw', 'lb'), '<init>', ('(ILln;)V', '(ILhj;)V')],
 		'aload_0',
 		['sipush', 226],
 		['putfield', c_name, 'bm', 'I'],
@@ -236,6 +238,59 @@ def _create_get_texture_id_method(cf, cp_cache):
 
 		['sipush', 226],
 		'ireturn',
+	])
+	a_code = a_code_assemble([
+		(4).to_bytes(2),
+		(7).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_create_block_entity_method(cf, cp_cache, side):
+	m = create_method(cf, cp_cache, ['protected'], 'a_', ['()Low;', '()Ljh;'][side])
+
+	code = assemble_code(cf, cp_cache, side, 0, [
+		['new', 'com/thebluetropics/crabpack/SmelterBlockEntity'],
+		'dup',
+		['invokespecial', 'com/thebluetropics/crabpack/SmelterBlockEntity', '<init>', '()V'],
+		'areturn'
+	])
+	a_code = a_code_assemble([
+		(2).to_bytes(2),
+		(1).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_on_use_method(cf, cp_cache, side):
+	m = create_method(cf, cp_cache, ['public'], 'a', ['(Lfd;IIILgs;)Z', '(Ldj;IIILem;)Z'][side])
+
+	code = assemble_code(cf, cp_cache, side, 0, [
+		'aload_1', 'iload_2', 'iload_3', ['iload', 4], ['invokevirtual', ('fd', 'dj'), 'b', ('(III)Low;', '(III)Ljh;')],
+		['checkcast', 'com/thebluetropics/crabpack/SmelterBlockEntity'],
+		['astore', 6],
+		['getstatic', 'java/lang/System', 'out', 'Ljava/io/PrintStream;'],
+		['aload', 6],
+		['invokevirtual', 'java/io/PrintStream', 'println', '(Ljava/lang/Object;)V'],
+		'iconst_1', 'ireturn'
 	])
 	a_code = a_code_assemble([
 		(4).to_bytes(2),
