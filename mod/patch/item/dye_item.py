@@ -49,7 +49,7 @@ def _modify_use_on_block_method(cf, cp_cache, side):
 
 		['aload', 3],
 		['getfield', icpx_f(cf, cp_cache, ['fd', 'dj'][side], 'B', 'Z')],
-		['ifne*', 'b'],
+		['ifne*', 'a'],
 
 		['aload', 3],
 		['iload', 4],
@@ -67,11 +67,10 @@ def _modify_use_on_block_method(cf, cp_cache, side):
 		'isub',
 		['putfield', icpx_f(cf, cp_cache, ['iz', 'fy'][side], 'a', 'I')],
 
-		['jump_target*', 'a'],
 		'iconst_1',
 		'ireturn',
 
-		['jump_target*', 'b']
+		['jump_target*', 'a']
 	]) + a_code[0x03][0:380]
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
