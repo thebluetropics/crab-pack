@@ -21,9 +21,6 @@ from modmaker.cp import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('block.solid_grass_block'):
-		return
-
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['km', 'gu'][side]
 
@@ -43,48 +40,94 @@ def _modify_use_on_block_method(cf, cp_cache, side):
 
 	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = assemble_code(cf, cp_cache, side, 0, [
-		['aload', 3],
-		['getfield', ('fd', 'dj'), 'B', 'Z'],
-		['ifne', 'a'],
+	code = []
 
-		['aload', 3],
-		['iload', 4],
-		['iload', 5],
-		['iload', 6],
-		['invokevirtual', ('fd', 'dj'), 'a', '(III)I'],
-		['getstatic', ('uu', 'na'), 'v', ('Lwp;', 'Loj;')],
-		['getfield', ('wp', 'oj'), 'bn', 'I'],
-		['if_icmpne', 'a'],
+	if mod.config.is_feature_enabled('block.solid_grass_block'):
+		code.extend([
+			['aload', 3],
+			['getfield', ('fd', 'dj'), 'B', 'Z'],
+			['ifne', 'a'],
 
-		['iload', 7],
-		['ifeq', 'a'],
+			['aload', 3],
+			['iload', 4],
+			['iload', 5],
+			['iload', 6],
+			['invokevirtual', ('fd', 'dj'), 'a', '(III)I'],
+			['getstatic', ('uu', 'na'), 'v', ('Lwp;', 'Loj;')],
+			['getfield', ('wp', 'oj'), 'bn', 'I'],
+			['if_icmpne', 'a'],
 
-		['iload', 7],
-		'iconst_1',
-		['if_icmpeq', 'a'],
+			['iload', 7],
+			['ifeq', 'a'],
 
-		['aload', 3],
-		['iload', 4],
-		['iload', 5],
-		['iload', 6],
-		['getstatic', ('uu', 'na'), 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;'],
-		['getfield', ('uu', 'na'), 'bn', 'I'],
-		['invokevirtual', ('fd', 'dj'), ('f', 'e'), '(IIII)Z'],
-		'pop',
+			['iload', 7],
+			'iconst_1',
+			['if_icmpeq', 'a'],
 
-		['aload', 1],
-		'dup',
-		['getfield', ('iz', 'fy'), 'a', 'I'],
-		'iconst_1',
-		'isub',
-		['putfield', ('iz', 'fy'), 'a', 'I'],
+			['aload', 3],
+			['iload', 4],
+			['iload', 5],
+			['iload', 6],
+			['getstatic', ('uu', 'na'), 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;'],
+			['getfield', ('uu', 'na'), 'bn', 'I'],
+			['invokevirtual', ('fd', 'dj'), ('f', 'e'), '(IIII)Z'],
+			'pop',
 
-		'iconst_1',
-		'ireturn',
+			['aload', 1],
+			'dup',
+			['getfield', ('iz', 'fy'), 'a', 'I'],
+			'iconst_1',
+			'isub',
+			['putfield', ('iz', 'fy'), 'a', 'I'],
 
-		['label', 'a']
-	]) + a_code[0x03][0:380]
+			'iconst_1',
+			'ireturn',
+
+			['label', 'a']
+		])
+
+	if mod.config.is_feature_enabled('etc.dirt_to_grass_block'):
+		code.extend([
+			['aload', 3],
+			['getfield', ('fd', 'dj'), 'B', 'Z'],
+			['ifne', 'b'],
+
+			['aload', 3],
+			['iload', 4],
+			['iload', 5],
+			['iload', 6],
+			['invokevirtual', ('fd', 'dj'), 'a', '(III)I'],
+			['getstatic', ('uu', 'na'), 'w', ('Luu;', 'Lna;')],
+			['getfield', ('uu', 'na'), 'bn', 'I'],
+			['if_icmpne', 'b'],
+
+			['iload', 7],
+			'iconst_1',
+			['if_icmpne', 'b'],
+
+			['aload', 3],
+			['iload', 4],
+			['iload', 5],
+			['iload', 6],
+			['getstatic', ('uu', 'na'), 'v', ('Lwp;', 'Loj;')],
+			['getfield', ('uu', 'na'), 'bn', 'I'],
+			['invokevirtual', ('fd', 'dj'), ('f', 'e'), '(IIII)Z'],
+			'pop',
+
+			['aload', 1],
+			'dup',
+			['getfield', ('iz', 'fy'), 'a', 'I'],
+			'iconst_1',
+			'isub',
+			['putfield', ('iz', 'fy'), 'a', 'I'],
+
+			'iconst_1',
+			'ireturn',
+
+			['label', 'b']
+		])
+
+	a_code[0x03] = assemble_code(cf, cp_cache, side, 0, code) + a_code[0x03][0:380]
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	# remove line number table
