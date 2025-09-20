@@ -1,20 +1,28 @@
 import mod
 
-from mod.attribute import get_attribute
-from mod.field import create_field
-from mod.method import create_method, get_method
-from mod import (
-	class_file,
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a import (
+	get_attribute
 )
-from mod.constant_pool import (
-	icpx_f,
-	icpx_m,
-	i2cpx_utf8,
-	icpx_string,
-	get_utf8_at
+from modmaker.a_code import (
+	a_code_load,
+	a_code_assemble,
+	assemble_code
+)
+from modmaker.f import (
+	create_field
+)
+from modmaker.m import (
+	get_method,
+	create_method
+)
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
+	get_utf8_at,
+	i2cpx_utf8
 )
 
 def apply(side_name):
@@ -24,8 +32,8 @@ def apply(side_name):
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['gs', 'em'][side]
 
-	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = load_class_file(mod.config.path(f'stage/{side_name}/{c_name}.class'))
+	cp_cache = cp_init_cache(cf[0x04])
 
 	add_fields = [
 		create_field(cf, cp_cache, ['public'], 'hunger', 'I'),
@@ -45,14 +53,14 @@ def apply(side_name):
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 4).to_bytes(2)
 	cf[0x0d].extend([
-		_create_update_hunger_method(cf, cp_cache),
-		_create_restore_hunger_method(cf, cp_cache, c_name),
-		_create_update_thirst_method(cf, cp_cache),
-		_create_restore_thirst_method(cf, cp_cache, c_name)
+		_create_update_hunger_method(cf, cp_cache, side),
+		_create_restore_hunger_method(cf, cp_cache, c_name, side),
+		_create_update_thirst_method(cf, cp_cache, side),
+		_create_restore_thirst_method(cf, cp_cache, c_name, side)
 	])
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(cf_assemble(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.entity.player.PlayerEntity')
 
@@ -60,15 +68,15 @@ def _modify_constructor(cf, cp_cache, side, c_name):
 	m = get_method(cf, cp_cache, '<init>', ['(Lfd;)V', '(Ldj;)V'][side])
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(0, [
-		'aload_0', ['bipush', 100], ['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
-		'aload_0', ['bipush', 100], ['putfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
-		'aload_0', ['bipush', 100], ['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
-		'aload_0', ['bipush', 100], ['putfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
-		'aload_0', 'iconst_0', ['putfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
-		'aload_0', 'iconst_0', ['putfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, side, 0, [
+		'aload_0', ['bipush', 100], ['putfield', c_name, 'hunger', 'I'],
+		'aload_0', ['bipush', 100], ['putfield', c_name, 'maxHunger', 'I'],
+		'aload_0', ['bipush', 100], ['putfield', c_name, 'thirst', 'I'],
+		'aload_0', ['bipush', 100], ['putfield', c_name, 'maxThirst', 'I'],
+		'aload_0', 'iconst_0', ['putfield', c_name, 'hungerTick', 'I'],
+		'aload_0', 'iconst_0', ['putfield', c_name, 'thirstTick', 'I'],
 		'return'
 	])
 
@@ -84,7 +92,7 @@ def _modify_constructor(cf, cp_cache, side, c_name):
 			break
 
 	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
+	a[0x02] = a_code_assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
@@ -93,121 +101,121 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 	m = get_method(cf, cp_cache, ['w_', 'm_'][side], '()V')
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
 	hunger_reduce_every = ['sipush', 200]
 	thirst_reduce_every = ['sipush', 160]
 
-	a_code[0x03] = a_code[0x03][0:-1] + instructions.assemble(402, [
+	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, side, 402, [
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, ['aI', 'aL'][side], ['Lfd;', 'Ldj;'][side])],
-		['getfield', icpx_f(cf, cp_cache, ['fd', 'dj'][side], 'B', 'Z')],
-		['ifne*', 'end_hunger_tick'],
+		['getfield', c_name, ('aI', 'aL'), ('Lfd;', 'Ldj;')],
+		['getfield', ('fd', 'dj'), 'B', 'Z'],
+		['ifne', 'end_hunger_tick'],
 
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		['getfield', c_name, 'hungerTick', 'I'],
 		hunger_reduce_every,
-		['if_icmpge*', 'a'],
+		['if_icmpge', 'a'],
 
 		'aload_0',
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		['getfield', c_name, 'hungerTick', 'I'],
 		'iconst_1',
 		'iadd',
-		['putfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		['putfield', c_name, 'hungerTick', 'I'],
 
-		['jump_target*', 'a'],
+		['label', 'a'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		['getfield', c_name, 'hungerTick', 'I'],
 		hunger_reduce_every,
-		['if_icmplt*', 'end_hunger_tick'],
+		['if_icmplt', 'end_hunger_tick'],
 
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
-		['ifle*', 'b'],
+		['getfield', c_name, 'hunger', 'I'],
+		['ifle', 'b'],
 
 		'aload_0',
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		['getfield', c_name, 'hunger', 'I'],
 		'iconst_1',
 		'isub',
-		['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		['putfield', c_name, 'hunger', 'I'],
 
 		'aload_0',
-		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
-		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'updateHunger', '(II)V')],
+		'aload_0', ['getfield', c_name, 'hunger', 'I'],
+		'aload_0', ['getfield', c_name, 'maxHunger', 'I'],
+		['invokevirtual', c_name, 'updateHunger', '(II)V'],
 
-		['goto*', 'c'],
+		['goto', 'c'],
 
-		['jump_target*', 'b'],
+		['label', 'b'],
 		'aload_0',
 		'aconst_null',
 		'iconst_1',
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lsn;I)Z', '(Llq;I)Z'][side])],
+		['invokevirtual', c_name, 'a', ('(Lsn;I)Z', '(Llq;I)Z')],
 		'pop',
 
-		['jump_target*', 'c'],
+		['label', 'c'],
 		'aload_0',
 		'iconst_0',
-		['putfield', icpx_f(cf, cp_cache, c_name, 'hungerTick', 'I')],
+		['putfield', c_name, 'hungerTick', 'I'],
 
-		['jump_target*', 'end_hunger_tick'],
-
-		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, ['aI', 'aL'][side], ['Lfd;', 'Ldj;'][side])],
-		['getfield', icpx_f(cf, cp_cache, ['fd', 'dj'][side], 'B', 'Z')],
-		['ifne*', 'end_thirst_tick'],
+		['label', 'end_hunger_tick'],
 
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		['getfield', c_name, ('aI', 'aL'), ('Lfd;', 'Ldj;')],
+		['getfield', ('fd', 'dj'), 'B', 'Z'],
+		['ifne', 'end_thirst_tick'],
+
+		'aload_0',
+		['getfield', c_name, 'thirstTick', 'I'],
 		thirst_reduce_every,
-		['if_icmpge*', 'd'],
+		['if_icmpge', 'd'],
 
 		'aload_0',
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		['getfield', c_name, 'thirstTick', 'I'],
 		'iconst_1',
 		'iadd',
-		['putfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		['putfield', c_name, 'thirstTick', 'I'],
 
-		['jump_target*', 'd'],
+		['label', 'd'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		['getfield', c_name, 'thirstTick', 'I'],
 		thirst_reduce_every,
-		['if_icmplt*', 'end_thirst_tick'],
+		['if_icmplt', 'end_thirst_tick'],
 
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
-		['ifle*', 'e'],
+		['getfield', c_name, 'thirst', 'I'],
+		['ifle', 'e'],
 
 		'aload_0',
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		['getfield', c_name, 'thirst', 'I'],
 		'iconst_1',
 		'isub',
-		['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		['putfield', c_name, 'thirst', 'I'],
 
 		'aload_0',
-		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
-		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'updateThirst', '(II)V')],
+		'aload_0', ['getfield', c_name, 'thirst', 'I'],
+		'aload_0', ['getfield', c_name, 'maxThirst', 'I'],
+		['invokevirtual', c_name, 'updateThirst', '(II)V'],
 
-		['goto*', 'f'],
+		['goto', 'f'],
 
-		['jump_target*', 'e'],
+		['label', 'e'],
 		'aload_0',
 		'aconst_null',
 		'iconst_1',
-		['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Lsn;I)Z', '(Llq;I)Z'][side])],
+		['invokevirtual', c_name, 'a', ('(Lsn;I)Z', '(Llq;I)Z')],
 		'pop',
 
-		['jump_target*', 'f'],
+		['label', 'f'],
 		'aload_0',
 		'iconst_0',
-		['putfield', icpx_f(cf, cp_cache, c_name, 'thirstTick', 'I')],
+		['putfield', c_name, 'thirstTick', 'I'],
 
-		['jump_target*', 'end_thirst_tick'],
+		['label', 'end_thirst_tick'],
 
 		'return'
 	])
@@ -224,18 +232,18 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 			break
 
 	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
+	a[0x02] = a_code_assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
-def _create_update_hunger_method(cf, cp_cache):
+def _create_update_hunger_method(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['protected'], 'updateHunger', '(II)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(0).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),
@@ -251,22 +259,22 @@ def _create_update_hunger_method(cf, cp_cache):
 
 	return m
 
-def _create_restore_hunger_method(cf, cp_cache, c_name):
+def _create_restore_hunger_method(cf, cp_cache, c_name, side):
 	m = create_method(cf, cp_cache, ['public'], 'restoreHunger', '(I)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'aload_0',
 		'dup',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
+		['getfield', c_name, 'maxHunger', 'I'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		['getfield', c_name, 'hunger', 'I'],
 		'iload_1',
 		'iadd',
-		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Math', 'min', '(II)I')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		['invokestatic', 'java/lang/Math', 'min', '(II)I'],
+		['putfield', c_name, 'hunger', 'I'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(4).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
@@ -282,13 +290,13 @@ def _create_restore_hunger_method(cf, cp_cache, c_name):
 
 	return m
 
-def _create_update_thirst_method(cf, cp_cache):
+def _create_update_thirst_method(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['protected'], 'updateThirst', '(II)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(0).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),
@@ -304,22 +312,22 @@ def _create_update_thirst_method(cf, cp_cache):
 
 	return m
 
-def _create_restore_thirst_method(cf, cp_cache, c_name):
+def _create_restore_thirst_method(cf, cp_cache, c_name, side):
 	m = create_method(cf, cp_cache, ['public'], 'restoreThirst', '(I)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'aload_0',
 		'dup',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		['getfield', c_name, 'maxThirst', 'I'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		['getfield', c_name, 'thirst', 'I'],
 		'iload_1',
 		'iadd',
-		['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Math', 'min', '(II)I')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		['invokestatic', 'java/lang/Math', 'min', '(II)I'],
+		['putfield', c_name, 'thirst', 'I'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(4).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
@@ -339,29 +347,29 @@ def _modify_read_nbt_method(cf, cp_cache, side, c_name):
 	m = get_method(cf, cp_cache, 'a', ['(Lnu;)V', '(Liq;)V'][side])
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:152] + instructions.assemble(152, [
+	a_code[0x03] = a_code[0x03][0:152] + assemble_code(cf, cp_cache, side, 152, [
 		'aload_0',
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'Hunger')],
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		['ldc_w.string', 'Hunger'],
+		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+		['putfield', c_name, 'hunger', 'I'],
 		'aload_0',
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'MaxHunger')],
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
+		['ldc_w.string', 'MaxHunger'],
+		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+		['putfield', c_name, 'maxHunger', 'I'],
 		'aload_0',
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'Thirst')],
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		['ldc_w.string', 'Thirst'],
+		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+		['putfield', c_name, 'thirst', 'I'],
 		'aload_0',
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'MaxThirst')],
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'd', '(Ljava/lang/String;)S')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		['ldc_w.string', 'MaxThirst'],
+		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+		['putfield', c_name, 'maxThirst', 'I'],
 		'return'
 	])
 
@@ -377,7 +385,7 @@ def _modify_read_nbt_method(cf, cp_cache, side, c_name):
 			break
 
 	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
+	a[0x02] = a_code_assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
@@ -386,33 +394,33 @@ def _modify_write_nbt_method(cf, cp_cache, side, c_name):
 	m = get_method(cf, cp_cache, 'b', ['(Lnu;)V', '(Liq;)V'][side])
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:102] + instructions.assemble(102, [
+	a_code[0x03] = a_code[0x03][0:102] + assemble_code(cf, cp_cache, side, 102, [
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'Hunger')],
+		['ldc_w.string', 'Hunger'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'hunger', 'I')],
+		['getfield', c_name, 'hunger', 'I'],
 		'i2s',
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'MaxHunger')],
+		['ldc_w.string', 'MaxHunger'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'maxHunger', 'I')],
+		['getfield', c_name, 'maxHunger', 'I'],
 		'i2s',
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'Thirst')],
+		['ldc_w.string', 'Thirst'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		['getfield', c_name, 'thirst', 'I'],
 		'i2s',
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
 		'aload_1',
-		['ldc_w', icpx_string(cf, cp_cache, 'MaxThirst')],
+		['ldc_w.string', 'MaxThirst'],
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		['getfield', c_name, 'maxThirst', 'I'],
 		'i2s',
-		['invokevirtual', icpx_m(cf, cp_cache, ['nu', 'iq'][side], 'a', '(Ljava/lang/String;S)V')],
+		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
 		'return'
 	])
 
@@ -428,7 +436,7 @@ def _modify_write_nbt_method(cf, cp_cache, side, c_name):
 			break
 
 	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
+	a[0x02] = a_code_assemble(a_code)
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
