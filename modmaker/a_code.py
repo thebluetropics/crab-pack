@@ -85,7 +85,7 @@ def _gen_ins_info_table(entries):
 	return table
 
 # multianewarray, jsr, jsr_w, ret, invokedynamic, invokeinterface, monitorenter,
-# monitorexit, wide, tableswitch, lookupswitch
+# monitorexit, wide, tableswitch, lookupswitch, iinc
 _ins_info_table = _gen_ins_info_table([
 	['nop', 0x00],
 	['aconst_null', 0x01],
@@ -218,7 +218,6 @@ _ins_info_table = _gen_ins_info_table([
 	['lor', 0x81],
 	['ixor', 0x82],
 	['lxor', 0x83],
-	['iinc', 0x84, 2],
 	['i2l', 0x85],
 	['i2f', 0x86],
 	['i2d', 0x87],
