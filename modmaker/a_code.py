@@ -307,6 +307,18 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 		else:
 			k, *args = ins
 
+			if k.__eq__('anewarray') and type(args[0]) is str:
+				opcode, sz, _ = _ins_info_table['anewarray']
+				temp.append(opcode + i2cpx_c(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('anewarray') and type(args[0]) is tuple:
+				opcode, sz, _ = _ins_info_table['anewarray']
+				temp.append(opcode + i2cpx_c(cf, cp_cache, args[0][select]))
+				i += sz
+				continue
+
 			if k.__eq__('new') and type(args[0]) is str:
 				opcode, sz, _ = _ins_info_table['new']
 				temp.append(opcode + i2cpx_c(cf, cp_cache, args[0]))
