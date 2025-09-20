@@ -1,50 +1,52 @@
 import mod
 
-from mod.method import create_method
-from mod import (
-	class_file,
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a_code import (
+	a_code_assemble,
+	assemble_code
 )
-from mod.constant_pool import (
-	icpx_f,
-	icpx_m,
-	i2cpx_utf8,
-	icpx_c
+from modmaker.m import (
+	create_method
+)
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
+	i2cpx_utf8
 )
 
 def apply():
 	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		return
 
-	cf = class_file.load(mod.config.path('stage/server/dl.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = load_class_file(mod.config.path('stage/server/dl.class'))
+	cp_cache = cp_init_cache(cf[0x04])
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 2).to_bytes(2)
 	cf[0x0d].append(_create_update_hunger_method(cf, cp_cache))
 	cf[0x0d].append(_create_update_thirst_method(cf, cp_cache))
 
 	with open('stage/server/dl.class', 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(cf_assemble(cf))
 
 	print('Patched server:dl.class → net.minecraft.entity.ServerPlayerEntity')
 
 def _create_update_hunger_method(cf, cp_cache):
 	m = create_method(cf, cp_cache, ['protected'], 'updateHunger', '(II)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, 1, 0, [
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, 'dl', 'a', 'Lha;')],
-		['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket')],
+		['getfield', 'dl', 'a', 'Lha;'],
+		['new', 'com/thebluetropics/crabpack/HungerUpdatePacket'],
 		'dup',
 		'iload_1',
 		'iload_2',
-		['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', '<init>', '(II)V')],
-		['invokevirtual', icpx_m(cf, cp_cache, 'ha', 'b', '(Lgt;)V')],
+		['invokespecial', 'com/thebluetropics/crabpack/HungerUpdatePacket', '<init>', '(II)V'],
+		['invokevirtual', 'ha', 'b', '(Lgt;)V'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(5).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),
@@ -64,18 +66,18 @@ def _create_update_hunger_method(cf, cp_cache):
 def _create_update_thirst_method(cf, cp_cache):
 	m = create_method(cf, cp_cache, ['protected'], 'updateThirst', '(II)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, 1, 0, [
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, 'dl', 'a', 'Lha;')],
-		['new', icpx_c(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket')],
+		['getfield', 'dl', 'a', 'Lha;'],
+		['new', 'com/thebluetropics/crabpack/ThirstUpdatePacket'],
 		'dup',
 		'iload_1',
 		'iload_2',
-		['invokespecial', icpx_m(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket', '<init>', '(II)V')],
-		['invokevirtual', icpx_m(cf, cp_cache, 'ha', 'b', '(Lgt;)V')],
+		['invokespecial', 'com/thebluetropics/crabpack/ThirstUpdatePacket', '<init>', '(II)V'],
+		['invokevirtual', 'ha', 'b', '(Lgt;)V'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(5).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),
@@ -85,9 +87,8 @@ def _create_update_thirst_method(cf, cp_cache):
 		(0).to_bytes(2),
 		[]
 	])
-	a = [i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]
 
 	m[0x03] = (1).to_bytes(2)
-	m[0x04] = [a]
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
