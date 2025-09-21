@@ -411,7 +411,15 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 				continue
 
 			if k.__eq__('invokeinterface'):
-				temp.append(b'\xb9' + i2cpx_i(cf, cp_cache, args[0], args[1], args[2]) + args[3].to_bytes(1) + b'\x00')
+				r_args = []
+
+				for arg in args[0:-1]:
+					if type(arg) is tuple:
+						r_args.append(arg[select])
+					else:
+						r_args.append(arg)
+
+				temp.append(b'\xb9' + i2cpx_i(cf, cp_cache, *r_args) + args[3].to_bytes(1) + b'\x00')
 				i += 5
 				continue
 
