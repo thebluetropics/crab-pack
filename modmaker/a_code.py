@@ -478,7 +478,7 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 			target_pc = target_table[args[0]]
 			offset_pc = target_pc - i
 
-			temp[j] = opcode + offset_pc.to_bytes(2)
+			temp[j] = opcode + offset_pc.to_bytes(2, signed=True)
 			i += sz
 
 	return b''.join(temp)
