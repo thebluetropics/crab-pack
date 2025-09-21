@@ -306,6 +306,11 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 		else:
 			k, *args = ins
 
+			if k.__eq__('iinc'):
+				temp.append(b'\x84' + args[0].to_bytes(1) + args[1].to_bytes(1))
+				i += 3
+				continue
+
 			if k.__eq__('anewarray') and type(args[0]) is str:
 				opcode, sz, _ = _ins_info_table['anewarray']
 				temp.append(opcode + i2cpx_c(cf, cp_cache, args[0]))
