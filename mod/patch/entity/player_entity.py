@@ -51,12 +51,13 @@ def apply(side_name):
 	_modify_read_nbt_method(cf, cp_cache, side, c_name)
 	_modify_write_nbt_method(cf, cp_cache, side, c_name)
 
-	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 4).to_bytes(2)
+	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 5).to_bytes(2)
 	cf[0x0d].extend([
 		_create_update_hunger_method(cf, cp_cache, side),
 		_create_restore_hunger_method(cf, cp_cache, c_name, side),
 		_create_update_thirst_method(cf, cp_cache, side),
-		_create_restore_thirst_method(cf, cp_cache, c_name, side)
+		_create_restore_thirst_method(cf, cp_cache, c_name, side),
+		_create_open_smelter_screen_method(cf, cp_cache, side)
 	])
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
@@ -440,3 +441,25 @@ def _modify_write_nbt_method(cf, cp_cache, side, c_name):
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _create_open_smelter_screen_method(cf, cp_cache, side):
+	m = create_method(cf, cp_cache, ['public'], 'openSmelterScreen', '(Lcom/thebluetropics/crabpack/SmelterBlockEntity;)V')
+
+	code = assemble_code(cf, cp_cache, side, 0, [
+		'return'
+	])
+	a_code = a_code_assemble([
+		(0).to_bytes(2),
+		(2).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m

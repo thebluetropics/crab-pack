@@ -1,4 +1,4 @@
-from . import (block, entity, client, item, server, world, meta_inf, packet, recipe, network)
+from . import (block, entity, client, item, server, world, meta_inf, packet, recipe, network, screen)
 
 def apply_client_patches():
 	block.apply_client()
@@ -9,6 +9,7 @@ def apply_client_patches():
 	packet.apply_client()
 	recipe.apply_client()
 	network.apply_client()
+	screen.apply_client()
 
 	meta_inf.apply_client()
 
@@ -21,6 +22,7 @@ def apply_server_patches():
 	recipe.apply_server()
 	entity.apply_server()
 	network.apply_server()
+	screen.apply_server()
 
 	meta_inf.apply_server()
 

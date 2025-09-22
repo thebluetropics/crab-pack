@@ -10,8 +10,11 @@ from . import (
 	item_renderer,
 	world_renderer,
 	entity_renderer,
-	block_render_manager
+	block_render_manager,
+	client_player_entity,
+	smelter_screen
 )
+import mod
 
 def apply():
 	title_screen.apply()
@@ -21,10 +24,17 @@ def apply():
 	keyboard_input.apply()
 	game_renderer.apply()
 	i18n.apply()
-	client_network_handler.apply()
+
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst') or mod.config.is_feature_enabled('block.smelter'):
+		client_network_handler.apply()
+
 	item_renderer.apply()
 	world_renderer.apply()
 	entity_renderer.apply()
 	block_render_manager.apply()
+
+	if mod.config.is_feature_enabled('block.smelter'):
+		smelter_screen.apply()
+		client_player_entity.apply()
 
 __all__ = [title_screen.__name__]

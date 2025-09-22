@@ -2,6 +2,7 @@ import ctypes
 import platform
 import os
 import mod
+import shutil
 
 from sys import (exit, stderr)
 
@@ -127,3 +128,5 @@ def apply():
 		if not ret_code.__eq__(0):
 			print('Err: unknown.', file=stderr)
 			exit(1)
+
+		shutil.copy(mod.config.path('assets', 'gui_smelter.png'), mod.config.path('stage', 'client', 'gui', 'smelter.png'))
