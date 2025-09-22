@@ -1,54 +1,58 @@
 import mod
 
-from mod.method import create_method
-from mod import (
-	class_file,
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a_code import (
+	a_code_assemble,
+	assemble_code
 )
-from mod.constant_pool import (
-	icpx_f,
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
 	i2cpx_utf8
+)
+from modmaker.m import (
+	create_method
 )
 
 def apply():
 	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		return
 
-	cf = class_file.load(mod.config.path('stage/client/nb.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = load_class_file(mod.config.path('stage/client/nb.class'))
+	cp_cache = cp_init_cache(cf[0x04])
 
 	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 2).to_bytes(2)
 	cf[0x0d].append(_on_hunger_update(cf, cp_cache))
 	cf[0x0d].append(_on_thirst_update(cf, cp_cache))
 
 	with open('stage/client/nb.class', 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(cf_assemble(cf))
 
 	print('Patched client:nb.class → net.minecraft.client.network.ClientNetworkHandler')
 
 def _on_hunger_update(cf, cp_cache):
 	m = create_method(cf, cp_cache, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, 0, 0, [
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
-		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
+		['getfield', 'nb', 'f', 'Lnet/minecraft/client/Minecraft;'],
+		['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'],
 		'aload_1',
-		['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I')],
-		['putfield', icpx_f(cf, cp_cache, 'dc', 'hunger', 'I')],
+		['getfield', 'com/thebluetropics/crabpack/HungerUpdatePacket', 'hunger', 'I'],
+		['putfield', 'dc', 'hunger', 'I'],
 
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
-		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
+		['getfield', 'nb', 'f', 'Lnet/minecraft/client/Minecraft;'],
+		['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'],
 		'aload_1',
-		['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I')],
-		['putfield', icpx_f(cf, cp_cache, 'dc', 'maxHunger', 'I')],
+		['getfield', 'com/thebluetropics/crabpack/HungerUpdatePacket', 'maxHunger', 'I'],
+		['putfield', 'dc', 'maxHunger', 'I'],
 
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(2).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
@@ -68,24 +72,24 @@ def _on_hunger_update(cf, cp_cache):
 def _on_thirst_update(cf, cp_cache):
 	m = create_method(cf, cp_cache, ['public'], 'onThirstUpdate', '(Lcom/thebluetropics/crabpack/ThirstUpdatePacket;)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, 0, 0, [
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
-		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
+		['getfield', 'nb', 'f', 'Lnet/minecraft/client/Minecraft;'],
+		['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'],
 		'aload_1',
-		['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'thirst', 'I')],
-		['putfield', icpx_f(cf, cp_cache, 'dc', 'thirst', 'I')],
+		['getfield', 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'thirst', 'I'],
+		['putfield', 'dc', 'thirst', 'I'],
 
 		'aload_0',
-		['getfield', icpx_f(cf, cp_cache, 'nb', 'f', 'Lnet/minecraft/client/Minecraft;')],
-		['getfield', icpx_f(cf, cp_cache, 'net/minecraft/client/Minecraft', 'h', 'Ldc;')],
+		['getfield', 'nb', 'f', 'Lnet/minecraft/client/Minecraft;'],
+		['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'],
 		'aload_1',
-		['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'maxThirst', 'I')],
-		['putfield', icpx_f(cf, cp_cache, 'dc', 'maxThirst', 'I')],
+		['getfield', 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'maxThirst', 'I'],
+		['putfield', 'dc', 'maxThirst', 'I'],
 
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(2).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
