@@ -54,5 +54,12 @@ with open(os.path.join(root_dir, 'config', 'features.conf'), 'r') as file:
 			if v.__eq__('enabled'):
 				_features.append(f'{sec}.{k}')
 
+def is_one_of_features_enabled(features):
+	for x in features:
+		if x in _features:
+			return True
+
+	return False
+
 def is_feature_enabled(feature):
 	return feature in _features
