@@ -48,10 +48,7 @@ def _modify_on_stepped_on_method(cf, cp_cache, side):
 		'return'
 	])
 
-	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
-
-	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
@@ -59,10 +56,7 @@ def _modify_on_stepped_on_method(cf, cp_cache, side):
 			del a_code[0x07][i]
 			break
 
-	# update code attribute
 	a[0x02] = a_code_assemble(a_code)
-
-	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
 def _modify_is_water_nearby_method(cf, cp_cache, side):
@@ -84,10 +78,7 @@ def _modify_is_water_nearby_method(cf, cp_cache, side):
 		['label', 'end']
 	]) + a_code[0x03][0:77]
 
-	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
-
-	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
@@ -95,8 +86,5 @@ def _modify_is_water_nearby_method(cf, cp_cache, side):
 			del a_code[0x07][i]
 			break
 
-	# update code attribute
 	a[0x02] = a_code_assemble(a_code)
-
-	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
