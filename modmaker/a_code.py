@@ -11,7 +11,8 @@ from .cp import (
 	i2cpx_c,
 	icpx_c,
 	icpx_float,
-	icpx_int
+	icpx_int,
+	i2cpx_long
 )
 
 def a_code_load(a_code_b):
@@ -342,6 +343,12 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 					temp.append(opcode + i2cpx_c(cf, cp_cache, args[0][select]))
 				else:
 					temp.append(opcode + i2cpx_c(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('ldc2_w.i64') and isinstance(args[0], int):
+				opcode, sz, _ = _ins_info_table['ldc2_w']
+				temp.append(opcode + i2cpx_long(cf, cp_cache, args[0]))
 				i += sz
 				continue
 
