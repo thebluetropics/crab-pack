@@ -263,19 +263,57 @@ def _modify_constructor(cf, cp_cache, side_name, side, c_name):
 		])
 
 	if mod.config.is_feature_enabled('debug.debug_recipes'):
+		result_dirt = [('gm', 'ej'), 'l', ('Lgm;', 'Lej;')]
+		result_sand = [('gm', 'ej'), 'l', ('Lgm;', 'Lej;')]
+		result_gravel = [('gm', 'ej'), 'l', ('Lgm;', 'Lej;')]
+
 		patch_code.extend([
 			'aload_0',
 			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, ['gm', 'ej'][side], 'l', ['Lgm;', 'Lej;'][side])],
+			['getstatic', icpx_f(cf, cp_cache, result_dirt[0][side], result_dirt[1], result_dirt[2][side])],
 			'iconst_1',
 			['bipush', 0],
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', ['(Lgm;II)V', '(Lej;II)V'][side])],
+			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', f'({result_dirt[2][side]}II)V')],
 			'iconst_1',
 			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
 			'dup',
 			'iconst_0',
 			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'w', ['Luu;', 'Lna;'][side])],
+			'aastore',
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+		])
+
+		patch_code.extend([
+			'aload_0',
+			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			'dup',
+			['getstatic', icpx_f(cf, cp_cache, result_sand[0][side], result_sand[1], result_sand[2][side])],
+			'iconst_1',
+			['bipush', 0],
+			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', f'({result_sand[2][side]}II)V')],
+			'iconst_1',
+			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			'dup',
+			'iconst_0',
+			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'F', ['Luu;', 'Lna;'][side])],
+			'aastore',
+			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+		])
+
+		patch_code.extend([
+			'aload_0',
+			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			'dup',
+			['getstatic', icpx_f(cf, cp_cache, result_gravel[0][side], result_gravel[1], result_gravel[2][side])],
+			'iconst_1',
+			['bipush', 0],
+			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', f'({result_gravel[2][side]}II)V')],
+			'iconst_1',
+			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			'dup',
+			'iconst_0',
+			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'G', ['Luu;', 'Lna;'][side])],
 			'aastore',
 			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
 		])
