@@ -79,8 +79,8 @@ def _create_static_initializer(cf, cp_cache, side, c_name):
 
 		['new', ('iz', 'fy')],
 		'dup',
-		['getstatic', ('uu', 'na'), 'w', ('Luu;', 'Lna;')],
-		['invokespecial', ('iz', 'fy'), '<init>', ('(Luu;)V', '(Lna;)V')],
+		['getstatic', ('gm', 'ej'), 'STEEL_INGOT', ('Lgm;', 'Lej;')],
+		['invokespecial', ('iz', 'fy'), '<init>', ('(Lgm;)V', '(Lej;)V')],
 
 		['invokeinterface', 'java/util/Map', 'put', '(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;', 3],
 		'pop',

@@ -34,6 +34,9 @@ def apply():
 	lib.apply_smelter.argtypes = [ctypes.c_char_p] * 5
 	lib.apply_smelter.restype = ctypes.c_uint8
 
+	lib.apply_steel_ingot.argtypes = [ctypes.c_char_p] * 2
+	lib.apply_steel_ingot.restype = ctypes.c_uint8
+
 	lib.apply_hunger_and_thirst.argtypes = [ctypes.c_char_p] * 2
 	lib.apply_hunger_and_thirst.restype = ctypes.c_uint8
 
@@ -130,3 +133,12 @@ def apply():
 			exit(1)
 
 		shutil.copy(mod.config.path('assets', 'gui_smelter.png'), mod.config.path('stage', 'client', 'gui', 'smelter.png'))
+
+		ret_code = lib.apply_steel_ingot(
+			os.path.join(mod.config.path('assets'), 'steel_ingot.png').encode('utf-8'),
+			os.path.join(mod.config.path('stage'), 'client', 'gui', 'items.png').encode('utf-8')
+		)
+
+		if not ret_code.__eq__(0):
+			print('Err: unknown.', file=stderr)
+			exit(1)

@@ -380,3 +380,36 @@ _exit:
 
 	return code;
 }
+
+uint8_t apply_steel_ingot(char* source, char* target) {
+	uint8_t code = 0;
+
+	struct _image_t icons;
+	icons.ptr = stbi_load(target, &icons.w, &icons.h, &icons._n, 4);
+
+	if (!icons.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	struct _image_t steel_ingot;
+	steel_ingot.ptr = stbi_load(source, &steel_ingot.w, &steel_ingot.h, &steel_ingot._n, 4);
+
+	if (!steel_ingot.ptr) {
+		code = 1;
+		goto _exit;
+	}
+
+	overlay(steel_ingot.ptr, icons.ptr, steel_ingot.w, steel_ingot.h, icons.w, 80, 240);
+
+	if (!stbi_write_png(target, icons.w, icons.h, 4, icons.ptr, icons.w * 4)) {
+		code = 1;
+		goto _exit;
+	}
+
+_exit:
+	stbi_image_free(icons.ptr);
+	stbi_image_free(steel_ingot.ptr);
+
+	return code;
+}

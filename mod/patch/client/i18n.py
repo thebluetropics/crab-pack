@@ -7,7 +7,9 @@ def apply():
 				"item.raw_squid.name=Raw Squid",
 				"item.raw_squid.desc=",
 				"item.calamari.name=Calamari",
-				"item.calamari.desc=Calamari"
+				"item.calamari.desc=Calamari",
+				"item.steel_ingot.name=Steel Ingot",
+				"item.steel_ingot.desc="
 			]))
 
 	if mod.config.is_feature_enabled("block.fortress_bricks"):
