@@ -10,7 +10,8 @@ from .cp import (
 	icpx_string,
 	i2cpx_c,
 	icpx_c,
-	icpx_float
+	icpx_float,
+	icpx_int
 )
 
 def a_code_load(a_code_b):
@@ -362,6 +363,12 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 				i += sz
 				continue
 
+			if k.__eq__('ldc_w.f32') and isinstance(args[0], float):
+				opcode, sz, _ = _ins_info_table['ldc_w']
+				temp.append(opcode + i2cpx_float(cf, cp_cache, struct.pack('>f', float(args[0]))))
+				i += sz
+				continue
+
 			if k.__eq__('ldc_w.f32'):
 				opcode, sz, _ = _ins_info_table['ldc_w']
 				temp.append(opcode + i2cpx_float(cf, cp_cache, args[0]))
@@ -371,6 +378,12 @@ def assemble_code(cf, cp_cache, select, pc_begin, code):
 			if k.__eq__('ldc_w.string'):
 				opcode, sz, _ = _ins_info_table['ldc_w']
 				temp.append(opcode + i2cpx_string(cf, cp_cache, args[0]))
+				i += sz
+				continue
+
+			if k.__eq__('ldc_w.i32') and isinstance(args[0], int):
+				opcode, sz, _ = _ins_info_table['ldc_w']
+				temp.append(opcode + icpx_int(cf, cp_cache, args[0]).to_bytes(2))
 				i += sz
 				continue
 
