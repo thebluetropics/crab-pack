@@ -28,7 +28,8 @@ def apply(side_name):
 		'block.fortress_bricks',
 		'block.solid_grass_block',
 		'block.mortar',
-		'block.smelter'
+		'block.smelter',
+		'block.persistent_leaves'
 	]): return
 
 	side = 0 if side_name.__eq__('client') else 1
@@ -49,6 +50,9 @@ def apply(side_name):
 
 	if mod.config.is_feature_enabled('block.smelter'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'SMELTER', 'Lcom/thebluetropics/crabpack/SmelterBlock;'))
+
+	if mod.config.is_feature_enabled('block.persistent_leaves'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'PERSISTENT_LEAVES', 'Lcom/thebluetropics/crabpack/PersistentLeavesBlock;'))
 
 	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
 
@@ -162,6 +166,19 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 			['invokevirtual', c_name, ('j', 'g'), ('()Luu;', '()Lna;')],
 			['checkcast', 'com/thebluetropics/crabpack/SmelterBlock'],
 			['putstatic', c_name, 'SMELTER', 'Lcom/thebluetropics/crabpack/SmelterBlock;']
+		])
+
+	if mod.config.is_feature_enabled('block.persistent_leaves'):
+		code.extend([
+			['new', 'com/thebluetropics/crabpack/PersistentLeavesBlock'],
+			'dup', ['bipush', 102], ['invokespecial', 'com/thebluetropics/crabpack/PersistentLeavesBlock', '<init>', '(I)V'],
+			['ldc_w.f32', 0.2], ['invokevirtual', 'com/thebluetropics/crabpack/PersistentLeavesBlock', 'c', ('(F)Luu;', '(F)Lna;')],
+			['getstatic', c_name, 'g', ('Lct;', 'Lbu;')], ['invokevirtual', c_name, 'a', ('(Lct;)Luu;', '(Lbu;)Lna;')],
+			['ldc_w.string', 'persistent_leaves'], ['invokevirtual', c_name, 'a', ('(Ljava/lang/String;)Luu;', '(Ljava/lang/String;)Lna;')],
+			['invokevirtual', c_name, ('j', 'g'), ('()Luu;', '()Lna;')],
+			'iconst_1', ['invokevirtual', c_name, ('g', 'f'), ('(I)Luu;', '(I)Lna;')],
+			['checkcast', 'com/thebluetropics/crabpack/PersistentLeavesBlock'],
+			['putstatic', c_name, 'PERSISTENT_LEAVES', 'Lcom/thebluetropics/crabpack/PersistentLeavesBlock;']
 		])
 
 	a_code[0x03] = a_code[0x03][0:3398] + assemble_code(cf, cp_cache, side, 3398, code) + a_code[0x03][3398:3678]
