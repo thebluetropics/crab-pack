@@ -24,12 +24,15 @@ def apply(side_name):
 	cf = cf_create()
 	cp_cache = cp_init_cache(cf[0x04])
 
+	cf[0x02] = (49).to_bytes(2)
+
 	cf[0x05] = (0x0001.__or__(0x0020)).to_bytes(2)
 	cf[0x06] = i2cpx_c(cf, cp_cache, c_name)
 	cf[0x07] = i2cpx_c(cf, cp_cache, ['nr', 'in'][side])
 
 	methods = [
-		_create_constructor(cf, cp_cache, side)
+		_create_constructor(cf, cp_cache, side),
+		_create_is_opaque_method(cf, cp_cache, side, c_name)
 	]
 
 	cf[0x0c], cf[0x0d] = (len(methods).to_bytes(2), methods)
@@ -57,6 +60,36 @@ def _create_constructor(cf, cp_cache, side):
 	a_code = a_code_assemble([
 		(5).to_bytes(2),
 		(2).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_is_opaque_method(cf, cp_cache, side, c_name):
+	m = create_method(cf, cp_cache, ['public'], ['c', 'a'][side], '()Z')
+
+	code = assemble_code(cf, cp_cache, side, 0, [
+		'aload_0',
+		['getfield', c_name, 'b', 'Z'],
+		['ifne', 'L1'],
+		'iconst_1',
+		['goto', 'L2'],
+		['label', 'L1'],
+		'iconst_0',
+		['label', 'L2'],
+		'ireturn'
+	])
+	a_code = a_code_assemble([
+		(1).to_bytes(2),
+		(1).to_bytes(2),
 		len(code).to_bytes(4),
 		code,
 		(0).to_bytes(2),
