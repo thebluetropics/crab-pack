@@ -181,7 +181,26 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 			['putstatic', c_name, 'PERSISTENT_LEAVES', 'Lcom/thebluetropics/crabpack/PersistentLeavesBlock;']
 		])
 
-	a_code[0x03] = a_code[0x03][0:3398] + assemble_code(cf, cp_cache, side, 3398, code) + a_code[0x03][3398:3678]
+	code_2 = []
+
+	if mod.config.is_feature_enabled('block.persistent_leaves'):
+		code_2.extend([
+			['getstatic', ('gm', 'ej'), 'c', ('[Lgm;', '[Lej;')],
+			['getstatic', ('uu', 'na'), 'PERSISTENT_LEAVES', 'Lcom/thebluetropics/crabpack/PersistentLeavesBlock;'],
+			['getfield', 'com/thebluetropics/crabpack/PersistentLeavesBlock', 'bn', 'I'],
+			['new', 'com/thebluetropics/crabpack/PersistentLeavesBlockItem'],
+			'dup',
+			['getstatic', ('uu', 'na'), 'PERSISTENT_LEAVES', 'Lcom/thebluetropics/crabpack/PersistentLeavesBlock;'],
+			['getfield', 'com/thebluetropics/crabpack/PersistentLeavesBlock', 'bn', 'I'],
+			['sipush', 256],
+			'isub',
+			['invokespecial', 'com/thebluetropics/crabpack/PersistentLeavesBlockItem', '<init>', '(I)V'],
+			['ldc_w.string', 'persistent_leaves'],
+			['invokevirtual', 'com/thebluetropics/crabpack/PersistentLeavesBlockItem', 'a', ('(Ljava/lang/String;)Lgm;', '(Ljava/lang/String;)Lej;')],
+			'aastore',
+		])
+
+	a_code[0x03] = a_code[0x03][0:3398] + assemble_code(cf, cp_cache, side, 3398, code) + a_code[0x03][3398:3558] + assemble_code(cf, cp_cache, side, 3558, code_2) + a_code[0x03][3558:3678]
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
