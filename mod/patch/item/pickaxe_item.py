@@ -44,6 +44,21 @@ def _modify_static_initializer(cf, cp_cache, side):
 		'aastore'
 	]
 
+	if mod.config.is_feature_enabled('block.fortress_bricks'):
+		ext_code.extend([
+			'dup',
+			['bipush', count],
+			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
+			'aastore'
+		])
+		ext_code.extend([
+			'dup',
+			['bipush', count + 1],
+			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'LIGHT_FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
+			'aastore'
+		])
+		count += 2
+
 	a_code[0x03] = instructions.assemble(0, [
 		['sipush', count]
 	]) + a_code[0x03][2:118] + instructions.assemble(121, ext_code) + a_code[0x03][118:122]
