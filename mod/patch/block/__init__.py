@@ -1,5 +1,5 @@
 from . import (farmland_block, block, solid_grass_block, plant_block, mortar, smelter_block, smelter_block_entity, block_entity)
-from . import (persistent_leaves_block)
+from . import (persistent_leaves_block, leaves_block)
 import mod
 
 def apply_client():
@@ -18,6 +18,8 @@ def apply_client():
 	if mod.config.is_feature_enabled('block.persistent_leaves'):
 		persistent_leaves_block.apply('client')
 
+	leaves_block.apply('client')
+
 def apply_server():
 	if mod.config.is_feature_enabled('etc.no_crop_trampling') or mod.config.is_feature_enabled('etc.extended_farmland_water_source'):
 		farmland_block.apply('server')
@@ -33,5 +35,7 @@ def apply_server():
 
 	if mod.config.is_feature_enabled('block.persistent_leaves'):
 		persistent_leaves_block.apply('server')
+
+	leaves_block.apply('server')
 
 __all__ = [apply_client.__name__, apply_server.__name__]

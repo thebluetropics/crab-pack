@@ -127,28 +127,19 @@ def _create_get_color_multiplier(cf, cp_cache):
 	m = create_method(cf, cp_cache, ['public'], 'f', '(I)I')
 
 	code = assemble_code(cf, cp_cache, 0, 0, [
-		'iload_1',
-		'iconst_1',
-		'iand',
-		'iconst_1',
-		['if_icmpne', 'L1'],
-
-		['invokestatic', 'jh', 'a', '()I'],
-		'ireturn',
+		'iload_1', 'iconst_0', ['if_icmpne', 'L1'],
+		['invokestatic', 'jh', 'c', '()I'], 'ireturn',
 
 		['label', 'L1'],
-		'iload_1',
-		'iconst_2',
-		'iand',
-		'iconst_2',
-		['if_icmpne', 'L2'],
-
-		['invokestatic', 'jh', 'b', '()I'],
-		'ireturn',
+		'iload_1', 'iconst_1', ['if_icmpne', 'L2'],
+		['invokestatic', 'jh', 'b', '()I'], 'ireturn',
 
 		['label', 'L2'],
-		['invokestatic', 'jh', 'c', '()I'],
+		'iload_1', 'iconst_2', ['if_icmpne', 'L3'],
+		['invokestatic', 'jh', 'a', '()I'], 'ireturn',
 
+		['label', 'L3'],
+		['ldc_w.i32', 0xffffff],
 		'ireturn'
 	])
 	a_code = a_code_assemble([
