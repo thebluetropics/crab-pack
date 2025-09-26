@@ -60,7 +60,7 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 	patch_code = []
 
 	if mod.config.is_feature_enabled('food.raw_squid_and_calamari'): patch_code.extend([
-		['new', 'yw', 'px'],
+		['new', ('yw', 'px')],
 		'dup', ['sipush', 1024], 'iconst_1', 'iconst_0', ['invokespecial', ('yw', 'px'), '<init>', '(IIZ)V'],
 		'iconst_2', ['bipush', 15], ['invokevirtual', ('yw', 'px'), 'a', ('(II)Lgm;', '(II)Lej;')],
 		['ldc_w.string', 'raw_squid'], ['invokevirtual', ('gm', 'ej'), 'a', ('(Ljava/lang/String;)Lgm;', '(Ljava/lang/String;)Lej;')],
