@@ -1,19 +1,23 @@
 import mod
 
-from mod.attribute import get_attribute
-from mod.method import get_method
-from mod import (
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a import (
+	get_attribute
 )
-from mod.class_file import (
+from modmaker.a_code import (
+	a_code_load,
+	a_code_assemble,
+	assemble_code
+)
+from modmaker.m import(
+	get_method
+)
+from modmaker.cf import (
 	load_class_file,
-	assemble_class_file
+	cf_assemble
 )
-from mod.constant_pool import (
-	get_utf8_at,
-	icpx_f
+from modmaker.cp import (
+	cp_init_cache,
+	get_utf8_at
 )
 
 def apply(side_name):
@@ -24,49 +28,46 @@ def apply(side_name):
 	c_name = ['wb', 'nw'][side]
 
 	cf = load_class_file(mod.config.path(f'stage/{side_name}/{c_name}.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cp_cache = cp_init_cache(cf[0x04])
 
 	m = get_method(cf, cp_cache, ['d', 'c'][side], '(I)Z')
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = instructions.assemble(0, [
-		['iload', 1],
-		['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;')],
-		['getfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/SolidGrassBlock', 'bn', 'I')],
-		['if_icmpeq*', 'a'],
+	a_code[0x03] = assemble_code(cf, cp_cache, side, 0, [
+		'iload_1',
+		['getstatic', ('uu', 'na'), 'SOLID_GRASS_BLOCK', 'Lcom/thebluetropics/crabpack/SolidGrassBlock;'],
+		['getfield', 'com/thebluetropics/crabpack/SolidGrassBlock', 'bn', 'I'],
+		['if_icmpeq', 'a'],
 
-		['iload', 1],
-		['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'v', ['Lwp;', 'Loj;'][side])],
-		['getfield', icpx_f(cf, cp_cache, ['wp', 'oj'][side], 'bn', 'I')],
-		['if_icmpeq*', 'a'],
+		'iload_1',
+		['getstatic', ('uu', 'na'), 'v', ('Lwp;', 'Loj;')],
+		['getfield', ('wp', 'oj'), 'bn', 'I'],
+		['if_icmpeq', 'a'],
 
-		['iload', 1],
-		['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'w', ['Luu;', 'Lna;'][side])],
-		['getfield', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'bn', 'I')],
-		['if_icmpeq*', 'a'],
+		'iload_1',
+		['getstatic', ('uu', 'na'), 'w', ('Luu;', 'Lna;')],
+		['getfield', ('uu', 'na'), 'bn', 'I'],
+		['if_icmpeq', 'a'],
 
-		['iload', 1],
-		['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'aB', ['Luu;', 'Lna;'][side])],
-		['getfield', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'bn', 'I')],
-		['if_icmpne*', 'b'],
+		'iload_1',
+		['getstatic', ('uu', 'na'), 'aB', ('Luu;', 'Lna;')],
+		['getfield', ('uu', 'na'), 'bn', 'I'],
+		['if_icmpne', 'b'],
 
-		['jump_target*', 'a'],
+		['label', 'a'],
 		'iconst_1',
-		['goto*', 'c'],
+		['goto', 'c'],
 
-		['jump_target*', 'b'],
+		['label', 'b'],
 		'iconst_0',
 
-		['jump_target*', 'c'],
+		['label', 'c'],
 		'ireturn'
 	])
 
-	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
-
-	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
@@ -74,13 +75,10 @@ def apply(side_name):
 			del a_code[0x07][i]
 			break
 
-	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
-
-	# update code attribute length
+	a[0x02] = a_code_assemble(a_code)
 	a[0x01] = len(a[0x02]).to_bytes(4)
 
 	with open(mod.config.path(f'stage/{side_name}/{c_name}.class'), 'wb') as file:
-		file.write(assemble_class_file(cf))
+		file.write(cf_assemble(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.block.PlantBlock')
