@@ -3,8 +3,10 @@ import shutil
 import os
 
 from sys import (exit, stderr)
-from json import load as load_json
 from pathlib import Path
+
+import json
+from json import load as load_json
 
 root_dir = str(Path(__file__).parent.parent.resolve(True))
 
@@ -52,6 +54,15 @@ with open(os.path.join(root_dir, 'config', 'features.conf'), 'r') as file:
 		for k, v in conf[sec].items():
 			if v.__eq__('enabled'):
 				_features.append(f'{sec}.{k}')
+
+if not os.path.exists(path('config', 'features.json')):
+	shutil.copy(path('etc', 'config_template', 'features.json'), path('config', 'features.json'))
+
+with open(os.path.join(root_dir, 'config', 'features.json'), 'r', encoding='utf-8') as file:
+	file = json.load(file)
+
+	for feature in file['enabled_features']:
+		_features.append(feature)
 
 def is_one_of_features_enabled(features):
 	for x in features:
