@@ -43,18 +43,6 @@ _features = []
 if not os.path.exists(path('config')):
 	os.makedirs(path('config'), exist_ok=True)
 
-if not os.path.exists(path('config/features.conf')):
-	shutil.copy(path('etc/config_template/features.conf'), path('config/features.conf'))
-
-with open(os.path.join(root_dir, 'config', 'features.conf'), 'r') as file:
-	conf = configparser.ConfigParser(delimiters=(':',))
-	conf.read_file(file)
-
-	for sec in conf.sections():
-		for k, v in conf[sec].items():
-			if v.__eq__('enabled'):
-				_features.append(f'{sec}.{k}')
-
 if not os.path.exists(path('config', 'features.json')):
 	shutil.copy(path('etc', 'config_template', 'features.json'), path('config', 'features.json'))
 

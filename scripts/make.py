@@ -69,7 +69,6 @@ shutil.copy(os.path.join(root_dir, 'LICENSE'), os.path.join(target_path, 'LICENS
 if not os.path.exists(os.path.join(target_path, 'config')):
 	os.mkdir(os.path.join(target_path, 'config'))
 
-shutil.copy(os.path.join(root_dir, 'etc', 'config_template', 'features.conf'), os.path.join(target_path, 'config', 'features.conf'))
 shutil.copy(os.path.join(root_dir, 'etc', 'config_template', 'features.json'), os.path.join(target_path, 'config', 'features.json'))
 
 with open(os.path.join(target_path, 'opts.json'), 'w', encoding='utf-8') as file:

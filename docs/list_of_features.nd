@@ -1,0 +1,24 @@
+[:. List of features (enabled by default)]
+. `food.stackable_food`
+. `food.raw_squid_and_calamari`
+. `block.fortress_bricks`
+. `block.solid_grass_block`
+. `block.mortar`
+. `block.smelter`
+. `block.persistent_leaves`
+. `user_interface.minimal_title_screen`
+. `user_interface.single_pixel_crosshair`
+. `fix.block_break_times_fix`
+. `etc.hunger_and_thirst`
+. `etc.no_crop_trampling`
+. `etc.extended_farmland_water_source`
+. `etc.log_version`
+. `etc.dirt_to_grass_block`
+
+[:. List of features (not enabled by default)]
+. `etc.no_entity_shadows`
+. `experimental.cloth`
+. `debug.debug_recipes`
+. `debug.debug_fov`
+. `debug.fixed_time`
+. `debug.no_clouds`
