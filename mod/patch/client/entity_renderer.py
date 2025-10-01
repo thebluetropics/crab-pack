@@ -1,48 +1,45 @@
 import mod
 
-from mod.attribute import get_attribute
-from mod.method import get_method
-from mod.constant_pool import get_utf8_at
-from mod import (
-	attribute,
-	constant_pool,
-	instructions
+from modmaker.a import get_attribute
+from modmaker.a_code import (
+	a_code_load,
+	a_code_assemble
 )
-from mod.class_file import (
+from modmaker.cf import (
 	load_class_file,
-	assemble_class_file
+	cf_assemble
 )
+from modmaker.cp import (
+	cp_init_cache,
+	get_utf8_at
+)
+from modmaker.m import get_method
 
 def apply():
 	if not mod.config.is_feature_enabled('etc.no_entity_shadows'):
 		return
 
 	cf = load_class_file(mod.config.path('stage/client/bw.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cp_cache = cp_init_cache(cf[0x04])
 
-	_patch_render_clouds_method(cf, cp_cache)
+	_patch_post_render_method(cf, cp_cache)
 
-	with open(mod.config.path('stage/client/bw.class'), 'wb') as f:
-		f.write(assemble_class_file(cf))
+	with open(mod.config.path('stage/client/bw.class'), 'wb') as file:
+		file.write(cf_assemble(cf))
 
 	print('Patched client:bw.class → net.minecraft.client.render.entity.EntityRenderer')
 
-def _patch_render_clouds_method(cf, cp_cache):
+def _patch_post_render_method(cf, cp_cache):
 	m = get_method(cf, cp_cache, 'b', '(Lsn;DDDFF)V')
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	# load code attribute
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 
-	# modify code
 	a_code[0x00] = (9).to_bytes(2)
 	a_code[0x01] = (10).to_bytes(2)
 	a_code[0x03] = a_code[0x03][81:101]
 
-	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
-
-	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
@@ -50,8 +47,5 @@ def _patch_render_clouds_method(cf, cp_cache):
 			del a_code[0x07][i]
 			break
 
-	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
-
-	# update code attribute length
+	a[0x02] = a_code_assemble(a_code)
 	a[0x01] = len(a[0x02]).to_bytes(4)
