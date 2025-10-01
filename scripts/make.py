@@ -63,7 +63,7 @@ shutil.copytree(
 	ignore=shutil.ignore_patterns('__pycache__', '*.pyc')
 )
 shutil.copytree(os.path.join(root_dir, 'assets'), os.path.join(target_path, 'assets'))
-shutil.copy(os.path.join(root_dir, 'mod.conf'), os.path.join(target_path, 'mod.conf'))
+shutil.copy(os.path.join(root_dir, 'mod.json'), os.path.join(target_path, 'mod.json'))
 shutil.copy(os.path.join(root_dir, 'LICENSE'), os.path.join(target_path, 'LICENSE'))
 
 if not os.path.exists(os.path.join(target_path, 'config')):

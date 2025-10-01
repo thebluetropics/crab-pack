@@ -25,14 +25,13 @@ if os.path.exists(path('opts.json')):
 
 _ver = None
 
-if not os.path.isfile(os.path.join(root_dir, 'mod.conf')):
+if not os.path.isfile(os.path.join(root_dir, 'mod.json')):
+	print('Err: unknown.', file=stderr)
 	exit(1)
 
-with open(os.path.join(root_dir, 'mod.conf'), 'r') as file:
-	conf = configparser.ConfigParser(delimiters=(':',))
-	conf.read_file(file)
-
-	_ver = conf['mod']['version']
+with open(os.path.join(root_dir, 'mod.json'), 'r', encoding='utf-8') as file:
+	mod_info = load_json(file)
+	_ver = mod_info['version']
 
 def get_version():
 	return _ver
