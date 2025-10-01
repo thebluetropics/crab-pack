@@ -2,73 +2,56 @@ import sys
 import mod
 
 from sys import (exit, stderr)
-from operator import eq
 from . import (packaging, staging, patch, artifacts)
 
-if not len(sys.argv).__eq__(2):
+args = []
+flags = []
+
+opts = {}
+opt_name = None
+
+for arg in sys.argv[1:len(sys.argv)]:
+	if opt_name:
+		opts[opt_name] = arg
+		opt_name = None
+		continue
+
+	if arg[0].__eq__('-') and arg[1:] in []:
+		opt_name = arg[1:]
+		continue
+
+	if arg[0].__eq__('-') and arg[1:] in ['v', 'q', 'i']:
+		flags.append(arg[1:])
+	else:
+		args.append(arg)
+
+if opt_name:
+	print('Err: invalid args.', file=stderr)
 	exit(1)
 
-_, mode = sys.argv
+if 'v' in flags:
+	if args or opts:
+		print('Err: unknown.', file=stderr)
+		exit(1)
 
-if mode.__eq__('version'):
 	print(mod.version)
 	exit()
 
-if not mode in (
-	'stage_client',
-	'stage_server',
-	'patch_client',
-	'patch_server'
-	'package_client',
-	'package_server',
-	'make_client',
-	'make_server',
-	'make'
-):
-	print('Err: unsupported mode of operation.', file=stderr)
-	exit(1)
-
-if eq(mode, 'stage_client'):
-	artifacts.fetch_if_not_exists('b1.7.3', 'client')
-	staging.stage('client')
-	exit(0)
-
-if eq(mode, 'stage_server'):
-	artifacts.fetch_if_not_exists('b1.7.3', 'server')
-	staging.stage('server')
-	exit(0)
-
-if eq(mode, 'patch_client'):
-	patch.apply_client_patches()
-	exit(0)
-
-if eq(mode, 'patch_server'):
-	patch.apply_server_patches()
-	exit(0)
-
-if eq(mode, 'package_client'):
-	packaging.package('client')
-	exit(0)
-
-if eq(mode, 'package_server'):
-	packaging.package('server')
-	exit(0)
-
-if eq(mode, 'make_client'):
+if args[0].__eq__('make_client'):
 	artifacts.fetch_if_not_exists('b1.7.3', 'client')
 	staging.stage('client')
 	patch.apply_client_patches()
 	packaging.package('client')
 	exit(0)
 
-if eq(mode, 'make_server'):
+if args[0].__eq__('make_server'):
 	artifacts.fetch_if_not_exists('b1.7.3', 'server')
 	staging.stage('server')
 	patch.apply_server_patches()
 	packaging.package('server')
 	exit(0)
 
-if eq(mode, 'make'):
+if args[0].__eq__('make'):
 	artifacts.fetch_if_not_exists('b1.7.3', 'client')
 	artifacts.fetch_if_not_exists('b1.7.3', 'server')
 	staging.stage('client')
