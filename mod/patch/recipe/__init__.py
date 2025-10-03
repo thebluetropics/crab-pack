@@ -2,7 +2,7 @@ from . import (smelting_recipe_manager, crafting_recipe_manager, smelter_recipe_
 import mod
 
 def apply_client():
-	smelting_recipe_manager.apply_client()
+	smelting_recipe_manager.apply('client')
 	if mod.config.is_feature_enabled('block.smelter'):
 		smelter_recipe_manager.apply('client')
 	if (
@@ -14,7 +14,7 @@ def apply_client():
 		crafting_recipe_manager.apply('client')
 
 def apply_server():
-	smelting_recipe_manager.apply_server()
+	smelting_recipe_manager.apply('server')
 	if mod.config.is_feature_enabled('block.smelter'):
 		smelter_recipe_manager.apply('server')
 	if (
