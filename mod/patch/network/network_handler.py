@@ -1,12 +1,19 @@
 import mod
 
-from mod.method import create_method
-from mod.constant_pool import i2cpx_utf8
-from mod import (
-	class_file,
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a_code import (
+	a_code_assemble,
+	assemble_code
+)
+from modmaker.m import(
+	create_method
+)
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
+	i2cpx_utf8
 )
 
 def apply(side_name):
@@ -16,25 +23,25 @@ def apply(side_name):
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['ti', 'me'][side]
 
-	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = load_class_file(mod.config.path(f'stage/{side_name}/{c_name}.class'))
+	cp_cache = cp_init_cache(cf[0x04])
 
-	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 2).to_bytes(2)
-	cf[0x0d].append(_create_on_hunger_update_method(cf, cp_cache))
-	cf[0x0d].append(_create_on_thirst_update_method(cf, cp_cache))
+	cf[0x0d].append(_create_on_hunger_update_method(cf, cp_cache, side))
+	cf[0x0d].append(_create_on_thirst_update_method(cf, cp_cache, side))
+	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(cf_assemble(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.network.NetworkHandler')
 
-def _create_on_hunger_update_method(cf, cp_cache):
+def _create_on_hunger_update_method(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['public'], 'onHungerUpdate', '(Lcom/thebluetropics/crabpack/HungerUpdatePacket;)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(0).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
@@ -50,13 +57,13 @@ def _create_on_hunger_update_method(cf, cp_cache):
 
 	return m
 
-def _create_on_thirst_update_method(cf, cp_cache):
+def _create_on_thirst_update_method(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['public'], 'onThirstUpdate', '(Lcom/thebluetropics/crabpack/ThirstUpdatePacket;)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(0).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
