@@ -64,6 +64,7 @@ shutil.copytree(
 )
 shutil.copytree(os.path.join(root_dir, 'assets'), os.path.join(target_path, 'assets'))
 shutil.copytree(os.path.join(root_dir, 'class_files'), os.path.join(target_path, 'class_files'))
+shutil.copytree(os.path.join(root_dir, 'deps'), os.path.join(target_path, 'deps'))
 shutil.copy(os.path.join(root_dir, 'mod.json'), os.path.join(target_path, 'mod.json'))
 shutil.copy(os.path.join(root_dir, 'LICENSE'), os.path.join(target_path, 'LICENSE'))
 
