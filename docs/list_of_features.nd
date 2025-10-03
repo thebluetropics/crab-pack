@@ -22,3 +22,4 @@
 . `debug.debug_fov`
 . `debug.fixed_time`
 . `debug.no_clouds`
+. `blackbox`
