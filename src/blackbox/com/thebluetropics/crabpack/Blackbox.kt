@@ -119,7 +119,7 @@ object Blackbox {
 		val file = (this.dir as Path).resolve(filename).toFile()
 		val state = State(BufferedOutputStream(FileOutputStream(file), 32 * 1024), dim, System.nanoTime(), System.nanoTime())
 
-		state.stream.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(1).array())
+		state.stream.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(2).array())
 		state.stream.write(player.length.and(255))
 		state.stream.write(player.toByteArray(Charsets.UTF_8))
 
@@ -136,6 +136,7 @@ object Blackbox {
 		})
 
 		state.stream.write(timestampBytes)
+		state.stream.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(date.nano).array())
 		state.stream.write(if (dim.equals("overworld")) 0 else 1)
 
 		this.states[player] = state
