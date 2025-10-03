@@ -1,33 +1,39 @@
 import mod
 
-from mod.attribute import get_attribute
-from mod.method import get_method
-from mod import (
-	class_file,
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a import (
+	get_attribute
 )
-from mod.constant_pool import (
-	icpx_m,
-	get_utf8_at,
-	icpx_c,
-	icpx_f,
-	icpx_m,
-	icpx_string
+from modmaker.a_code import (
+	a_code_load,
+	a_code_assemble,
+	assemble_code
+)
+from modmaker.m import(
+	get_method
+)
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
+	get_utf8_at
 )
 
 def apply(side_name):
+	if not mod.config.is_one_of_features_enabled(['block.fortress_bricks', 'etc.hunger_and_thirst', 'debug.debug_recipes', 'block.mortar']):
+		return
+
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['hk', 'ey'][side]
 
-	cf = class_file.load(mod.config.path(f'stage/{side_name}/{c_name}.class'))
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = load_class_file(mod.config.path(f'stage/{side_name}/{c_name}.class'))
+	cp_cache = cp_init_cache(cf[0x04])
 
 	_modify_constructor(cf, cp_cache, side_name, side, c_name)
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(cf_assemble(cf))
 
 	print(f'Patched {side_name}:{c_name}.class → net.minecraft.recipe.CraftingRecipeManager')
 
@@ -35,231 +41,231 @@ def _modify_constructor(cf, cp_cache, side_name, side, c_name):
 	m = get_method(cf, cp_cache, '<init>', '()V')
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
-	a_code = attribute.code.load(a[0x02])
+	a_code = a_code_load(a[0x02])
 	patch_code = []
 
 	if mod.config.is_feature_enabled('block.fortress_bricks'):
 		patch_code.extend([
 			'aload_0',
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			['new', ('iz', 'fy')],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'LIGHT_FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'LIGHT_FORTRESS_BRICKS', ('Luu;', 'Lna;')],
 			'iconst_4',
 			'iconst_1',
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', ['(Luu;II)V', '(Lna;II)V'][side])],
+			['invokespecial', ('iz', 'fy'), '<init>', ('(Luu;II)V', '(Lna;II)V')],
 			['bipush', 4],
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			['anewarray', 'java/lang/Object'],
 
 			'dup',
 			'iconst_0',
-			['ldc_w', icpx_string(cf, cp_cache, 'aa')],
+			['ldc_w.string', 'aa'],
 			'aastore',
 
 			'dup',
 			'iconst_1',
-			['ldc_w', icpx_string(cf, cp_cache, 'aa')],
+			['ldc_w.string', 'aa'],
 			'aastore',
 
 			'dup',
 			'iconst_2',
 			['bipush', 97],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
 			'aastore',
 
 			'dup',
 			'iconst_3',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'x', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'x', ('Luu;', 'Lna;')],
 			'aastore',
 
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+			['invokevirtual', c_name, 'a', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
 		])
 		patch_code.extend([
 			'aload_0',
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			['new', ('iz', 'fy')],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'FORTRESS_BRICKS', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'FORTRESS_BRICKS', ('Luu;', 'Lna;')],
 			'iconst_4',
 			'iconst_1',
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', ['(Luu;II)V', '(Lna;II)V'][side])],
+			['invokespecial', ('iz', 'fy'), '<init>', ('(Luu;II)V', '(Lna;II)V')],
 			['bipush', 6],
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			['anewarray', 'java/lang/Object'],
 
 			'dup',
 			'iconst_0',
-			['ldc_w', icpx_string(cf, cp_cache, 'ab')],
+			['ldc_w.string', 'ab'],
 			'aastore',
 
 			'dup',
 			'iconst_1',
-			['ldc_w', icpx_string(cf, cp_cache, 'ba')],
+			['ldc_w.string', 'ba'],
 			'aastore',
 
 			'dup',
 			'iconst_2',
 			['bipush', 97],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
 			'aastore',
 
 			'dup',
 			'iconst_3',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'x', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'x', ('Luu;', 'Lna;')],
 			'aastore',
 
 			'dup',
 			'iconst_4',
 			['bipush', 98],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
 			'aastore',
 
 			'dup',
 			'iconst_5',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'u', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'u', ('Luu;', 'Lna;')],
 			'aastore',
 
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
-		])
-
-	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
-		patch_code.extend([
-			'aload_0',
-
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
-			'dup',
-			['getstatic', icpx_f(cf, cp_cache, ['gm', 'ej'][side], 'BOTTLE', ['Lgm;', 'Lej;'][side])],
-			'iconst_1',
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', ['(Lgm;I)V', '(Lej;I)V'][side])],
-
-			['bipush', 7],
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
-
-			'dup',
-			'iconst_0',
-			['ldc_w', icpx_string(cf, cp_cache, ' a ')],
-			'aastore',
-
-			'dup',
-			'iconst_1',
-			['ldc_w', icpx_string(cf, cp_cache, 'b b')],
-			'aastore',
-
-			'dup',
-			'iconst_2',
-			['ldc_w', icpx_string(cf, cp_cache, ' b ')],
-			'aastore',
-
-			'dup',
-			'iconst_3',
-			['bipush', 97],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
-			'aastore',
-
-			'dup',
-			'iconst_4',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'y', ['Luu;', 'Lna;'][side])],
-			'aastore',
-
-			'dup',
-			'iconst_5',
-			['bipush', 98],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
-			'aastore',
-
-			'dup',
-			['bipush', 6],
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'N', ['Luu;', 'Lna;'][side])],
-			'aastore',
-
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+			['invokevirtual', c_name, 'a', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
 		])
 
 	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		patch_code.extend([
 			'aload_0',
 
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			['new', ('iz', 'fy')],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, ['gm', 'ej'][side], 'BOTTLE', ['Lgm;', 'Lej;'][side])],
+			['getstatic', ('gm', 'ej'), 'BOTTLE', ('Lgm;', 'Lej;')],
 			'iconst_1',
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', ['(Lgm;I)V', '(Lej;I)V'][side])],
+			['invokespecial', ('iz', 'fy'), '<init>', ('(Lgm;I)V', '(Lej;I)V')],
 
 			['bipush', 7],
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			['anewarray', 'java/lang/Object'],
 
 			'dup',
 			'iconst_0',
-			['ldc_w', icpx_string(cf, cp_cache, ' a ')],
+			['ldc_w.string', ' a '],
 			'aastore',
 
 			'dup',
 			'iconst_1',
-			['ldc_w', icpx_string(cf, cp_cache, 'b b')],
+			['ldc_w.string', 'b b'],
 			'aastore',
 
 			'dup',
 			'iconst_2',
-			['ldc_w', icpx_string(cf, cp_cache, ' b ')],
+			['ldc_w.string', ' b '],
 			'aastore',
 
 			'dup',
 			'iconst_3',
 			['bipush', 97],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
 			'aastore',
 
 			'dup',
 			'iconst_4',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'y', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'y', ('Luu;', 'Lna;')],
 			'aastore',
 
 			'dup',
 			'iconst_5',
 			['bipush', 98],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
 			'aastore',
 
 			'dup',
 			['bipush', 6],
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'N', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'N', ('Luu;', 'Lna;')],
 			'aastore',
 
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+			['invokevirtual', c_name, 'a', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
+		])
+
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+		patch_code.extend([
+			'aload_0',
+
+			['new', ('iz', 'fy')],
+			'dup',
+			['getstatic', ('gm', 'ej'), 'BOTTLE', ('Lgm;', 'Lej;')],
+			'iconst_1',
+			['invokespecial', ('iz', 'fy'), '<init>', ('(Lgm;I)V', '(Lej;I)V')],
+
+			['bipush', 7],
+			['anewarray', 'java/lang/Object'],
+
+			'dup',
+			'iconst_0',
+			['ldc_w.string', ' a '],
+			'aastore',
+
+			'dup',
+			'iconst_1',
+			['ldc_w.string', 'b b'],
+			'aastore',
+
+			'dup',
+			'iconst_2',
+			['ldc_w.string', ' b '],
+			'aastore',
+
+			'dup',
+			'iconst_3',
+			['bipush', 97],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
+			'aastore',
+
+			'dup',
+			'iconst_4',
+			['getstatic', ('uu', 'na'), 'y', ('Luu;', 'Lna;')],
+			'aastore',
+
+			'dup',
+			'iconst_5',
+			['bipush', 98],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
+			'aastore',
+
+			'dup',
+			['bipush', 6],
+			['getstatic', ('uu', 'na'), 'N', ('Luu;', 'Lna;')],
+			'aastore',
+
+			['invokevirtual', c_name, 'a', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
 		])
 
 	if mod.config.is_feature_enabled('block.mortar'):
 		patch_code.extend([
 			'aload_0',
 
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			['new', ('iz', 'fy')],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'MORTAR', 'Lcom/thebluetropics/crabpack/MortarBlock;')],
+			['getstatic', ('uu', 'na'), 'MORTAR', 'Lcom/thebluetropics/crabpack/MortarBlock;'],
 			'iconst_1',
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', ['(Luu;I)V', '(Lna;I)V'][side])],
+			['invokespecial', ('iz', 'fy'), '<init>', ('(Luu;I)V', '(Lna;I)V')],
 
 			['bipush', 4],
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			['anewarray', 'java/lang/Object'],
 
 			'dup',
 			'iconst_0',
-			['ldc_w', icpx_string(cf, cp_cache, 'a a')],
+			['ldc_w.string', 'a a'],
 			'aastore',
 
 			'dup',
 			'iconst_1',
-			['ldc_w', icpx_string(cf, cp_cache, ' a ')],
+			['ldc_w.string', ' a '],
 			'aastore',
 
 			'dup',
 			'iconst_2',
 			['bipush', 97],
-			['invokestatic', icpx_m(cf, cp_cache, 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;')],
+			['invokestatic', 'java/lang/Character', 'valueOf', '(C)Ljava/lang/Character;'],
 			'aastore',
 
 			'dup',
 			'iconst_3',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'x', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'x', ('Luu;', 'Lna;')],
 			'aastore',
 
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'a', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+			['invokevirtual', c_name, 'a', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
 		])
 
 	if mod.config.is_feature_enabled('debug.debug_recipes'):
@@ -269,65 +275,62 @@ def _modify_constructor(cf, cp_cache, side_name, side, c_name):
 
 		patch_code.extend([
 			'aload_0',
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			['new', ('iz', 'fy')],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, result_dirt[0][side], result_dirt[1], result_dirt[2][side])],
+			['getstatic', result_dirt[0][side], result_dirt[1], result_dirt[2][side]],
 			'iconst_1',
 			['bipush', 0],
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', f'({result_dirt[2][side]}II)V')],
+			['invokespecial', ('iz', 'fy')[side], '<init>', f'({result_dirt[2][side]}II)V'],
 			'iconst_1',
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			['anewarray', 'java/lang/Object'],
 			'dup',
 			'iconst_0',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'w', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'w', ('Luu;', 'Lna;')],
 			'aastore',
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+			['invokevirtual', c_name, 'b', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
 		])
 
 		patch_code.extend([
 			'aload_0',
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			['new', ('iz', 'fy')],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, result_sand[0][side], result_sand[1], result_sand[2][side])],
+			['getstatic', result_sand[0][side], result_sand[1], result_sand[2][side]],
 			'iconst_1',
 			['bipush', 0],
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', f'({result_sand[2][side]}II)V')],
+			['invokespecial', ('iz', 'fy'), '<init>', f'({result_sand[2][side]}II)V'],
 			'iconst_1',
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			['anewarray', 'java/lang/Object'],
 			'dup',
 			'iconst_0',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'F', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'F', ('Luu;', 'Lna;')],
 			'aastore',
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+			['invokevirtual', c_name, 'b', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
 		])
 
 		patch_code.extend([
 			'aload_0',
-			['new', icpx_c(cf, cp_cache, ['iz', 'fy'][side])],
+			['new', ('iz', 'fy')],
 			'dup',
-			['getstatic', icpx_f(cf, cp_cache, result_gravel[0][side], result_gravel[1], result_gravel[2][side])],
+			['getstatic', result_gravel[0][side], result_gravel[1], result_gravel[2][side]],
 			'iconst_1',
 			['bipush', 0],
-			['invokespecial', icpx_m(cf, cp_cache, ['iz', 'fy'][side], '<init>', f'({result_gravel[2][side]}II)V')],
+			['invokespecial', ('iz', 'fy'), '<init>', f'({result_gravel[2][side]}II)V'],
 			'iconst_1',
-			['anewarray', icpx_c(cf, cp_cache, 'java/lang/Object')],
+			['anewarray', 'java/lang/Object'],
 			'dup',
 			'iconst_0',
-			['getstatic', icpx_f(cf, cp_cache, ['uu', 'na'][side], 'G', ['Luu;', 'Lna;'][side])],
+			['getstatic', ('uu', 'na'), 'G', ('Luu;', 'Lna;')],
 			'aastore',
-			['invokevirtual', icpx_m(cf, cp_cache, c_name, 'b', ['(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V'][side])]
+			['invokevirtual', c_name, 'b', ('(Liz;[Ljava/lang/Object;)V', '(Lfy;[Ljava/lang/Object;)V')]
 		])
 
 	if side_name.__eq__('client'):
-		a_code[0x03] = a_code[0x03][0:3189] + instructions.assemble(0, patch_code) + a_code[0x03][3189:3238]
+		a_code[0x03] = a_code[0x03][0:3189] + assemble_code(cf, cp_cache, 0, 3189, patch_code) + a_code[0x03][3189:3238]
 
 	if side_name.__eq__('server'):
-		a_code[0x03] = a_code[0x03][0:3189] + instructions.assemble(0, patch_code) + a_code[0x03][3189:3238]
+		a_code[0x03] = a_code[0x03][0:3189] + assemble_code(cf, cp_cache, 1, 3189, patch_code) + a_code[0x03][3189:3238]
 
-	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
-
-	# remove line number table
 	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
 
 	for i, a in a_code[0x07]:
@@ -335,8 +338,5 @@ def _modify_constructor(cf, cp_cache, side_name, side, c_name):
 			del a_code[0x07][i]
 			break
 
-	# update code attribute
-	a[0x02] = attribute.code.assemble(a_code)
-
-	# update code attribute length
+	a[0x02] = a_code_assemble(a_code)
 	a[0x01] = len(a[0x02]).to_bytes(4)
