@@ -1,18 +1,23 @@
 import os, mod
 
-from mod.field import create_field
-from mod.method import create_method
-from mod import (
-	class_file,
-	attribute,
-	instructions,
-	constant_pool
+from modmaker.a_code import (
+	a_code_assemble,
+	assemble_code
 )
-from mod.constant_pool import (
-	icpx_f,
-	icpx_m,
+from modmaker.cf import (
+	cf_assemble,
+	cf_create
+)
+from modmaker.cp import (
+	cp_init_cache,
 	i2cpx_utf8,
 	i2cpx_c
+)
+from modmaker.m import (
+	create_method
+)
+from modmaker.f import (
+	create_field
 )
 
 def apply(side_name):
@@ -22,45 +27,41 @@ def apply(side_name):
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = 'com/thebluetropics/crabpack/ThirstUpdatePacket'
 
-	cf = class_file.create_new()
-	cp_cache = constant_pool.init_constant_pool_cache(cf[0x04])
+	cf = cf_create()
+	cp_cache = cp_init_cache(cf[0x04])
 
 	cf[0x05] = (0x0001.__or__(0x0020)).to_bytes(2)
 	cf[0x06] = i2cpx_c(cf, cp_cache, c_name)
 	cf[0x07] = i2cpx_c(cf, cp_cache, ['ki', 'gt'][side])
 
-	fields = [
-		create_field(cf, cp_cache, ['public'], 'thirst', 'I'),
-		create_field(cf, cp_cache, ['public'], 'maxThirst', 'I')
-	]
-	cf[0x0a], cf[0x0b] = (len(fields).to_bytes(2), fields)
+	cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'thirst', 'I'))
+	cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'maxThirst', 'I'))
+	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
 
-	methods = [
-		_create_empty_constructor(cf, cp_cache, side),
-		_create_constructor(cf, cp_cache, side),
-		_create_read_method(cf, cp_cache, c_name),
-		_create_write_method(cf, cp_cache, c_name),
-		_create_apply_method(cf, cp_cache, side, c_name),
-		_create_size_method(cf, cp_cache)
-	]
-	cf[0x0c], cf[0x0d] = (len(methods).to_bytes(2), methods)
+	cf[0x0d].append(_create_empty_constructor(cf, cp_cache, side))
+	cf[0x0d].append(_create_constructor(cf, cp_cache, side))
+	cf[0x0d].append(_create_read_method(cf, cp_cache, side, c_name))
+	cf[0x0d].append(_create_write_method(cf, cp_cache, side, c_name))
+	cf[0x0d].append(_create_apply_method(cf, cp_cache, side, c_name))
+	cf[0x0d].append(_create_size_method(cf, cp_cache, side))
+	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
 	if not os.path.exists(f'stage/{side_name}/com/thebluetropics/crabpack'):
 		os.makedirs(f'stage/{side_name}/com/thebluetropics/crabpack', exist_ok=True)
 
 	with open(mod.config.path(f'stage/{side_name}/{c_name}.class'), 'wb') as file:
-		file.write(class_file.assemble(cf))
+		file.write(cf_assemble(cf))
 
 	print(f'Created {side_name}:ThirstUpdatePacket.class')
 
 def _create_empty_constructor(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['public'], '<init>', '()V')
 
-	code = instructions.assemble(0, [
-		'aload_0', ['invokespecial', icpx_m(cf, cp_cache, ['ki', 'gt'][side], '<init>', '()V')],
+	code = assemble_code(cf, cp_cache, side, 0, [
+		'aload_0', ['invokespecial', ('ki', 'gt'), '<init>', '()V'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(1).to_bytes(2),
 		(1).to_bytes(2),
 		len(code).to_bytes(4),
@@ -79,13 +80,13 @@ def _create_empty_constructor(cf, cp_cache, side):
 def _create_constructor(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['public'], '<init>', '(II)V')
 
-	code = instructions.assemble(0, [
-		'aload_0', ['invokespecial', icpx_m(cf, cp_cache, ['ki', 'gt'][side], '<init>', '()V')],
-		'aload_0', ['iload_1'], ['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'thirst', 'I')],
-		'aload_0', ['iload_2'], ['putfield', icpx_f(cf, cp_cache, 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'maxThirst', 'I')],
+	code = assemble_code(cf, cp_cache, side, 0, [
+		'aload_0', ['invokespecial', ('ki', 'gt'), '<init>', '()V'],
+		'aload_0', 'iload_1', ['putfield', 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'thirst', 'I'],
+		'aload_0', 'iload_2', ['putfield', 'com/thebluetropics/crabpack/ThirstUpdatePacket', 'maxThirst', 'I'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(2).to_bytes(2),
 		(3).to_bytes(2),
 		len(code).to_bytes(4),
@@ -101,19 +102,19 @@ def _create_constructor(cf, cp_cache, side):
 
 	return m
 
-def _create_read_method(cf, cp_cache, c_name):
+def _create_read_method(cf, cp_cache, side, c_name):
 	m = create_method(cf, cp_cache, ['public'], 'a', '(Ljava/io/DataInputStream;)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'aload_0',
-		'aload_1', ['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataInputStream', 'readShort', '()S')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
+		'aload_1', ['invokevirtual', 'java/io/DataInputStream', 'readShort', '()S'],
+		['putfield', c_name, 'thirst', 'I'],
 		'aload_0',
-		'aload_1', ['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataInputStream', 'readShort', '()S')],
-		['putfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
+		'aload_1', ['invokevirtual', 'java/io/DataInputStream', 'readShort', '()S'],
+		['putfield', c_name, 'maxThirst', 'I'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(2).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
@@ -129,19 +130,19 @@ def _create_read_method(cf, cp_cache, c_name):
 
 	return m
 
-def _create_write_method(cf, cp_cache, c_name):
+def _create_write_method(cf, cp_cache, side, c_name):
 	m = create_method(cf, cp_cache, ['public'], 'a', '(Ljava/io/DataOutputStream;)V')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'aload_1',
-		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'thirst', 'I')],
-		['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
+		'aload_0', ['getfield', c_name, 'thirst', 'I'],
+		['invokevirtual', 'java/io/DataOutputStream', 'writeShort', '(I)V'],
 		'aload_1',
-		'aload_0', ['getfield', icpx_f(cf, cp_cache, c_name, 'maxThirst', 'I')],
-		['invokevirtual', icpx_m(cf, cp_cache, 'java/io/DataOutputStream', 'writeShort', '(I)V')],
+		'aload_0', ['getfield', c_name, 'maxThirst', 'I'],
+		['invokevirtual', 'java/io/DataOutputStream', 'writeShort', '(I)V'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(2).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
@@ -160,13 +161,13 @@ def _create_write_method(cf, cp_cache, c_name):
 def _create_apply_method(cf, cp_cache, side, c_name):
 	m = create_method(cf, cp_cache, ['public'], 'a', ['(Lti;)V', '(Lme;)V'][side])
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'aload_1',
 		'aload_0',
-		['invokevirtual', icpx_m(cf, cp_cache, ['ti', 'me'][side], 'onThirstUpdate', f'(L{c_name};)V')],
+		['invokevirtual', ('ti', 'me'), 'onThirstUpdate', f'(L{c_name};)V'],
 		'return'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(2).to_bytes(2),
 		(2).to_bytes(2),
 		len(code).to_bytes(4),
@@ -182,14 +183,14 @@ def _create_apply_method(cf, cp_cache, side, c_name):
 
 	return m
 
-def _create_size_method(cf, cp_cache):
+def _create_size_method(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['public'], 'a', '()I')
 
-	code = instructions.assemble(0, [
+	code = assemble_code(cf, cp_cache, side, 0, [
 		'iconst_4',
 		'ireturn'
 	])
-	a_code = attribute.code.assemble([
+	a_code = a_code_assemble([
 		(1).to_bytes(2),
 		(1).to_bytes(2),
 		len(code).to_bytes(4),
