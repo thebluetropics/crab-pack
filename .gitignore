@@ -1,22 +1,17 @@
 /.idea/
-/deps/
-/class_files/
 
-# vscode
 /.vscode/*
 !settings.json
 
-# python
-__pycache__/
-*.pyc
-
-# temp files
+/deps/
+/class_files/
 /dist/
 /artifacts/
 /out/
 /stage/
 /jars/
 /opts.json
-
-# mod config
 /config/
+
+__pycache__/
+*.pyc
