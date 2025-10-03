@@ -12,7 +12,8 @@ from . import (
 	entity_renderer,
 	block_render_manager,
 	client_player_entity,
-	smelter_screen
+	smelter_screen,
+	singleplayer_interaction_manager
 )
 import mod
 
@@ -36,5 +37,7 @@ def apply():
 	if mod.config.is_feature_enabled('block.smelter'):
 		smelter_screen.apply()
 		client_player_entity.apply()
+
+	singleplayer_interaction_manager.apply()
 
 __all__ = [title_screen.__name__]

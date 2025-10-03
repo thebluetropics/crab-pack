@@ -1,0 +1,60 @@
+import mod
+
+from modmaker.a import (
+	get_attribute
+)
+from modmaker.a_code import (
+	a_code_load,
+	a_code_assemble,
+	assemble_code
+)
+from modmaker.m import(
+	get_method
+)
+from modmaker.cf import (
+	load_class_file,
+	cf_assemble
+)
+from modmaker.cp import (
+	cp_init_cache,
+	get_utf8_at
+)
+
+def apply():
+	if not mod.config.is_feature_enabled('blackbox'):
+		return
+
+	cf = load_class_file(mod.config.path('stage/server/pu.class'))
+	cp_cache = cp_init_cache(cf[0x04])
+
+	_modify_break_block_method(cf, cp_cache)
+
+	with open(mod.config.path('stage/server/pu.class'), 'wb') as file:
+		file.write(cf_assemble(cf))
+
+	print('Patched server:pu.class → net.minecraft.server.network.ServerPlayerInteractionManager')
+
+def _modify_break_block_method(cf, cp_cache):
+	m = get_method(cf, cp_cache, 'c', '(III)Z')
+	a = get_attribute(m[0x04], cp_cache, 'Code')
+
+	a_code = a_code_load(a[0x02])
+
+	a_code[0x03] = a_code[0x03][0:189] + assemble_code(cf, cp_cache, 1, 161, [
+		['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
+		'aload_0', ['getfield', 'pu', 'a', 'Lem;'],
+		['getfield', 'em', 'r', 'Ljava/lang/String;'],
+		'iload_1', 'iload_2', 'iload_3',
+		['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onBreakBlock', '(Ljava/lang/String;III)V']
+	]) + a_code[0x03][189:192]
+
+	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
+	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
+
+	for i, a in a_code[0x07]:
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+			del a_code[0x07][i]
+			break
+
+	a[0x02] = a_code_assemble(a_code)
+	a[0x01] = len(a[0x02]).to_bytes(4)

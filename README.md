@@ -3,6 +3,16 @@
 **Crab Pack** is a free and open-source mod pack for Minecraft Beta 1.7.3,
 developed by [thebluetropics](https://github.com/thebluetropics).
 
+```bat
+@REM Configure
+.\scripts\configure.bat
+```
+
+```sh
+# Compile
+kotlinc -d class_files src/blackbox
+```
+
 ```sh
 # Build the assets patcher (Linux)
 cd c_libs/assets

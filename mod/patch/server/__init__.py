@@ -1,6 +1,8 @@
-from . import minecraft_server
+from . import minecraft_server, server_player_interaction_manager, player_manager
 
 def apply():
 	minecraft_server.apply()
+	server_player_interaction_manager.apply()
+	player_manager.apply()
 
 __all__ = [apply.__name__]

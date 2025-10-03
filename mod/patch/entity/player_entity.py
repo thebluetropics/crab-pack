@@ -26,7 +26,7 @@ from modmaker.cp import (
 )
 
 def apply(side_name):
-	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'blackbox']):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1
@@ -35,30 +35,35 @@ def apply(side_name):
 	cf = load_class_file(mod.config.path(f'stage/{side_name}/{c_name}.class'))
 	cp_cache = cp_init_cache(cf[0x04])
 
-	add_fields = [
-		create_field(cf, cp_cache, ['public'], 'hunger', 'I'),
-		create_field(cf, cp_cache, ['public'], 'maxHunger', 'I'),
-		create_field(cf, cp_cache, ['public'], 'thirst', 'I'),
-		create_field(cf, cp_cache, ['public'], 'maxThirst', 'I'),
-		create_field(cf, cp_cache, ['public'], 'hungerTick', 'I'),
-		create_field(cf, cp_cache, ['public'], 'thirstTick', 'I')
-	]
-	cf[0x0a] = (int.from_bytes(cf[0x0a]) + len(add_fields)).to_bytes(2)
-	cf[0x0b].extend(add_fields)
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'hunger', 'I'))
+		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'maxHunger', 'I'))
+		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'thirst', 'I'))
+		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'maxThirst', 'I'))
+		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'hungerTick', 'I'))
+		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'thirstTick', 'I'))
 
-	_modify_constructor(cf, cp_cache, side, c_name)
+	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
+
 	_modify_tick_method(cf, cp_cache, side_name, side, c_name)
-	_modify_read_nbt_method(cf, cp_cache, side, c_name)
-	_modify_write_nbt_method(cf, cp_cache, side, c_name)
 
-	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 5).to_bytes(2)
-	cf[0x0d].extend([
-		_create_update_hunger_method(cf, cp_cache, side),
-		_create_restore_hunger_method(cf, cp_cache, c_name, side),
-		_create_update_thirst_method(cf, cp_cache, side),
-		_create_restore_thirst_method(cf, cp_cache, c_name, side),
-		_create_open_smelter_screen_method(cf, cp_cache, side)
-	])
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+		_modify_constructor(cf, cp_cache, side, c_name)
+		_modify_read_nbt_method(cf, cp_cache, side, c_name)
+		_modify_write_nbt_method(cf, cp_cache, side, c_name)
+
+	if mod.config.is_feature_enabled('blackbox'):
+		_modify_on_killed_by_method(cf, cp_cache, side)
+
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+		cf[0x0d].extend([
+			_create_update_hunger_method(cf, cp_cache, side),
+			_create_restore_hunger_method(cf, cp_cache, c_name, side),
+			_create_update_thirst_method(cf, cp_cache, side),
+			_create_restore_thirst_method(cf, cp_cache, c_name, side),
+			_create_open_smelter_screen_method(cf, cp_cache, side)
+		])
+	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
 		file.write(cf_assemble(cf))
@@ -107,119 +112,150 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 	hunger_reduce_every = ['sipush', 200]
 	thirst_reduce_every = ['sipush', 160]
 
-	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, side, 402, [
-		'aload_0',
-		['getfield', c_name, ('aI', 'aL'), ('Lfd;', 'Ldj;')],
-		['getfield', ('fd', 'dj'), 'B', 'Z'],
-		['ifne', 'end_hunger_tick'],
+	a_code[0x00] = (12).to_bytes(2)
 
-		'aload_0',
-		['getfield', c_name, 'hungerTick', 'I'],
-		hunger_reduce_every,
-		['if_icmpge', 'a'],
+	code = []
 
-		'aload_0',
-		'aload_0',
-		['getfield', c_name, 'hungerTick', 'I'],
-		'iconst_1',
-		'iadd',
-		['putfield', c_name, 'hungerTick', 'I'],
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+		code.extend([
+			'aload_0',
+			['getfield', c_name, ('aI', 'aL'), ('Lfd;', 'Ldj;')],
+			['getfield', ('fd', 'dj'), 'B', 'Z'],
+			['ifne', 'end_hunger_tick'],
 
-		['label', 'a'],
-		'aload_0',
-		['getfield', c_name, 'hungerTick', 'I'],
-		hunger_reduce_every,
-		['if_icmplt', 'end_hunger_tick'],
+			'aload_0',
+			['getfield', c_name, 'hungerTick', 'I'],
+			hunger_reduce_every,
+			['if_icmpge', 'a'],
 
-		'aload_0',
-		['getfield', c_name, 'hunger', 'I'],
-		['ifle', 'b'],
+			'aload_0',
+			'aload_0',
+			['getfield', c_name, 'hungerTick', 'I'],
+			'iconst_1',
+			'iadd',
+			['putfield', c_name, 'hungerTick', 'I'],
 
-		'aload_0',
-		'aload_0',
-		['getfield', c_name, 'hunger', 'I'],
-		'iconst_1',
-		'isub',
-		['putfield', c_name, 'hunger', 'I'],
+			['label', 'a'],
+			'aload_0',
+			['getfield', c_name, 'hungerTick', 'I'],
+			hunger_reduce_every,
+			['if_icmplt', 'end_hunger_tick'],
 
-		'aload_0',
-		'aload_0', ['getfield', c_name, 'hunger', 'I'],
-		'aload_0', ['getfield', c_name, 'maxHunger', 'I'],
-		['invokevirtual', c_name, 'updateHunger', '(II)V'],
+			'aload_0',
+			['getfield', c_name, 'hunger', 'I'],
+			['ifle', 'b'],
 
-		['goto', 'c'],
+			'aload_0',
+			'aload_0',
+			['getfield', c_name, 'hunger', 'I'],
+			'iconst_1',
+			'isub',
+			['putfield', c_name, 'hunger', 'I'],
 
-		['label', 'b'],
-		'aload_0',
-		'aconst_null',
-		'iconst_1',
-		['invokevirtual', c_name, 'a', ('(Lsn;I)Z', '(Llq;I)Z')],
-		'pop',
+			'aload_0',
+			'aload_0', ['getfield', c_name, 'hunger', 'I'],
+			'aload_0', ['getfield', c_name, 'maxHunger', 'I'],
+			['invokevirtual', c_name, 'updateHunger', '(II)V'],
 
-		['label', 'c'],
-		'aload_0',
-		'iconst_0',
-		['putfield', c_name, 'hungerTick', 'I'],
+			['goto', 'c'],
 
-		['label', 'end_hunger_tick'],
+			['label', 'b'],
+			'aload_0',
+			'aconst_null',
+			'iconst_1',
+			['invokevirtual', c_name, 'a', ('(Lsn;I)Z', '(Llq;I)Z')],
+			'pop',
 
-		'aload_0',
-		['getfield', c_name, ('aI', 'aL'), ('Lfd;', 'Ldj;')],
-		['getfield', ('fd', 'dj'), 'B', 'Z'],
-		['ifne', 'end_thirst_tick'],
+			['label', 'c'],
+			'aload_0',
+			'iconst_0',
+			['putfield', c_name, 'hungerTick', 'I'],
 
-		'aload_0',
-		['getfield', c_name, 'thirstTick', 'I'],
-		thirst_reduce_every,
-		['if_icmpge', 'd'],
+			['label', 'end_hunger_tick'],
 
-		'aload_0',
-		'aload_0',
-		['getfield', c_name, 'thirstTick', 'I'],
-		'iconst_1',
-		'iadd',
-		['putfield', c_name, 'thirstTick', 'I'],
+			'aload_0',
+			['getfield', c_name, ('aI', 'aL'), ('Lfd;', 'Ldj;')],
+			['getfield', ('fd', 'dj'), 'B', 'Z'],
+			['ifne', 'end_thirst_tick'],
 
-		['label', 'd'],
-		'aload_0',
-		['getfield', c_name, 'thirstTick', 'I'],
-		thirst_reduce_every,
-		['if_icmplt', 'end_thirst_tick'],
+			'aload_0',
+			['getfield', c_name, 'thirstTick', 'I'],
+			thirst_reduce_every,
+			['if_icmpge', 'd'],
 
-		'aload_0',
-		['getfield', c_name, 'thirst', 'I'],
-		['ifle', 'e'],
+			'aload_0',
+			'aload_0',
+			['getfield', c_name, 'thirstTick', 'I'],
+			'iconst_1',
+			'iadd',
+			['putfield', c_name, 'thirstTick', 'I'],
 
-		'aload_0',
-		'aload_0',
-		['getfield', c_name, 'thirst', 'I'],
-		'iconst_1',
-		'isub',
-		['putfield', c_name, 'thirst', 'I'],
+			['label', 'd'],
+			'aload_0',
+			['getfield', c_name, 'thirstTick', 'I'],
+			thirst_reduce_every,
+			['if_icmplt', 'end_thirst_tick'],
 
-		'aload_0',
-		'aload_0', ['getfield', c_name, 'thirst', 'I'],
-		'aload_0', ['getfield', c_name, 'maxThirst', 'I'],
-		['invokevirtual', c_name, 'updateThirst', '(II)V'],
+			'aload_0',
+			['getfield', c_name, 'thirst', 'I'],
+			['ifle', 'e'],
 
-		['goto', 'f'],
+			'aload_0',
+			'aload_0',
+			['getfield', c_name, 'thirst', 'I'],
+			'iconst_1',
+			'isub',
+			['putfield', c_name, 'thirst', 'I'],
 
-		['label', 'e'],
-		'aload_0',
-		'aconst_null',
-		'iconst_1',
-		['invokevirtual', c_name, 'a', ('(Lsn;I)Z', '(Llq;I)Z')],
-		'pop',
+			'aload_0',
+			'aload_0', ['getfield', c_name, 'thirst', 'I'],
+			'aload_0', ['getfield', c_name, 'maxThirst', 'I'],
+			['invokevirtual', c_name, 'updateThirst', '(II)V'],
 
-		['label', 'f'],
-		'aload_0',
-		'iconst_0',
-		['putfield', c_name, 'thirstTick', 'I'],
+			['goto', 'f'],
 
-		['label', 'end_thirst_tick'],
+			['label', 'e'],
+			'aload_0',
+			'aconst_null',
+			'iconst_1',
+			['invokevirtual', c_name, 'a', ('(Lsn;I)Z', '(Llq;I)Z')],
+			'pop',
 
-		'return'
-	])
+			['label', 'f'],
+			'aload_0',
+			'iconst_0',
+			['putfield', c_name, 'thirstTick', 'I'],
+
+			['label', 'end_thirst_tick']
+		])
+
+	if mod.config.is_feature_enabled('blackbox'):
+		code.extend([
+			'aload_0', ['getfield', ('gs', 'em'), ('aI', 'aL'), ('Lfd;', 'Ldj;')], ['getfield', ('fd', 'dj'), 'B', 'Z'],
+			['ifne', 'skip'],
+			'aload_0', ['invokevirtual', ('gs', 'em'), ('W', 'T'), '()Z'],
+			['ifeq', 'skip'],
+
+			['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
+			'aload_0', ['getfield', ('gs', 'em'), ('l', 'r'), 'Ljava/lang/String;'],
+			'aload_0',
+			['getfield', ('gs', 'em'), ('aI', 'aL'), ('Lfd;', 'Ldj;')],
+			['getfield', ('fd', 'dj'), 't', ('Lxa;', 'Los;')],
+			['getfield', ('xa', 'os'), 'g', 'I'],
+			'aload_0', ['getfield', ('gs', 'em'), ('aM', 'aP'), 'D'],
+			'aload_0', ['getfield', ('gs', 'em'), ('aN', 'aQ'), 'D'],
+			'aload_0', ['getfield', ('gs', 'em'), ('aO', 'aR'), 'D'],
+			'aload_0', ['getfield', ('gs', 'em'), ('aS', 'aV'), 'F'],
+			'aload_0', ['getfield', ('gs', 'em'), ('aT', 'aW'), 'F'],
+			'aload_0', ['invokevirtual', ('gs', 'em'), ('t', 'ah'), '()Z'],
+			['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onPlayerTick', '(Ljava/lang/String;IDDDFFZ)V'],
+
+			['label', 'skip'],
+		])
+
+	code.append('return')
+
+	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, side, 402, code)
 
 	# update code length
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
@@ -463,3 +499,31 @@ def _create_open_smelter_screen_method(cf, cp_cache, side):
 	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
+
+def _modify_on_killed_by_method(cf, cp_cache, side):
+	m = get_method(cf, cp_cache, ['b', 'a'][side], ['(Lsn;)V', '(Llq;)V'][side])
+	a = get_attribute(m[0x04], cp_cache, 'Code')
+
+	a_code = a_code_load(a[0x02])
+
+	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, side, len(a_code[0x03]) - 1, [
+		'aload_0', ['getfield', ('gs', 'em'), ('aI', 'aL'), ('Lfd;', 'Ldj;')], ['getfield', ('fd', 'dj'), 'B', 'Z'],
+		['ifne', 'skip'],
+		['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
+		'aload_0', ['getfield', ('gs', 'em'), ('l', 'r'), 'Ljava/lang/String;'],
+		['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onPlayerDied', '(Ljava/lang/String;)V'],
+
+		['label', 'skip'],
+		'return'
+	])
+
+	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
+	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
+
+	for i, a in a_code[0x07]:
+		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+			del a_code[0x07][i]
+			break
+
+	a[0x02] = a_code_assemble(a_code)
+	a[0x01] = len(a[0x02]).to_bytes(4)
