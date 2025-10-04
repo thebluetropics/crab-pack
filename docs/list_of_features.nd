@@ -15,6 +15,7 @@
 . `etc.log_version`
 . `etc.dirt_to_grass_block`
 . `item.cloth`
+. `zoom`
 
 [:. List of features (not enabled by default)]
 . `etc.no_entity_shadows`
@@ -23,4 +24,3 @@
 . `debug.no_clouds`
 . `debug.pause_prevention`
 . `blackbox`
-. `zoom`
