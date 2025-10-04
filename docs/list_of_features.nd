@@ -19,8 +19,8 @@
 . `etc.no_entity_shadows`
 . `experimental.cloth`
 . `debug.debug_recipes`
-. `debug.debug_fov`
 . `debug.fixed_time`
 . `debug.no_clouds`
 . `debug.pause_prevention`
 . `blackbox`
+. `zoom`

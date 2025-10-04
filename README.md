@@ -11,6 +11,7 @@ developed by [thebluetropics](https://github.com/thebluetropics).
 ```sh
 # Compile
 kotlinc -d class_files src/blackbox
+javac -d class_files src/zoom # → jdk8
 ```
 
 ```sh
