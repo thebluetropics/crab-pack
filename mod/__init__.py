@@ -1,3 +1,3 @@
-from mod import config
+from . import config
 
-version = config.get_version()
+version = None

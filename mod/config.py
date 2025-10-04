@@ -1,56 +1,21 @@
-import tomllib, configparser
 import shutil
-import os
+import os, json
 
 from sys import (exit, stderr)
 from pathlib import Path
 
-import json
-from json import load as load_json
-
-root_dir = str(Path(__file__).parent.parent.resolve(True))
+project_dir = str(Path(__file__).parent.parent.resolve(True))
 
 def path(*path):
-	return os.path.abspath(os.path.join(root_dir, *path))
+	return os.path.abspath(os.path.join(project_dir, *path))
 
 is_debug = True
-
-if os.path.exists(path('opts.json')):
-	with open(path('opts.json'), 'r', encoding='utf-8') as file:
-		opts = load_json(file)
-
-		if 'is_debug' in opts and type(opts['is_debug']) is bool:
-			is_debug = opts['is_debug']
-		else:
-			print('Err: unknown.', file=stderr)
-			exit(1)
-
 _ver = None
-
-if not os.path.isfile(os.path.join(root_dir, 'mod.json')):
-	print('Err: unknown.', file=stderr)
-	exit(1)
-
-with open(os.path.join(root_dir, 'mod.json'), 'r', encoding='utf-8') as file:
-	mod_info = load_json(file)
-	_ver = mod_info['version']
 
 def get_version():
 	return _ver
 
 _features = []
-
-if not os.path.exists(path('config')):
-	os.makedirs(path('config'), exist_ok=True)
-
-if not os.path.exists(path('config', 'features.json')):
-	shutil.copy(path('etc', 'config_template', 'features.json'), path('config', 'features.json'))
-
-with open(os.path.join(root_dir, 'config', 'features.json'), 'r', encoding='utf-8') as file:
-	file = json.load(file)
-
-	for feature in file['enabled_features']:
-		_features.append(feature)
 
 def is_one_of_features_enabled(features):
 	for x in features:
@@ -61,3 +26,24 @@ def is_one_of_features_enabled(features):
 
 def is_feature_enabled(feature):
 	return feature in _features
+
+def initialize(flags):
+	global is_debug, _ver
+
+	if 'no_debug' in flags:
+		is_debug = False
+
+	if not os.path.isfile(os.path.join(project_dir, 'mod.json')):
+		print('Err: unknown.', file=stderr)
+		exit(1)
+
+	with open(os.path.join(project_dir, 'mod.json'), 'r', encoding='utf-8') as file:
+		mod_info = json.load(file)
+		_ver = mod_info['version']
+
+	if os.path.exists(os.path.join(project_dir, 'config', 'features.json')):
+		with open(os.path.join(project_dir, 'config', 'features.json'), 'r', encoding='utf-8') as file:
+			file = json.load(file)
+
+			for feature in file['enabled_features']:
+				_features.append(feature)

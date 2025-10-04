@@ -1,23 +1,22 @@
 import urllib.request
 import os
 import shutil
-import zipfile
-import json
+import zipfile, sys
 
 from pathlib import Path
 from sys import (exit, stderr)
 
-root_dir = str(Path(__file__).parent.parent.resolve(True))
+project_dir = str(Path(__file__).parent.parent.resolve(True))
 
 def requires_dir(*segments):
-	path = os.path.join(root_dir, *segments)
+	path = os.path.join(project_dir, *segments)
 
 	if not os.path.exists(path):
 		os.makedirs(path, exist_ok=True)
 
-requires_dir('out', 'python_embeddable_distribution')
+requires_dir('out', 'python-3.13.2-embed-amd64')
 
-embeddable_distribution_file = os.path.join(root_dir, 'out', 'python_embeddable_distribution', 'python-3.13.2-embed-amd64.zip')
+embeddable_distribution_file = os.path.join(project_dir, 'out', 'python-3.13.2-embed-amd64', 'python-3.13.2-embed-amd64.zip')
 
 if not os.path.exists(embeddable_distribution_file):
 	with urllib.request.urlopen(f'https://www.python.org/ftp/python/3.13.2/python-3.13.2-embed-amd64.zip', timeout=16) as res:
@@ -26,7 +25,7 @@ if not os.path.exists(embeddable_distribution_file):
 
 requires_dir('out', 'target', 'windows-x86_64')
 
-target_path = os.path.join(root_dir, 'out', 'target', 'windows-x86_64')
+target_path = os.path.join(project_dir, 'out', 'target', 'windows-x86_64')
 
 if os.listdir(target_path):
 	for entry in os.listdir(target_path):
@@ -53,42 +52,39 @@ with open(os.path.join(target_path, 'python-3.13.2', 'python313._pth'), 'w', enc
 	)
 
 shutil.copytree(
-	os.path.join(root_dir, 'mod'),
+	os.path.join(project_dir, 'mod'),
 	os.path.join(target_path, 'mod'),
 	ignore=shutil.ignore_patterns('__pycache__', '*.pyc')
 )
 shutil.copytree(
-	os.path.join(root_dir, 'modmaker'),
+	os.path.join(project_dir, 'modmaker'),
 	os.path.join(target_path, 'modmaker'),
 	ignore=shutil.ignore_patterns('__pycache__', '*.pyc')
 )
-shutil.copytree(os.path.join(root_dir, 'assets'), os.path.join(target_path, 'assets'))
-shutil.copytree(os.path.join(root_dir, 'class_files'), os.path.join(target_path, 'class_files'))
-shutil.copytree(os.path.join(root_dir, 'deps'), os.path.join(target_path, 'deps'))
-shutil.copy(os.path.join(root_dir, 'mod.json'), os.path.join(target_path, 'mod.json'))
-shutil.copy(os.path.join(root_dir, 'LICENSE'), os.path.join(target_path, 'LICENSE'))
+shutil.copytree(os.path.join(project_dir, 'assets'), os.path.join(target_path, 'assets'))
+shutil.copytree(os.path.join(project_dir, 'class_files'), os.path.join(target_path, 'class_files'))
+shutil.copytree(os.path.join(project_dir, 'deps'), os.path.join(target_path, 'deps'))
+shutil.copy(os.path.join(project_dir, 'mod.json'), os.path.join(target_path, 'mod.json'))
+shutil.copy(os.path.join(project_dir, 'LICENSE'), os.path.join(target_path, 'LICENSE'))
 
 if not os.path.exists(os.path.join(target_path, 'config')):
 	os.mkdir(os.path.join(target_path, 'config'))
 
-shutil.copy(os.path.join(root_dir, 'etc', 'config_template', 'features.json'), os.path.join(target_path, 'config', 'features.json'))
-
-with open(os.path.join(target_path, 'opts.json'), 'w', encoding='utf-8') as file:
-	json.dump({ 'is_debug': False }, file)
+shutil.copy(os.path.join(project_dir, 'etc', 'config_template', 'features.json'), os.path.join(target_path, 'config', 'features.json'))
 
 with open(os.path.join(target_path, 'make.bat'), 'w', encoding='utf-8') as file:
 	file.write(
-		'\r\n'.join(['@echo off', '.\\python-3.13.2\\python.exe -m mod make'])
+		'\r\n'.join(['@echo off', '.\\python-3.13.2\\python.exe -m mod -no_debug make'])
 	)
 
 if not os.path.exists(os.path.join(target_path, 'lib')):
 	os.mkdir(os.path.join(target_path, 'lib'))
 
-shutil.copy(os.path.join(root_dir, 'c_libs', 'assets', 'lib', 'assets.dll'), os.path.join(target_path, 'lib', 'assets.dll'))
+shutil.copy(os.path.join(project_dir, 'c_libs', 'assets', 'lib', 'assets.dll'), os.path.join(target_path, 'lib', 'assets.dll'))
 
 requires_dir('dist')
 
-with zipfile.ZipFile(os.path.join(root_dir, 'dist', 'windows-x86_64.zip'), 'w', zipfile.ZIP_DEFLATED) as zipf:
+with zipfile.ZipFile(os.path.join(project_dir, 'dist', 'windows-x86_64.zip'), 'w', zipfile.ZIP_DEFLATED) as zipf:
 	for root, _, files in os.walk(target_path):
 		for file in files:
 			abs_path = os.path.join(root, file)

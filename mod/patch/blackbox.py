@@ -13,7 +13,7 @@ def apply(side_name):
 		mod.config.path('stage', side_name, 'com/thebluetropics/crabpack/State.class')
 	)
 
-	with zipfile.ZipFile(mod.config.path('deps/kotlin-stdlib-2.2.0.jar'), 'r') as zip_ref:
+	with zipfile.ZipFile(mod.config.path('deps', 'kotlin-stdlib-2.2.0.jar'), 'r') as zip_ref:
 		for member in zip_ref.namelist():
 			if member.lower().endswith('.class'):
 				target_path = os.path.join(mod.config.path('stage', side_name), member)
