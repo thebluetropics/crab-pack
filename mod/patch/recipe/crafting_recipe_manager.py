@@ -269,7 +269,7 @@ def _modify_constructor(cf, cp_cache, side_name, side, c_name):
 		])
 
 	if mod.config.is_feature_enabled('debug.debug_recipes'):
-		result_dirt = [('gm', 'ej'), 'l', ('Lgm;', 'Lej;')]
+		result_dirt = [('gm', 'ej'), 'BOTTLE', ('Lgm;', 'Lej;')]
 		result_sand = [('gm', 'ej'), 'l', ('Lgm;', 'Lej;')]
 		result_gravel = [('gm', 'ej'), 'l', ('Lgm;', 'Lej;')]
 

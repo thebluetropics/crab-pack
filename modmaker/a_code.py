@@ -12,7 +12,12 @@ from .cp import (
 	icpx_c,
 	icpx_float,
 	icpx_int,
-	i2cpx_long
+	i2cpx_long,
+	get_ecp_type_at,
+	get_float_at,
+	get_double_at,
+	get_method_reference_at,
+	get_field_reference_at
 )
 
 def a_code_load(a_code_b):
@@ -73,22 +78,10 @@ def a_code_assemble(a_code):
 		*[b''.join(a) for a in a_code[0x07]]
 	])
 
-def _gen_ins_info_table(entries):
-	table = {}
-
-	for info in entries:
-		if len(info).__eq__(3):
-			name, opcode, sz_operand = info
-			table[name] = (bytes([opcode]), 1 + sz_operand, sz_operand)
-		else:
-			name, opcode = info
-			table[name] = (bytes([opcode]), 1)
-
-	return table
 
 # multianewarray, jsr, jsr_w, ret, invokedynamic, invokeinterface, monitorenter,
 # monitorexit, wide, tableswitch, lookupswitch, iinc
-_ins_info_table = _gen_ins_info_table([
+_info_table = [
 	['nop', 0x00],
 	['aconst_null', 0x01],
 	['iconst_0', 0x03],
@@ -281,16 +274,129 @@ _ins_info_table = _gen_ins_info_table([
 	['ifnonnull', 0xc7, 2],
 	['goto_w', 0xc8, 4],
 	['breakpoint', 0xca],
-])
+]
+
+def _gen_ins_info_table(entries):
+	table = {}
+
+	for info in entries:
+		if len(info).__eq__(3):
+			name, opcode, sz_operand = info
+			table[name] = (bytes([opcode]), 1 + sz_operand, sz_operand)
+		else:
+			name, opcode = info
+			table[name] = (bytes([opcode]), 1)
+
+	return table
+
+_ins_info_table = _gen_ins_info_table(_info_table)
+
+def _gen_ins_info_table_2(entries):
+	table = {}
+
+	for info in entries:
+		if len(info).__eq__(3):
+			name, opcode, sz_operand = info
+			table[opcode] = (name, 1 + sz_operand, sz_operand)
+		else:
+			name, opcode = info
+			table[opcode] = (name, 1)
+
+	return table
+
+_ins_info_table_2 = _gen_ins_info_table_2(_info_table)
 
 def is_opcode_only(opcode_name):
 	return not (_ins_info_table.get(opcode_name)[1] != 1)
+
+def is_opcode_only_2(opcode):
+	return _ins_info_table_2.get(opcode)[1].__eq__(1)
+
+def get_opcode_name_2(opcode):
+	return _ins_info_table_2.get(opcode)[0]
 
 def is_jump(opcode_name):
 	return opcode_name[0:2].__eq__('if') or opcode_name.__eq__('goto') or opcode_name.__eq__('goto_w')
 
 def is_opcode_accept_field_reference(opcode_name):
 	return opcode_name in ['getstatic', 'putstatic', 'getfield', 'putfield']
+
+def load_code(cp_cache, code_bytes):
+	i = 0
+	code = []
+
+	while i < len(code_bytes):
+		opcode = code_bytes[i]
+		if not opcode in _ins_info_table_2:
+			print('Err: unknown instruction.', file=stderr)
+			exit(1)
+
+		if is_opcode_only_2(opcode):
+			opcode_name, *_ = _ins_info_table_2.get(opcode)
+			code.append(opcode_name)
+			i += 1
+		else:
+			opcode_name, sz, sz_operand = _ins_info_table_2.get(opcode)
+
+			if opcode_name.__eq__('ldc'):
+				icp = int.from_bytes(code_bytes[i + 1:i + 2])
+				ecp_type = get_ecp_type_at(cp_cache, icp)
+
+				if ecp_type.__eq__(b'\x03'):
+					pass
+
+				if ecp_type.__eq__(b'\x04'):
+					code.append(['ldc_w.f32', get_float_at(cp_cache, icp)])
+
+				if ecp_type.__eq__(b'\x08'):
+					pass
+
+				if ecp_type.__eq__(b'\x07'):
+					pass
+
+				if ecp_type.__eq__(b'\x0f'):
+					pass
+
+				if ecp_type.__eq__(b'\x10'):
+					pass
+
+				i += 2
+				continue
+
+			if opcode_name.__eq__('ldc2_w'):
+				icp = int.from_bytes(code_bytes[i + 1:i + 3])
+				ecp_type = get_ecp_type_at(cp_cache, icp)
+
+				if ecp_type.__eq__(b'\x05'):
+					pass
+
+				if ecp_type.__eq__(b'\x06'):
+					code.append(['ldc2_w.f64', get_double_at(cp_cache, icp)])
+
+				i += 3
+				continue
+
+			if opcode_name in ['getfield', 'putfield', 'getstatic', 'putstatic']:
+				icp = int.from_bytes(code_bytes[i + 1:i + 3])
+				ecp_type = get_ecp_type_at(cp_cache, icp)
+				code.append([opcode_name, *get_field_reference_at(cp_cache, icp)])
+				i += 3
+				continue
+
+			if opcode_name in ['invokevirtual', 'invokespecial', 'invokestatic']:
+				icp = int.from_bytes(code_bytes[i + 1:i + 3])
+				ecp_type = get_ecp_type_at(cp_cache, icp)
+				code.append([opcode_name, *get_method_reference_at(cp_cache, icp)])
+				i += 3
+				continue
+
+			if opcode_name in ['checkcast', 'instanceof', 'anewarray', 'new']:
+				pass
+
+			code.append([opcode_name, int.from_bytes(code_bytes[i + 1:i + 1 + sz_operand])])
+			i += sz
+
+	return code
 
 def assemble_code(cf, cp_cache, select, pc_begin, code):
 	temp = []
