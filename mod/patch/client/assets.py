@@ -99,7 +99,7 @@ def apply():
 			print('Err: unknown.', file=stderr)
 			exit(1)
 
-	if mod.config.is_feature_enabled('experimental.cloth'):
+	if mod.config.is_feature_enabled('item.cloth'):
 		ret_code = lib.apply_cloth(
 			os.path.join(mod.config.path('assets'), 'cloth.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'gui', 'items.png').encode('utf-8'),

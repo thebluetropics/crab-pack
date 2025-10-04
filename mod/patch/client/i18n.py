@@ -9,7 +9,9 @@ def apply():
 				"item.calamari.name=Calamari",
 				"item.calamari.desc=Calamari",
 				"item.steel_ingot.name=Steel Ingot",
-				"item.steel_ingot.desc="
+				"item.steel_ingot.desc=",
+				"item.cloth.name=Cloth",
+				"item.cloth.desc="
 			]))
 
 	if mod.config.is_feature_enabled("block.fortress_bricks"):

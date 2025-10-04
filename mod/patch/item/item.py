@@ -37,7 +37,7 @@ def apply(side_name):
 	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'BOTTLE', f'L{c_name};'))
 
-	if mod.config.is_feature_enabled('experimental.cloth'):
+	if mod.config.is_feature_enabled('item.cloth'):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public', 'static'], 'CLOTH', f'L{c_name};'))
 
 	if mod.config.is_feature_enabled('block.smelter'):
@@ -84,13 +84,13 @@ def _modify_static_initializer(cf, cp_cache, side_name, side):
 		['putstatic', ('gm', 'ej'), 'BOTTLE', ('Lgm;', 'Lej;')]
 	])
 
-	if mod.config.is_feature_enabled('experimental.cloth'):
+	if mod.config.is_feature_enabled('item.cloth'):
 		patch_code.extend([
 			['new', ('gm', 'ej')],
 			'dup',
-			['sipush', 1027],
+			['sipush', 1028],
 			['invokespecial', ('gm', 'ej'), '<init>', '(I)V'],
-			'iconst_5',
+			['bipush', 6],
 			['bipush', 15],
 			['invokevirtual', ('gm', 'ej'), 'a', ('(II)Lgm;', '(II)Lej;')],
 			['ldc_w.string', 'cloth'],

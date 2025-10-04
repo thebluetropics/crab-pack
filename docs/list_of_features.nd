@@ -14,10 +14,10 @@
 . `etc.extended_farmland_water_source`
 . `etc.log_version`
 . `etc.dirt_to_grass_block`
+. `item.cloth`
 
 [:. List of features (not enabled by default)]
 . `etc.no_entity_shadows`
-. `experimental.cloth`
 . `debug.debug_recipes`
 . `debug.fixed_time`
 . `debug.no_clouds`

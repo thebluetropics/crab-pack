@@ -16,6 +16,7 @@
 		"etc.extended_farmland_water_source",
 		"etc.log_version",
 		"etc.dirt_to_grass_block",
-		"zoom"
+		"zoom",
+		"item.cloth"
 	]
 }

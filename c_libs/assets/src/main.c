@@ -90,7 +90,7 @@ uint8_t apply_cloth(char* source, char* target) {
 		goto _exit;
 	}
 
-	overlay(cloth.ptr, items.ptr, cloth.w, cloth.h, items.w, 80, 240);
+	overlay(cloth.ptr, items.ptr, cloth.w, cloth.h, items.w, 96, 240);
 
 	if (!stbi_write_png(target, items.w, items.h, 4, items.ptr, items.w * 4)) {
 		code = 1;
