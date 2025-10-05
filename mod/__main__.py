@@ -40,6 +40,14 @@ if 'v' in flags:
 	print(mod.version)
 	exit()
 
+if args[0].__eq__('package_client'):
+	packaging.package('client')
+	exit(0)
+
+if args[0].__eq__('package_server'):
+	packaging.package('client')
+	exit(0)
+
 if args[0].__eq__('make_client'):
 	artifacts.ensure('b1.7.3', 'client')
 	staging.stage('client')
@@ -56,11 +64,11 @@ if args[0].__eq__('make_server'):
 
 if args[0].__eq__('make'):
 	artifacts.ensure('b1.7.3', 'client')
-	artifacts.ensure('b1.7.3', 'server')
 	staging.stage('client')
-	staging.stage('server')
 	patch.apply_client_patches()
-	patch.apply_server_patches()
 	packaging.package('client')
+	artifacts.ensure('b1.7.3', 'server')
+	staging.stage('server')
+	patch.apply_server_patches()
 	packaging.package('server')
 	exit(0)
