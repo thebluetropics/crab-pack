@@ -5,21 +5,41 @@ import mod
 from sys import (exit, stderr)
 
 def package(side):
-	if not side in ('client', 'server'):
+	if side not in ('client', 'server'):
 		print('Err: failed to package.', file=stderr)
 		exit(1)
 
-	if not os.path.exists(mod.config.path('dist')):
-		os.mkdir(mod.config.path('dist'))
+	dist = mod.config.path('dist')
+	stage = mod.config.path('stage', side)
 
-	for file_name in os.listdir(mod.config.path('dist')):
+	out_name = f'crabpack-{mod.version}-{side}.jar'
+	out_path = os.path.join(dist, out_name)
+
+	os.makedirs(dist, exist_ok=True)
+
+	for file_name in os.listdir(dist):
 		if side in file_name:
-			os.remove(mod.config.path('dist', file_name))
+			os.remove(os.path.join(dist, file_name))
 			break
 
-	with zipfile.ZipFile(mod.config.path('dist', f'crabpack-{mod.version}-{side}.jar'), 'w', zipfile.ZIP_DEFLATED) as zipf:
-		for root, _, files in os.walk(mod.config.path('stage', side)):
-			for file in files:
-				absolute_file_path = os.path.join(root, file)
-				rel_path = os.path.relpath(absolute_file_path, start=mod.config.path('stage', side))
-				zipf.write(absolute_file_path, arcname=rel_path)
+	all_files = []
+	for root, _, files in os.walk(stage):
+		for file in files:
+			all_files.append(os.path.join(root, file))
+
+	if not all_files:
+		exit(1)
+
+	total = len(all_files)
+
+	bar_width = 20
+
+	with zipfile.ZipFile(out_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+		for i, absolute_file_path in enumerate(all_files, 1):
+			relative_path = os.path.relpath(absolute_file_path, start=stage)
+			zip_file.write(absolute_file_path, arcname=relative_path)
+
+			progress = i / total
+			filled = int(bar_width * progress)
+			bar = '█' * filled + '▁' * (bar_width - filled)
+			print(f'\rPackaging {out_name} ▕{bar}▏ {i}/{total} {progress * 100:5.1f}%', end='', flush=True)
