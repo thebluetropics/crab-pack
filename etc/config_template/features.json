@@ -2,7 +2,6 @@
 	"enabled_features": [
 		"food.stackable_food",
 		"food.raw_squid_and_calamari",
-		"blackbox",
 		"block.fortress_bricks",
 		"block.solid_grass_block",
 		"block.mortar",
