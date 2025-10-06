@@ -17,9 +17,6 @@ from modmaker.cp import (
 from modmaker.m import (
 	create_method
 )
-from modmaker.helper import (
-	as_f64
-)
 
 def apply(side_name):
 	if not mod.config.is_feature_enabled('block.mortar'):
@@ -252,7 +249,7 @@ def _create_get_collision_shape_method(cf, cp_cache, side):
 	code = assemble_code(cf, cp_cache, side, 0, [
 		['iload', 2],
 		'i2d',
-		['ldc2_w.f64', as_f64(1.0 / 16.0)],
+		['ldc2_w.f64', 1.0 / 16.0],
 		'dadd',
 
 		['iload', 3],
@@ -262,22 +259,22 @@ def _create_get_collision_shape_method(cf, cp_cache, side):
 
 		['iload', 4],
 		'i2d',
-		['ldc2_w.f64', as_f64(1.0 / 16.0)],
+		['ldc2_w.f64', 1.0 / 16.0],
 		'dadd',
 
 		['iload', 2],
 		'i2d',
-		['ldc2_w.f64', as_f64(15.0 / 16.0)],
+		['ldc2_w.f64', 15.0 / 16.0],
 		'dadd',
 
 		['iload', 3],
 		'i2d',
-		['ldc2_w.f64', as_f64(6.0 / 16.0)],
+		['ldc2_w.f64', 6.0 / 16.0],
 		'dadd',
 
 		['iload', 4],
 		'i2d',
-		['ldc2_w.f64', as_f64(15.0 / 16.0)],
+		['ldc2_w.f64', 15.0 / 16.0],
 		'dadd',
 
 		['invokestatic', ('eq', 'cz'), 'b', ('(DDDDDD)Leq;', '(DDDDDD)Lcz;')],
@@ -305,7 +302,7 @@ def _create_get_bounding_box_method(cf, cp_cache):
 	code = assemble_code(cf, cp_cache, 0, 0, [
 		['iload', 2],
 		'i2d',
-		['ldc2_w.f64', as_f64(1.0 / 16.0)],
+		['ldc2_w.f64', 1.0 / 16.0],
 		'dadd',
 
 		['iload', 3],
@@ -315,22 +312,22 @@ def _create_get_bounding_box_method(cf, cp_cache):
 
 		['iload', 4],
 		'i2d',
-		['ldc2_w.f64', as_f64(1.0 / 16.0)],
+		['ldc2_w.f64', 1.0 / 16.0],
 		'dadd',
 
 		['iload', 2],
 		'i2d',
-		['ldc2_w.f64', as_f64(15.0 / 16.0)],
+		['ldc2_w.f64', 15.0 / 16.0],
 		'dadd',
 
 		['iload', 3],
 		'i2d',
-		['ldc2_w.f64', as_f64(6.0 / 16.0)],
+		['ldc2_w.f64', 6.0 / 16.0],
 		'dadd',
 
 		['iload', 4],
 		'i2d',
-		['ldc2_w.f64', as_f64(15.0 / 16.0)],
+		['ldc2_w.f64', 15.0 / 16.0],
 		'dadd',
 
 		['invokestatic', 'eq', 'b', '(DDDDDD)Leq;'],
