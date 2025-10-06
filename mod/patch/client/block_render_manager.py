@@ -20,10 +20,6 @@ from modmaker.cp import (
 	get_utf8_at,
 	i2cpx_utf8
 )
-from modmaker.helper import (
-	as_f64,
-	as_f32
-)
 from modmaker.m import (
 	create_method
 )
@@ -104,35 +100,35 @@ def _render_face(
 		['invokevirtual', 'nw', 'b', '(FFF)V'],
 
 		['aload', 4],
-		['ldc2_w.f64', as_f64(v0_x / 16.0)],
-		['ldc2_w.f64', as_f64(v0_y / 16.0)],
-		['ldc2_w.f64', as_f64(v0_z / 16.0)],
-		['ldc2_w.f64', as_f64(v0_u / 256.0)], ['ldc2_w.f64', as_f64((v0_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
-		['ldc2_w.f64', as_f64(v0_v / 256.0)], ['ldc2_w.f64', as_f64((v0_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', v0_x / 16.0],
+		['ldc2_w.f64', v0_y / 16.0],
+		['ldc2_w.f64', v0_z / 16.0],
+		['ldc2_w.f64', v0_u / 256.0], ['ldc2_w.f64', (v0_u_offset / 16.0) * (16.0 / 256.0)], 'dadd',
+		['ldc2_w.f64', v0_v / 256.0], ['ldc2_w.f64', (v0_v_offset / 16.0) * (16.0 / 256.0)], 'dadd',
 		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
 
 		['aload', 4],
-		['ldc2_w.f64', as_f64(v1_x / 16.0)],
-		['ldc2_w.f64', as_f64(v1_y / 16.0)],
-		['ldc2_w.f64', as_f64(v1_z / 16.0)],
-		['ldc2_w.f64', as_f64(v1_u / 256.0)], ['ldc2_w.f64', as_f64((v1_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
-		['ldc2_w.f64', as_f64(v1_v / 256.0)], ['ldc2_w.f64', as_f64((v1_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', v1_x / 16.0],
+		['ldc2_w.f64', v1_y / 16.0],
+		['ldc2_w.f64', v1_z / 16.0],
+		['ldc2_w.f64', v1_u / 256.0], ['ldc2_w.f64', (v1_u_offset / 16.0) * (16.0 / 256.0)], 'dadd',
+		['ldc2_w.f64', v1_v / 256.0], ['ldc2_w.f64', (v1_v_offset / 16.0) * (16.0 / 256.0)], 'dadd',
 		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
 
 		['aload', 4],
-		['ldc2_w.f64', as_f64(v2_x / 16.0)],
-		['ldc2_w.f64', as_f64(v2_y / 16.0)],
-		['ldc2_w.f64', as_f64(v2_z / 16.0)],
-		['ldc2_w.f64', as_f64(v2_u / 256.0)], ['ldc2_w.f64', as_f64((v2_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
-		['ldc2_w.f64', as_f64(v2_v / 256.0)], ['ldc2_w.f64', as_f64((v2_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', v2_x / 16.0],
+		['ldc2_w.f64', v2_y / 16.0],
+		['ldc2_w.f64', v2_z / 16.0],
+		['ldc2_w.f64', v2_u / 256.0], ['ldc2_w.f64', (v2_u_offset / 16.0) * (16.0 / 256.0)], 'dadd',
+		['ldc2_w.f64', v2_v / 256.0], ['ldc2_w.f64', (v2_v_offset / 16.0) * (16.0 / 256.0)], 'dadd',
 		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
 
 		['aload', 4],
-		['ldc2_w.f64', as_f64(v3_x / 16.0)],
-		['ldc2_w.f64', as_f64(v3_y / 16.0)],
-		['ldc2_w.f64', as_f64(v3_z / 16.0)],
-		['ldc2_w.f64', as_f64(v3_u / 256.0)], ['ldc2_w.f64', as_f64((v3_u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
-		['ldc2_w.f64', as_f64(v3_v / 256.0)], ['ldc2_w.f64', as_f64((v3_v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['ldc2_w.f64', v3_x / 16.0],
+		['ldc2_w.f64', v3_y / 16.0],
+		['ldc2_w.f64', v3_z / 16.0],
+		['ldc2_w.f64', v3_u / 256.0], ['ldc2_w.f64', (v3_u_offset / 16.0) * (16.0 / 256.0)], 'dadd',
+		['ldc2_w.f64', v3_v / 256.0], ['ldc2_w.f64', (v3_v_offset / 16.0) * (16.0 / 256.0)], 'dadd',
 		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
 
 		['aload', 4],
@@ -151,13 +147,13 @@ def _modify_render_2_method(cf, cp_cache):
 		['bipush', 50],
 		['if_icmpne', 'skip_c'],
 
-		['ldc_w.f32', as_f32(-0.5)],
-		['ldc_w.f32', as_f32(-0.5)],
-		['ldc_w.f32', as_f32(-0.5)],
+		['ldc_w.f32', -0.5],
+		['ldc_w.f32', -0.5],
+		['ldc_w.f32', -0.5],
 		['invokestatic', 'org/lwjgl/opengl/GL11', 'glTranslatef', '(FFF)V'],
 
 		*_render_face(
-			'fconst_0', ['ldc_w.f32', as_f32(1.0)], 'fconst_0',
+			'fconst_0', ['ldc_w.f32', 1.0], 'fconst_0',
 			1.0, 6.0, 1.0, 64.0, 176.0, 1.0, 1.0,
 			1.0, 6.0, 15.0, 64.0, 176.0, 1.0, 15.0,
 			15.0, 6.0, 15.0, 64.0, 176.0, 15.0, 15.0,
@@ -165,7 +161,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			'fconst_0', ['ldc_w.f32', as_f32(1.0)], 'fconst_0',
+			'fconst_0', ['ldc_w.f32', 1.0], 'fconst_0',
 			3.0, 2.0, 3.0, 80.0, 176.0, 3.0, 3.0,
 			3.0, 2.0, 13.0, 80.0, 176.0, 13.0, 13.0,
 			13.0, 2.0, 13.0, 80.0, 176.0, 13.0, 13.0,
@@ -173,7 +169,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			'fconst_0', ['ldc_w.f32', as_f32(-1.0)], 'fconst_0',
+			'fconst_0', ['ldc_w.f32', -1.0], 'fconst_0',
 			1.0, 0.0, 15.0, 96.0, 176.0, 1.0, 15.0,
 			1.0, 0.0, 1.0, 96.0, 176.0, 1.0, 1.0,
 			15.0, 0.0, 1.0, 96.0, 176.0, 15.0, 1.0,
@@ -181,7 +177,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			['ldc_w.f32', as_f32(-1.0)], 'fconst_0', 'fconst_0',
+			['ldc_w.f32', -1.0], 'fconst_0', 'fconst_0',
 			1.0, 6.0, 15.0, 112.0, 176.0, 15.0, 10.0,
 			1.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
 			1.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
@@ -189,7 +185,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			['ldc_w.f32', as_f32(-1.0)], 'fconst_0', 'fconst_0',
+			['ldc_w.f32', -1.0], 'fconst_0', 'fconst_0',
 			13.0, 6.0, 15.0, 112.0, 176.0, 15.0, 10.0,
 			13.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
 			13.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
@@ -197,7 +193,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			['ldc_w.f32', as_f32(1.0)], 'fconst_0', 'fconst_0',
+			['ldc_w.f32', 1.0], 'fconst_0', 'fconst_0',
 			15.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
 			15.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
 			15.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
@@ -205,7 +201,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			['ldc_w.f32', as_f32(1.0)], 'fconst_0', 'fconst_0',
+			['ldc_w.f32', 1.0], 'fconst_0', 'fconst_0',
 			3.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
 			3.0, 0.0, 1.0, 112.0, 176.0, 1.0, 16.0,
 			3.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
@@ -213,7 +209,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(-1.0)],
+			'fconst_0', 'fconst_0', ['ldc_w.f32', -1.0],
 			1.0, 6.0, 1.0, 112.0, 176.0, 1.0, 10.0,
 			15.0, 6.0, 1.0, 112.0, 176.0, 15.0, 10.0,
 			15.0, 0.0, 1.0, 112.0, 176.0, 15.0, 16.0,
@@ -221,7 +217,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(-1.0)],
+			'fconst_0', 'fconst_0', ['ldc_w.f32', -1.0],
 			1.0, 6.0, 13.0, 112.0, 176.0, 1.0, 10.0,
 			15.0, 6.0, 13.0, 112.0, 176.0, 15.0, 10.0,
 			15.0, 0.0, 13.0, 112.0, 176.0, 15.0, 16.0,
@@ -229,7 +225,7 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(1.0)],
+			'fconst_0', 'fconst_0', ['ldc_w.f32', 1.0],
 			1.0, 6.0, 15.0, 112.0, 176.0, 1.0, 10.0,
 			1.0, 0.0, 15.0, 112.0, 176.0, 1.0, 16.0,
 			15.0, 0.0, 15.0, 112.0, 176.0, 15.0, 16.0,
@@ -237,16 +233,16 @@ def _modify_render_2_method(cf, cp_cache):
 		),
 
 		*_render_face(
-			'fconst_0', 'fconst_0', ['ldc_w.f32', as_f32(1.0)],
+			'fconst_0', 'fconst_0', ['ldc_w.f32', 1.0],
 			1.0, 6.0, 3.0, 112.0, 176.0, 1.0, 10.0,
 			1.0, 0.0, 3.0, 112.0, 176.0, 1.0, 16.0,
 			15.0, 0.0, 3.0, 112.0, 176.0, 15.0, 16.0,
 			15.0, 6.0, 3.0, 112.0, 176.0, 15.0, 10.0,
 		),
 
-		['ldc_w.f32', as_f32(0.5)],
-		['ldc_w.f32', as_f32(0.5)],
-		['ldc_w.f32', as_f32(0.5)],
+		['ldc_w.f32', 0.5],
+		['ldc_w.f32', 0.5],
+		['ldc_w.f32', 0.5],
 		['invokestatic', 'org/lwjgl/opengl/GL11', 'glTranslatef', '(FFF)V'],
 
 		'return',
@@ -333,11 +329,11 @@ def _texture_override(index, label):
 def _fn_vertex(x, y, z, u_offset, v_offset):
 	return [
 		['aload', 5],
-		['iload', 2], 'i2d', ['ldc2_w.f64', as_f64(x / 16.0)], 'dadd',
-		['iload', 3], 'i2d', ['ldc2_w.f64', as_f64(y / 16.0)], 'dadd',
-		['iload', 4], 'i2d', ['ldc2_w.f64', as_f64(z / 16.0)], 'dadd',
-		['iload', 8], 'i2d', ['ldc2_w.f64', as_f64(256.0)], 'ddiv', ['ldc2_w.f64', as_f64((u_offset / 16.0) * (16.0 / 256.0))], 'dadd',
-		['iload', 9], 'i2d', ['ldc2_w.f64', as_f64(256.0)], 'ddiv', ['ldc2_w.f64', as_f64((v_offset / 16.0) * (16.0 / 256.0))], 'dadd',
+		['iload', 2], 'i2d', ['ldc2_w.f64', x / 16.0], 'dadd',
+		['iload', 3], 'i2d', ['ldc2_w.f64', y / 16.0], 'dadd',
+		['iload', 4], 'i2d', ['ldc2_w.f64', z / 16.0], 'dadd',
+		['iload', 8], 'i2d', ['ldc2_w.f64', 256.0], 'ddiv', ['ldc2_w.f64', (u_offset / 16.0) * (16.0 / 256.0)], 'dadd',
+		['iload', 9], 'i2d', ['ldc2_w.f64', 256.0], 'ddiv', ['ldc2_w.f64', (v_offset / 16.0) * (16.0 / 256.0)], 'dadd',
 		['invokevirtual', 'nw', 'a', '(DDDDD)V'],
 	]
 
@@ -404,7 +400,7 @@ def _create_render_mortar_method(cf, cp_cache):
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
 		*_fn_vertex(1.0, 6.0, 15.0, 15.0, 10.0),
 		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 10.0),
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 16.0),
 		*_fn_vertex(1.0, 0.0, 15.0, 15.0, 16.0),
 
@@ -413,13 +409,13 @@ def _create_render_mortar_method(cf, cp_cache):
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
 		*_fn_vertex(13.0, 6.0, 15.0, 15.0, 10.0),
 		*_fn_vertex(13.0, 6.0, 1.0, 1.0, 10.0),
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(13.0, 0.0, 1.0, 1.0, 16.0),
 		*_fn_vertex(13.0, 0.0, 15.0, 15.0, 16.0),
 
 		*_texture_override(183, 'skip_south_1_smooth'),
 
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 16.0),
 		*_fn_vertex(15.0, 0.0, 1.0, 1.0, 16.0),
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
@@ -428,7 +424,7 @@ def _create_render_mortar_method(cf, cp_cache):
 
 		*_texture_override(183, 'skip_south_2_smooth'),
 
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(3.0, 0.0, 15.0, 15.0, 16.0),
 		*_fn_vertex(3.0, 0.0, 1.0, 1.0, 16.0),
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
@@ -440,7 +436,7 @@ def _create_render_mortar_method(cf, cp_cache):
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
 		*_fn_vertex(1.0, 6.0, 1.0, 1.0, 10.0),
 		*_fn_vertex(15.0, 6.0, 1.0, 15.0, 10.0),
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(15.0, 0.0, 1.0, 15.0, 16.0),
 		*_fn_vertex(1.0, 0.0, 1.0, 1.0, 16.0),
 
@@ -449,7 +445,7 @@ def _create_render_mortar_method(cf, cp_cache):
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
 		*_fn_vertex(1.0, 6.0, 13.0, 1.0, 10.0),
 		*_fn_vertex(15.0, 6.0, 13.0, 15.0, 10.0),
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(15.0, 0.0, 13.0, 15.0, 16.0),
 		*_fn_vertex(1.0, 0.0, 13.0, 1.0, 16.0),
 
@@ -457,7 +453,7 @@ def _create_render_mortar_method(cf, cp_cache):
 
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
 		*_fn_vertex(1.0, 6.0, 15.0, 1.0, 10.0),
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(1.0, 0.0, 15.0, 1.0, 16.0),
 		*_fn_vertex(15.0, 0.0, 15.0, 15.0, 16.0),
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
@@ -467,7 +463,7 @@ def _create_render_mortar_method(cf, cp_cache):
 
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
 		*_fn_vertex(1.0, 6.0, 3.0, 1.0, 10.0),
-		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub', ['fload', 6], ['ldc_w.f32', as_f32(0.25)], 'fsub'),
+		*_fn_set_tessellator_color(['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub', ['fload', 6], ['ldc_w.f32', 0.25], 'fsub'),
 		*_fn_vertex(1.0, 0.0, 3.0, 1.0, 16.0),
 		*_fn_vertex(15.0, 0.0, 3.0, 15.0, 16.0),
 		*_fn_set_tessellator_color(['fload', 6], ['fload', 6], ['fload', 6]),
