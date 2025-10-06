@@ -216,6 +216,9 @@ def apply():
 			['invokestatic', 'org/lwjgl/opengl/GL11', 'glEnable', '(I)V']
 		]),
 		*([] if not mod.config.is_feature_enabled('actions') else [
+			['getstatic', 'com/thebluetropics/crabpack/Actions', 'render', 'Z'],
+			['ifeq', 'skip_render_actions'],
+
 			'aload_0',
 			['aload', 8],
 
@@ -228,7 +231,9 @@ def apply():
 			'iconst_0',
 			'iconst_0',
 			['ldc_w.i32', 0xffffff],
-			['invokevirtual', 'uq', 'b', '(Lsj;Ljava/lang/String;III)V']
+			['invokevirtual', 'uq', 'b', '(Lsj;Ljava/lang/String;III)V'],
+
+			['label', 'skip_render_actions']
 		])
 	]) + a_code[0x03][943:2102]
 

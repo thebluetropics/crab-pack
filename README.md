@@ -12,6 +12,7 @@ developed by [thebluetropics](https://github.com/thebluetropics).
 # Compile
 kotlinc -d class_files src/blackbox
 javac -d class_files src/zoom # → jdk8
+javac -d class_files src/actions/com/thebluetropics/crabpack/Actions.java # → jdk8
 ```
 
 ```sh

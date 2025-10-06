@@ -1,5 +1,5 @@
 from . import (block, entity, client, item, server, world, meta_inf, packet, recipe, network, screen)
-from . import blackbox, inventory, zoom
+from . import blackbox, inventory, zoom, actions
 
 def apply_client_patches():
 	block.apply_client()
@@ -16,6 +16,7 @@ def apply_client_patches():
 	blackbox.apply('client')
 	zoom.apply('client')
 	inventory.apply_client()
+	actions.apply('client')
 
 def apply_server_patches():
 	block.apply_server()
