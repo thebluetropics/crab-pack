@@ -21,6 +21,9 @@ from modmaker.cp import (
 )
 
 def apply(side_name):
+	if not mod.config.is_one_of_features_enabled(['etc.no_crop_trampling', 'etc.extended_farmland_water_source']):
+		return
+
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['vl', 'no'][side]
 
