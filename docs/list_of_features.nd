@@ -16,6 +16,7 @@
 . `etc.dirt_to_grass_block`
 . `item.cloth`
 . `zoom`
+. `actions`
 
 [:. List of features (not enabled by default)]
 . `etc.no_entity_shadows`

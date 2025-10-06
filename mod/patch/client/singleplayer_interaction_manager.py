@@ -21,7 +21,7 @@ from modmaker.cp import (
 )
 
 def apply():
-	if not mod.config.is_feature_enabled('blackbox'):
+	if not mod.config.is_one_of_features_enabled(['blackbox', 'actions']):
 		return
 
 	cf = load_class_file(mod.config.path('stage/client/os.class'))
@@ -41,12 +41,20 @@ def _modify_break_block_method(cf, cp_cache):
 	a_code = a_code_load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:161] + assemble_code(cf, cp_cache, 0, 161, [
-		['iload', 7], ['ifeq', 'skip'], ['iload', 9], ['ifeq', 'skip'],
-		['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
-		'aload_0', ['getfield', 'os', 'a', 'Lnet/minecraft/client/Minecraft;'], ['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'], ['getfield', 'gs', 'l', 'Ljava/lang/String;'],
-		'iload_1', 'iload_2', 'iload_3',
-		['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onBreakBlock', '(Ljava/lang/String;III)V'],
-		['label', 'skip']
+		*([] if not mod.config.is_feature_enabled('blackbox') else [
+			['iload', 7], ['ifeq', 'skip'], ['iload', 9], ['ifeq', 'skip'],
+			['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
+			'aload_0', ['getfield', 'os', 'a', 'Lnet/minecraft/client/Minecraft;'], ['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'], ['getfield', 'gs', 'l', 'Ljava/lang/String;'],
+			'iload_1', 'iload_2', 'iload_3',
+			['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onBreakBlock', '(Ljava/lang/String;III)V'],
+			['label', 'skip']
+		]),
+		*([] if not mod.config.is_feature_enabled('actions') else [
+			'aload_0',
+			['getfield', 'os', 'a', 'Lnet/minecraft/client/Minecraft;'], ['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'],
+			'iconst_1',
+			['invokevirtual', 'gs', 'incrementActions', '(I)V'],
+		])
 	]) + a_code[0x03][161:164]
 
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)

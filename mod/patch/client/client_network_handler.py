@@ -23,6 +23,9 @@ from modmaker.m import (
 )
 
 def apply():
+	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'block.smelter', 'actions']):
+		return
+
 	cf = load_class_file(mod.config.path('stage/client/nb.class'))
 	cp_cache = cp_init_cache(cf[0x04])
 
@@ -32,6 +35,9 @@ def apply():
 
 	if mod.config.is_feature_enabled('block.smelter'):
 		_modify_on_open_screen_method(cf, cp_cache)
+
+	if mod.config.is_feature_enabled('actions'):
+		cf[0x0d].append(_create_on_actions_update_method(cf, cp_cache))
 
 	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
@@ -167,3 +173,33 @@ def _modify_on_open_screen_method(cf, cp_cache):
 
 	# update code attribute length
 	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _create_on_actions_update_method(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'onActionsUpdate', '(Lcom/thebluetropics/crabpack/ActionsUpdatePacket;)V')
+
+	code = assemble_code(cf, cp_cache, 0, 0, [
+		'aload_0',
+		['getfield', 'nb', 'f', 'Lnet/minecraft/client/Minecraft;'],
+		['getfield', 'net/minecraft/client/Minecraft', 'h', 'Ldc;'],
+		'aload_1',
+		['getfield', 'com/thebluetropics/crabpack/ActionsUpdatePacket', 'actions', 'I'],
+		['putfield', 'dc', 'actions', 'I'],
+
+		'return'
+	])
+	a_code = a_code_assemble([
+		(2).to_bytes(2),
+		(2).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+	a = [i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [a]
+
+	return m

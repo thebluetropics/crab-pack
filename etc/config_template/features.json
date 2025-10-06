@@ -17,6 +17,7 @@
 		"etc.log_version",
 		"etc.dirt_to_grass_block",
 		"zoom",
-		"item.cloth"
+		"item.cloth",
+		"actions"
 	]
 }

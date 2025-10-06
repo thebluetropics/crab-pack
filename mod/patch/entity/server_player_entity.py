@@ -17,16 +17,21 @@ from modmaker.cp import (
 )
 
 def apply():
-	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'actions']):
 		return
 
 	cf = load_class_file(mod.config.path('stage/server/dl.class'))
 	cp_cache = cp_init_cache(cf[0x04])
 
-	cf[0x0c] = (int.from_bytes(cf[0x0c]) + 3).to_bytes(2)
-	cf[0x0d].append(_create_update_hunger_method(cf, cp_cache))
-	cf[0x0d].append(_create_update_thirst_method(cf, cp_cache))
-	cf[0x0d].append(_create_open_smelter_screen_method(cf, cp_cache))
+	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
+		cf[0x0d].append(_create_update_hunger_method(cf, cp_cache))
+		cf[0x0d].append(_create_update_thirst_method(cf, cp_cache))
+		cf[0x0d].append(_create_open_smelter_screen_method(cf, cp_cache))
+
+	if mod.config.is_feature_enabled('actions'):
+		cf[0x0d].append(_create_increment_actions_method(cf, cp_cache))
+
+	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
 	with open('stage/server/dl.class', 'wb') as file:
 		file.write(cf_assemble(cf))
@@ -140,6 +145,38 @@ def _create_open_smelter_screen_method(cf, cp_cache):
 	a_code = a_code_assemble([
 		(7).to_bytes(2),
 		(3).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m
+
+def _create_increment_actions_method(cf, cp_cache):
+	m = create_method(cf, cp_cache, ['public'], 'incrementActions', '(I)V')
+
+	code = assemble_code(cf, cp_cache, 1, 0, [
+		'aload_0', 'iload_1', ['invokespecial', 'em', 'incrementActions', '(I)V'],
+
+		'aload_0',
+		['getfield', 'dl', 'a', 'Lha;'],
+		['new', 'com/thebluetropics/crabpack/ActionsUpdatePacket'],
+		'dup',
+		'aload_0', ['getfield', 'dl', 'actions', 'I'],
+		['invokespecial', 'com/thebluetropics/crabpack/ActionsUpdatePacket', '<init>', '(I)V'],
+		['invokevirtual', 'ha', 'b', '(Lgt;)V'],
+
+		'return'
+	])
+	a_code = a_code_assemble([
+		(4).to_bytes(2),
+		(2).to_bytes(2),
 		len(code).to_bytes(4),
 		code,
 		(0).to_bytes(2),

@@ -26,7 +26,7 @@ from modmaker.cp import (
 )
 
 def apply(side_name):
-	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'blackbox']):
+	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'blackbox', 'actions']):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1
@@ -42,6 +42,9 @@ def apply(side_name):
 		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'maxThirst', 'I'))
 		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'hungerTick', 'I'))
 		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'thirstTick', 'I'))
+
+	if mod.config.is_feature_enabled('actions'):
+		cf[0x0b].append(create_field(cf, cp_cache, ['public'], 'actions', 'I'))
 
 	cf[0x0a] = len(cf[0x0b]).to_bytes(2)
 
@@ -63,6 +66,10 @@ def apply(side_name):
 			_create_restore_thirst_method(cf, cp_cache, c_name, side),
 			_create_open_smelter_screen_method(cf, cp_cache, side)
 		])
+
+	if mod.config.is_feature_enabled('actions'):
+		cf[0x0d].append(_create_increment_actions_method(cf, cp_cache, side))
+
 	cf[0x0c] = len(cf[0x0d]).to_bytes(2)
 
 	with open(f'stage/{side_name}/{c_name}.class', 'wb') as file:
@@ -75,14 +82,18 @@ def _modify_constructor(cf, cp_cache, side, c_name):
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = a_code_load(a[0x02])
-
 	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, side, 0, [
-		'aload_0', ['bipush', 100], ['putfield', c_name, 'hunger', 'I'],
-		'aload_0', ['bipush', 100], ['putfield', c_name, 'maxHunger', 'I'],
-		'aload_0', ['bipush', 100], ['putfield', c_name, 'thirst', 'I'],
-		'aload_0', ['bipush', 100], ['putfield', c_name, 'maxThirst', 'I'],
-		'aload_0', 'iconst_0', ['putfield', c_name, 'hungerTick', 'I'],
-		'aload_0', 'iconst_0', ['putfield', c_name, 'thirstTick', 'I'],
+		*([] if not mod.config.is_feature_enabled('etc.hunger_and_thirst') else [
+			'aload_0', ['bipush', 100], ['putfield', c_name, 'hunger', 'I'],
+			'aload_0', ['bipush', 100], ['putfield', c_name, 'maxHunger', 'I'],
+			'aload_0', ['bipush', 100], ['putfield', c_name, 'thirst', 'I'],
+			'aload_0', ['bipush', 100], ['putfield', c_name, 'maxThirst', 'I'],
+			'aload_0', 'iconst_0', ['putfield', c_name, 'hungerTick', 'I'],
+			'aload_0', 'iconst_0', ['putfield', c_name, 'thirstTick', 'I'],
+		]),
+		*([] if not mod.config.is_feature_enabled('actions') else [
+			'aload_0', 'iconst_0', ['putfield', c_name, 'actions', 'I']
+		]),
 		'return'
 	])
 
@@ -387,26 +398,33 @@ def _modify_read_nbt_method(cf, cp_cache, side, c_name):
 	a_code = a_code_load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:152] + assemble_code(cf, cp_cache, side, 152, [
-		'aload_0',
-		'aload_1',
-		['ldc_w.string', 'Hunger'],
-		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
-		['putfield', c_name, 'hunger', 'I'],
-		'aload_0',
-		'aload_1',
-		['ldc_w.string', 'MaxHunger'],
-		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
-		['putfield', c_name, 'maxHunger', 'I'],
-		'aload_0',
-		'aload_1',
-		['ldc_w.string', 'Thirst'],
-		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
-		['putfield', c_name, 'thirst', 'I'],
-		'aload_0',
-		'aload_1',
-		['ldc_w.string', 'MaxThirst'],
-		['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
-		['putfield', c_name, 'maxThirst', 'I'],
+		*([] if not mod.config.is_feature_enabled('etc.hunger_and_thirst') else [
+			'aload_0',
+			'aload_1',
+			['ldc_w.string', 'Hunger'],
+			['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+			['putfield', c_name, 'hunger', 'I'],
+			'aload_0',
+			'aload_1',
+			['ldc_w.string', 'MaxHunger'],
+			['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+			['putfield', c_name, 'maxHunger', 'I'],
+			'aload_0',
+			'aload_1',
+			['ldc_w.string', 'Thirst'],
+			['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+			['putfield', c_name, 'thirst', 'I'],
+			'aload_0',
+			'aload_1',
+			['ldc_w.string', 'MaxThirst'],
+			['invokevirtual', ('nu', 'iq'), 'd', '(Ljava/lang/String;)S'],
+			['putfield', c_name, 'maxThirst', 'I'],
+		]),
+		*([] if not mod.config.is_feature_enabled('actions') else [
+			'aload_0',
+			'aload_1', ['ldc_w.string', 'Actions'], ['invokevirtual', ('nu', 'iq'), 'e', '(Ljava/lang/String;)I'],
+			['putfield', c_name, 'actions', 'I']
+		]),
 		'return'
 	])
 
@@ -434,30 +452,39 @@ def _modify_write_nbt_method(cf, cp_cache, side, c_name):
 	a_code = a_code_load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:102] + assemble_code(cf, cp_cache, side, 102, [
-		'aload_1',
-		['ldc_w.string', 'Hunger'],
-		'aload_0',
-		['getfield', c_name, 'hunger', 'I'],
-		'i2s',
-		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
-		'aload_1',
-		['ldc_w.string', 'MaxHunger'],
-		'aload_0',
-		['getfield', c_name, 'maxHunger', 'I'],
-		'i2s',
-		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
-		'aload_1',
-		['ldc_w.string', 'Thirst'],
-		'aload_0',
-		['getfield', c_name, 'thirst', 'I'],
-		'i2s',
-		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
-		'aload_1',
-		['ldc_w.string', 'MaxThirst'],
-		'aload_0',
-		['getfield', c_name, 'maxThirst', 'I'],
-		'i2s',
-		['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
+		*([] if not mod.config.is_feature_enabled('etc.hunger_and_thirst') else [
+			'aload_1',
+			['ldc_w.string', 'Hunger'],
+			'aload_0',
+			['getfield', c_name, 'hunger', 'I'],
+			'i2s',
+			['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
+			'aload_1',
+			['ldc_w.string', 'MaxHunger'],
+			'aload_0',
+			['getfield', c_name, 'maxHunger', 'I'],
+			'i2s',
+			['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
+			'aload_1',
+			['ldc_w.string', 'Thirst'],
+			'aload_0',
+			['getfield', c_name, 'thirst', 'I'],
+			'i2s',
+			['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
+			'aload_1',
+			['ldc_w.string', 'MaxThirst'],
+			'aload_0',
+			['getfield', c_name, 'maxThirst', 'I'],
+			'i2s',
+			['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;S)V'],
+		]),
+		*([] if not mod.config.is_feature_enabled('actions') else [
+			'aload_1',
+			['ldc_w.string', 'Actions'],
+			'aload_0',
+			['getfield', c_name, 'actions', 'I'],
+			['invokevirtual', ('nu', 'iq'), 'a', '(Ljava/lang/String;I)V'],
+		]),
 		'return'
 	])
 
@@ -527,3 +554,26 @@ def _modify_on_killed_by_method(cf, cp_cache, side):
 
 	a[0x02] = a_code_assemble(a_code)
 	a[0x01] = len(a[0x02]).to_bytes(4)
+
+def _create_increment_actions_method(cf, cp_cache, side):
+	m = create_method(cf, cp_cache, ['public'], 'incrementActions', '(I)V')
+
+	code = assemble_code(cf, cp_cache, side, 0, [
+		'aload_0', 'aload_0', ['getfield', ('gs', 'em'), 'actions', 'I'], 'iload_1', 'iadd', ['putfield', ('gs', 'em'), 'actions', 'I'],
+		'return'
+	])
+	a_code = a_code_assemble([
+		(3).to_bytes(2),
+		(2).to_bytes(2),
+		len(code).to_bytes(4),
+		code,
+		(0).to_bytes(2),
+		[],
+		(0).to_bytes(2),
+		[]
+	])
+
+	m[0x03] = (1).to_bytes(2)
+	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
+
+	return m

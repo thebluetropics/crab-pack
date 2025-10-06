@@ -26,8 +26,7 @@ def apply():
 	game_renderer.apply()
 	i18n.apply()
 
-	if mod.config.is_feature_enabled('etc.hunger_and_thirst') or mod.config.is_feature_enabled('block.smelter'):
-		client_network_handler.apply()
+	client_network_handler.apply()
 
 	item_renderer.apply()
 	world_renderer.apply()

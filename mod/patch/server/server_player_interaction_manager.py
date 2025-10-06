@@ -21,7 +21,7 @@ from modmaker.cp import (
 )
 
 def apply():
-	if not mod.config.is_feature_enabled('blackbox'):
+	if not mod.config.is_one_of_features_enabled(['blackbox', 'actions']):
 		return
 
 	cf = load_class_file(mod.config.path('stage/server/pu.class'))
@@ -41,11 +41,18 @@ def _modify_break_block_method(cf, cp_cache):
 	a_code = a_code_load(a[0x02])
 
 	a_code[0x03] = a_code[0x03][0:189] + assemble_code(cf, cp_cache, 1, 161, [
-		['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
-		'aload_0', ['getfield', 'pu', 'a', 'Lem;'],
-		['getfield', 'em', 'r', 'Ljava/lang/String;'],
-		'iload_1', 'iload_2', 'iload_3',
-		['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onBreakBlock', '(Ljava/lang/String;III)V']
+		*([] if not mod.config.is_feature_enabled('blackbox') else [
+			['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
+			'aload_0', ['getfield', 'pu', 'a', 'Lem;'],
+			['getfield', 'em', 'r', 'Ljava/lang/String;'],
+			'iload_1', 'iload_2', 'iload_3',
+			['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onBreakBlock', '(Ljava/lang/String;III)V']
+		]),
+		*([] if not mod.config.is_feature_enabled('actions') else [
+			'aload_0', ['getfield', 'pu', 'a', 'Lem;'], ['checkcast', 'dl'],
+			'iconst_1',
+			['invokevirtual', 'dl', 'incrementActions', '(I)V']
+		])
 	]) + a_code[0x03][189:192]
 
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
