@@ -84,6 +84,7 @@ def a_code_assemble(a_code):
 _info_table = [
 	['nop', 0x00],
 	['aconst_null', 0x01],
+	['iconst_m1', 0x02],
 	['iconst_0', 0x03],
 	['iconst_1', 0x04],
 	['iconst_2', 0x05],
