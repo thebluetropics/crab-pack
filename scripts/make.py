@@ -14,9 +14,9 @@ def requires_dir(*segments):
 	if not os.path.exists(path):
 		os.makedirs(path, exist_ok=True)
 
-requires_dir('out', 'python-3.13.2-embed-amd64')
+requires_dir('out', 'python-3.13.2')
 
-embeddable_distribution_file = os.path.join(project_dir, 'out', 'python-3.13.2-embed-amd64', 'python-3.13.2-embed-amd64.zip')
+embeddable_distribution_file = os.path.join(project_dir, 'out', 'python-3.13.2', 'python-3.13.2-embed-amd64.zip')
 
 if not os.path.exists(embeddable_distribution_file):
 	with urllib.request.urlopen(f'https://www.python.org/ftp/python/3.13.2/python-3.13.2-embed-amd64.zip', timeout=16) as res:
