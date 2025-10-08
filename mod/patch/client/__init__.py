@@ -13,7 +13,8 @@ from . import (
 	block_render_manager,
 	client_player_entity,
 	smelter_screen,
-	singleplayer_interaction_manager
+	singleplayer_interaction_manager,
+	handled_screen
 )
 import mod
 
@@ -38,5 +39,6 @@ def apply():
 		client_player_entity.apply()
 
 	singleplayer_interaction_manager.apply()
+	handled_screen.apply()
 
 __all__ = [title_screen.__name__]

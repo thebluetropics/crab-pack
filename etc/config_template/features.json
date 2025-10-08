@@ -17,6 +17,7 @@
 		"etc.dirt_to_grass_block",
 		"zoom",
 		"item.cloth",
-		"actions"
+		"actions",
+		"fancy_tooltips"
 	]
 }

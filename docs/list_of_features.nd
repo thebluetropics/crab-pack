@@ -17,6 +17,7 @@
 . `item.cloth`
 . `zoom`
 . `actions`
+. `fancy_tooltips`
 
 [:. List of features (not enabled by default)]
 . `etc.no_entity_shadows`
