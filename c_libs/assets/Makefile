@@ -14,7 +14,7 @@ endif
 SRC_DIR = src
 OUT_DIR = out
 LIB_DIR = lib
-VENDOR_DIR = vendor
+DEPS_DIR = deps
 
 SRC = main.c
 OBJ := $(patsubst %.c, %.o, $(SRC))
@@ -30,19 +30,19 @@ ifeq ($(TARGET),windows)
 all: $(LIB_DIR)/$(NAME).dll
 endif
 
-$(VENDOR_DIR)/stb_image.h: $(VENDOR_DIR)
-	curl https://raw.githubusercontent.com/nothings/stb/f58f558c120e9b32c217290b80bad1a0729fbb2c/stb_image.h -o $(VENDOR_DIR)/stb_image.h
+$(DEPS_DIR)/stb_image.h: $(DEPS_DIR)
+	curl https://raw.githubusercontent.com/nothings/stb/f58f558c120e9b32c217290b80bad1a0729fbb2c/stb_image.h -o $(DEPS_DIR)/stb_image.h
 
-$(VENDOR_DIR)/stb_image_write.h: $(VENDOR_DIR)
-	curl https://raw.githubusercontent.com/nothings/stb/f58f558c120e9b32c217290b80bad1a0729fbb2c/stb_image_write.h -o $(VENDOR_DIR)/stb_image_write.h
+$(DEPS_DIR)/stb_image_write.h: $(DEPS_DIR)
+	curl https://raw.githubusercontent.com/nothings/stb/f58f558c120e9b32c217290b80bad1a0729fbb2c/stb_image_write.h -o $(DEPS_DIR)/stb_image_write.h
 
 ifeq ($(TARGET),linux)
-$(OUT_DIR)/%.o: $(SRC_DIR)/%.c $(VENDOR_DIR)/stb_image.h $(VENDOR_DIR)/stb_image_write.h | $(OUT_DIR)
+$(OUT_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS_DIR)/stb_image.h $(DEPS_DIR)/stb_image_write.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 endif
 
 ifeq ($(TARGET),windows)
-$(OUT_DIR)/%.win32.o: $(SRC_DIR)/%.c $(VENDOR_DIR)/stb_image.h $(VENDOR_DIR)/stb_image_write.h | $(OUT_DIR)
+$(OUT_DIR)/%.win32.o: $(SRC_DIR)/%.c $(DEPS_DIR)/stb_image.h $(DEPS_DIR)/stb_image_write.h | $(OUT_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 endif
 
@@ -64,10 +64,10 @@ $(OUT_DIR):
 $(LIB_DIR):
 	mkdir -p $(LIB_DIR)
 
-$(VENDOR_DIR):
-	mkdir -p $(VENDOR_DIR)
+$(DEPS_DIR):
+	mkdir -p $(DEPS_DIR)
 
 clean:
-	rm -rf $(OUT_DIR) $(LIB_DIR) $(VENDOR_DIR)
+	rm -rf $(OUT_DIR) $(LIB_DIR) $(DEPS_DIR)
 
 .PHONY: clean

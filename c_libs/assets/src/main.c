@@ -1,9 +1,9 @@
 #include "main.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "../vendor/stb_image.h"
+#include "../deps/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../vendor/stb_image_write.h"
+#include "../deps/stb_image_write.h"
 
 struct _image_t {
 	int w, h, _n;
