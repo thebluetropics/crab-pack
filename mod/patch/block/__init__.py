@@ -1,9 +1,8 @@
-from . import (farmland_block, block, solid_grass_block, plant_block, mortar, smelter_block, smelter_block_entity, block_entity)
+from . import (block, solid_grass_block, plant_block, mortar, smelter_block, smelter_block_entity, block_entity)
 from . import (persistent_leaves_block, leaves_block)
 import mod
 
 def apply_client():
-	farmland_block.apply('client')
 	block.apply('client')
 	solid_grass_block.apply('client')
 	plant_block.apply('client')
@@ -20,7 +19,6 @@ def apply_client():
 	leaves_block.apply('client')
 
 def apply_server():
-	farmland_block.apply('server')
 	block.apply('server')
 	solid_grass_block.apply('server')
 	plant_block.apply('server')
