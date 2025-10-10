@@ -22,7 +22,7 @@ from modmaker.cp import (
 
 def apply(side_name):
 	if not mod.config.is_feature_enabled('blackbox'):
-		pass
+		return
 
 	side = 0 if side_name.__eq__('client') else 1
 	c_name = ['lv', 'hn'][side]
