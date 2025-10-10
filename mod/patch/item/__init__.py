@@ -1,4 +1,4 @@
-from . import (food_item, item, bottle_item, dye_item, pickaxe_item, axe_item, seeds_item, persistent_leaves_block_item, block_item, secondary_block_item)
+from . import (food_item, item, bottle_item, dye_item, pickaxe_item, axe_item, seeds_item, persistent_leaves_block_item)
 import mod
 
 def apply_client():
@@ -13,8 +13,6 @@ def apply_client():
 		dye_item.apply('client')
 
 	persistent_leaves_block_item.apply('client')
-	block_item.apply('client')
-	secondary_block_item.apply('client')
 
 def apply_server():
 	food_item.apply('server')
@@ -28,7 +26,5 @@ def apply_server():
 		dye_item.apply('server')
 
 	persistent_leaves_block_item.apply('server')
-	block_item.apply('server')
-	secondary_block_item.apply('server')
 
 __all__ = [apply_client.__name__]

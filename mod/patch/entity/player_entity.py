@@ -26,7 +26,7 @@ from modmaker.cp import (
 )
 
 def apply(side_name):
-	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'blackbox', 'actions']):
+	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'actions']):
 		return
 
 	side = 0 if side_name.__eq__('client') else 1
@@ -54,9 +54,6 @@ def apply(side_name):
 		_modify_constructor(cf, cp_cache, side, c_name)
 		_modify_read_nbt_method(cf, cp_cache, side, c_name)
 		_modify_write_nbt_method(cf, cp_cache, side, c_name)
-
-	if mod.config.is_feature_enabled('blackbox'):
-		_modify_on_killed_by_method(cf, cp_cache, side)
 
 	if mod.config.is_feature_enabled('etc.hunger_and_thirst'):
 		cf[0x0d].extend([
@@ -238,30 +235,6 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 			['putfield', c_name, 'thirstTick', 'I'],
 
 			['label', 'end_thirst_tick']
-		])
-
-	if mod.config.is_feature_enabled('blackbox'):
-		code.extend([
-			'aload_0', ['getfield', ('gs', 'em'), ('aI', 'aL'), ('Lfd;', 'Ldj;')], ['getfield', ('fd', 'dj'), 'B', 'Z'],
-			['ifne', 'skip'],
-			'aload_0', ['invokevirtual', ('gs', 'em'), ('W', 'T'), '()Z'],
-			['ifeq', 'skip'],
-
-			['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
-			'aload_0', ['getfield', ('gs', 'em'), ('l', 'r'), 'Ljava/lang/String;'],
-			'aload_0',
-			['getfield', ('gs', 'em'), ('aI', 'aL'), ('Lfd;', 'Ldj;')],
-			['getfield', ('fd', 'dj'), 't', ('Lxa;', 'Los;')],
-			['getfield', ('xa', 'os'), 'g', 'I'],
-			'aload_0', ['getfield', ('gs', 'em'), ('aM', 'aP'), 'D'],
-			'aload_0', ['getfield', ('gs', 'em'), ('aN', 'aQ'), 'D'],
-			'aload_0', ['getfield', ('gs', 'em'), ('aO', 'aR'), 'D'],
-			'aload_0', ['getfield', ('gs', 'em'), ('aS', 'aV'), 'F'],
-			'aload_0', ['getfield', ('gs', 'em'), ('aT', 'aW'), 'F'],
-			'aload_0', ['invokevirtual', ('gs', 'em'), ('t', 'ah'), '()Z'],
-			['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onPlayerTick', '(Ljava/lang/String;IDDDFFZ)V'],
-
-			['label', 'skip'],
 		])
 
 	code.append('return')
@@ -526,34 +499,6 @@ def _create_open_smelter_screen_method(cf, cp_cache, side):
 	m[0x04] = [[i2cpx_utf8(cf, cp_cache, 'Code'), len(a_code).to_bytes(4), a_code]]
 
 	return m
-
-def _modify_on_killed_by_method(cf, cp_cache, side):
-	m = get_method(cf, cp_cache, ['b', 'a'][side], ['(Lsn;)V', '(Llq;)V'][side])
-	a = get_attribute(m[0x04], cp_cache, 'Code')
-
-	a_code = a_code_load(a[0x02])
-
-	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, side, len(a_code[0x03]) - 1, [
-		'aload_0', ['getfield', ('gs', 'em'), ('aI', 'aL'), ('Lfd;', 'Ldj;')], ['getfield', ('fd', 'dj'), 'B', 'Z'],
-		['ifne', 'skip'],
-		['getstatic', 'com/thebluetropics/crabpack/Blackbox', 'INSTANCE', 'Lcom/thebluetropics/crabpack/Blackbox;'],
-		'aload_0', ['getfield', ('gs', 'em'), ('l', 'r'), 'Ljava/lang/String;'],
-		['invokevirtual', 'com/thebluetropics/crabpack/Blackbox', 'onPlayerDied', '(Ljava/lang/String;)V'],
-
-		['label', 'skip'],
-		'return'
-	])
-
-	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
-	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
-
-	for i, a in a_code[0x07]:
-		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
-			del a_code[0x07][i]
-			break
-
-	a[0x02] = a_code_assemble(a_code)
-	a[0x01] = len(a[0x02]).to_bytes(4)
 
 def _create_increment_actions_method(cf, cp_cache, side):
 	m = create_method(cf, cp_cache, ['public'], 'incrementActions', '(I)V')
