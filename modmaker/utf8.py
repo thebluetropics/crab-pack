@@ -18,7 +18,7 @@ def utf8_decode(utf8_b):
 				decoded.append(chr(((byte & 0x1F) << 6) | (b1 & 0x3F)))
 
 			i += 2
-		elif (byte & 0xF0) == 0xE0:
+		elif (byte & 0xF0).__eq__(0xE0):
 			b1 = utf8_b[i + 1]
 			b2 = utf8_b[i + 2]
 
