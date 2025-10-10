@@ -1,28 +1,5 @@
-import mod, os
-
-from modmaker.a import (
-	get_attribute
-)
-from modmaker.a_code import (
-	a_code_load,
-	a_code_assemble,
-	assemble_code,
-	load_code
-)
-from modmaker.m import(
-	get_method,
-	create_method
-)
-from modmaker.cf import (
-	load_class_file,
-	cf_assemble,
-	cf_create
-)
-from modmaker.cp import (
-	cp_init_cache,
-	i2cpx_c,
-	i2cpx_utf8
-)
+from modmaker import *
+import os, mod
 
 def apply(side_name):
 	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):

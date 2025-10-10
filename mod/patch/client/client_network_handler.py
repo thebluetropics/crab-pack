@@ -1,26 +1,5 @@
+from modmaker import *
 import mod
-
-from modmaker.a import (
-	get_attribute
-)
-from modmaker.a_code import (
-	a_code_assemble,
-	assemble_code,
-	a_code_load
-)
-from modmaker.cf import (
-	load_class_file,
-	cf_assemble
-)
-from modmaker.cp import (
-	cp_init_cache,
-	i2cpx_utf8,
-	get_utf8_at
-)
-from modmaker.m import (
-	create_method,
-	get_method
-)
 
 def apply():
 	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'block.smelter', 'actions']):

@@ -1,10 +1,5 @@
+from modmaker import *
 import mod
-
-from modmaker.a import *
-from modmaker.a_code import *
-from modmaker.m import *
-from modmaker.cf import *
-from modmaker.cp import *
 
 def apply():
 	if not mod.config.is_feature_enabled('advanced_tooltips'):

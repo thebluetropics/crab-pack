@@ -1,23 +1,5 @@
+from modmaker import *
 import mod
-
-from modmaker.a import (
-	get_attribute
-)
-from modmaker.a_code import (
-	a_code_load,
-	a_code_assemble
-)
-from modmaker.m import(
-	get_method
-)
-from modmaker.cf import (
-	load_class_file,
-	cf_assemble
-)
-from modmaker.cp import (
-	cp_init_cache,
-	get_utf8_at
-)
 
 def apply():
 	if not mod.config.is_feature_enabled('user_interface.minimal_title_screen'):

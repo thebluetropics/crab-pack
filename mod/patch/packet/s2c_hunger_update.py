@@ -1,24 +1,5 @@
+from modmaker import *
 import os, mod
-
-from modmaker.a_code import (
-	a_code_assemble,
-	assemble_code
-)
-from modmaker.cf import (
-	cf_assemble,
-	cf_create
-)
-from modmaker.cp import (
-	cp_init_cache,
-	i2cpx_utf8,
-	i2cpx_c
-)
-from modmaker.m import (
-	create_method
-)
-from modmaker.f import (
-	create_field
-)
 
 def apply(side_name):
 	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):
