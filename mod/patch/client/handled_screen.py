@@ -2,7 +2,7 @@ from modmaker import *
 import mod
 
 def apply():
-	if not mod.config.is_feature_enabled('advanced_tooltips'):
+	if not mod.config.is_feature_enabled('fancy_tooltips'):
 		return
 
 	cf = load_class_file(mod.config.path('stage/client/id.class'))
