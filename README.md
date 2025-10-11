@@ -4,6 +4,11 @@
 developed by [thebluetropics](https://github.com/thebluetropics).
 
 ```sh
+# Configure
+py ./scripts/configure.py
+```
+
+```sh
 # Compile
 javac -d class_files src/zoom/com/thebluetropics/crabpack/Zoom.java # → jdk8
 javac -d class_files src/actions/com/thebluetropics/crabpack/Actions.java # → jdk8
