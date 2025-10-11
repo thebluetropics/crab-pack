@@ -4,9 +4,7 @@
 /.vscode/*
 !settings.json
 
-/deps/*
-!modmaker.py
-
+/deps/
 /class_files/
 /dist/
 /artifacts/
