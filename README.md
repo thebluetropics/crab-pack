@@ -7,6 +7,7 @@ developed by [thebluetropics](https://github.com/thebluetropics).
 # Compile
 javac -d class_files src/zoom/com/thebluetropics/crabpack/Zoom.java # → jdk8
 javac -d class_files src/actions/com/thebluetropics/crabpack/Actions.java # → jdk8
+javac -cp deps/lwjgl-2.9.0.jar -d class_files src/minimal_crosshair/com/thebluetropics/crabpack/MinimalCrosshair.java # → jdk8
 ```
 
 ```sh

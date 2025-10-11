@@ -8,6 +8,9 @@ if not os.path.exists(os.path.join(project_dir, 'deps')):
 if not os.path.exists(os.path.join(project_dir, 'deps', 'kotlin-stdlib-2.2.0.jar')):
 	urllib.request.urlretrieve('https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.2.0/kotlin-stdlib-2.2.0.jar', os.path.join(project_dir, 'deps', 'kotlin-stdlib-2.2.0.jar'))
 
+if not os.path.exists(os.path.join(project_dir, 'deps', 'lwjgl-2.9.0.jar')):
+	urllib.request.urlretrieve('https://repo1.maven.org/maven2/org/lwjgl/lwjgl/lwjgl/2.9.0/lwjgl-2.9.0.jar', os.path.join(project_dir, 'deps', 'lwjgl-2.9.0.jar'))
+
 if not os.path.exists(os.path.join(project_dir, 'config')):
 	os.mkdir(os.path.join(project_dir, 'config'))
 

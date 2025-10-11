@@ -7,7 +7,6 @@
 . `block.smelter`
 . `block.persistent_leaves`
 . `user_interface.minimal_title_screen`
-. `user_interface.single_pixel_crosshair`
 . `fix.block_break_times_fix`
 . `etc.hunger_and_thirst`
 . `etc.no_crop_trampling`
@@ -18,6 +17,7 @@
 . `zoom`
 . `actions`
 . `fancy_tooltips`
+. `minimal_crosshair`
 
 [:. List of features (not enabled by default)]
 . `etc.no_entity_shadows`

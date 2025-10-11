@@ -1,5 +1,5 @@
 from . import (block, entity, client, item, server, world, meta_inf, packet, recipe, network, screen)
-from . import inventory, zoom, actions, no_crop_trampling, extended_farmland_water_source
+from . import inventory, zoom, actions, no_crop_trampling, extended_farmland_water_source, minimal_crosshair
 
 def apply_client_patches():
 	block.apply_client()
@@ -18,6 +18,7 @@ def apply_client_patches():
 	actions.apply('client')
 	no_crop_trampling.apply('client')
 	extended_farmland_water_source.apply('client')
+	minimal_crosshair.apply()
 
 def apply_server_patches():
 	block.apply_server()

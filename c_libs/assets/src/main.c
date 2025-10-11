@@ -285,39 +285,6 @@ _exit:
 	return code;
 }
 
-uint8_t apply_single_pixel_crosshair(char* source, char* target) {
-	uint8_t code = 0;
-
-	struct _image_t icons;
-	icons.ptr = stbi_load(target, &icons.w, &icons.h, &icons._n, 4);
-
-	if (!icons.ptr) {
-		code = 1;
-		goto _exit;
-	}
-
-	struct _image_t single_pixel_crosshair;
-	single_pixel_crosshair.ptr = stbi_load(source, &single_pixel_crosshair.w, &single_pixel_crosshair.h, &single_pixel_crosshair._n, 4);
-
-	if (!single_pixel_crosshair.ptr) {
-		code = 1;
-		goto _exit;
-	}
-
-	overlay(single_pixel_crosshair.ptr, icons.ptr, single_pixel_crosshair.w, single_pixel_crosshair.h, icons.w, 0, 0);
-
-	if (!stbi_write_png(target, icons.w, icons.h, 4, icons.ptr, icons.w * 4)) {
-		code = 1;
-		goto _exit;
-	}
-
-_exit:
-	stbi_image_free(icons.ptr);
-	stbi_image_free(single_pixel_crosshair.ptr);
-
-	return code;
-}
-
 uint8_t apply_smelter(char* y_column_path, char* front_path, char* front_lit_path, char* side_path, char* target) {
 	uint8_t code = 0;
 

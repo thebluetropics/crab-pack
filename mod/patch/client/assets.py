@@ -40,9 +40,6 @@ def apply():
 	lib.apply_hunger_and_thirst.argtypes = [ctypes.c_char_p] * 2
 	lib.apply_hunger_and_thirst.restype = ctypes.c_uint8
 
-	lib.apply_single_pixel_crosshair.argtypes = [ctypes.c_char_p] * 2
-	lib.apply_single_pixel_crosshair.restype = ctypes.c_uint8
-
 	if mod.config.is_feature_enabled('food.raw_squid_and_calamari'):
 		ret_code = lib.apply_raw_squid_and_calamari(
 			os.path.join(mod.config.path('assets'), 'raw_squid.png').encode('utf-8'),
@@ -103,16 +100,6 @@ def apply():
 		ret_code = lib.apply_cloth(
 			os.path.join(mod.config.path('assets'), 'cloth.png').encode('utf-8'),
 			os.path.join(mod.config.path('stage'), 'client', 'gui', 'items.png').encode('utf-8'),
-		)
-
-		if not ret_code.__eq__(0):
-			print('Err: unknown.', file=stderr)
-			exit(1)
-
-	if mod.config.is_feature_enabled('user_interface.single_pixel_crosshair'):
-		ret_code = lib.apply_single_pixel_crosshair(
-			os.path.join(mod.config.path('assets'), 'single_pixel_crosshair.png').encode('utf-8'),
-			os.path.join(mod.config.path('stage'), 'client', 'gui', 'icons.png').encode('utf-8'),
 		)
 
 		if not ret_code.__eq__(0):

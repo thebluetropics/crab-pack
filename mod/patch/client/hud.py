@@ -2,7 +2,7 @@ from modmaker import *
 import mod
 
 def apply():
-	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'actions']):
+	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'actions', 'minimal_crosshair']):
 		return
 
 	cf = load_class_file(mod.config.path('stage/client/uq.class'))
@@ -12,9 +12,18 @@ def apply():
 	a = get_attribute(m[0x04], cp_cache, 'Code')
 
 	a_code = a_code_load(a[0x02])
-
 	a_code[0x01] = (28).to_bytes(2)
-	a_code[0x03] = a_code[0x03][0:943] + assemble_code(cf, cp_cache, 0, 0, [
+
+	code = None
+
+	if mod.config.is_feature_enabled('minimal_crosshair'):
+		code = a_code[0x03][0:338] + assemble_code(cf, cp_cache, 0, 338, [
+			['invokestatic', 'com/thebluetropics/crabpack/MinimalCrosshair', 'renderCrosshair', '()V']
+		]) + a_code[0x03][362:943]
+	else:
+		code = a_code[0x03][0:943]
+
+	a_code[0x03] = code + assemble_code(cf, cp_cache, 0, len(code), [
 		*([] if not mod.config.is_feature_enabled('etc.hunger_and_thirst') else [
 			['sipush', 2929],
 			['invokestatic', 'org/lwjgl/opengl/GL11', 'glDisable', '(I)V'],
