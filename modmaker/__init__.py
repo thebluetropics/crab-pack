@@ -1053,8 +1053,6 @@ _info_table = [
 	['athrow', 0xbf],
 	['checkcast', 0xc0, 2],
 	['instanceof', 0xc1, 2],
-	['monitorenter', 0xc5],
-	['monitorexit', 0xc6],
 	['ifnull', 0xc6, 2],
 	['ifnonnull', 0xc7, 2],
 	['goto_w', 0xc8, 4],
