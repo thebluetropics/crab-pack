@@ -16,10 +16,11 @@ def apply(side_name):
 
 	a_code = a_code_load(a[0x02])
 
+	a_code[0x00] = (0).to_bytes(2)
+	a_code[0x01] = (6).to_bytes(2)
 	a_code[0x03] = assemble_code(cf, cp_cache, side, 0, [
 		'return'
 	])
-
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	for i, a in a_code[0x07]:
