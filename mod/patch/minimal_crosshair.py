@@ -18,13 +18,16 @@ def apply():
 
 	a_code = a_code_load(a[0x02])
 
-	a_code[0x03] = a_code[0x03][0:-1] + assemble_code(cf, cp_cache, 0, len(a_code[0x03]) - 1, [
+	code = load_code(cp_cache, a_code[0x03])
+	del code[-1]
+	code = code + [
 		'aload_0', ['getfield', 'qq', 'c', 'I'],
 		'aload_0', ['getfield', 'qq', 'd', 'I'],
 		'aload_0', ['getfield', 'qq', 'e', 'I'],
 		['invokestatic', 'com/thebluetropics/crabpack/MinimalCrosshair', 'beforeRenderCrosshair', '(III)V'],
 		'return'
-	])
+	]
+	a_code[0x03] = assemble_code(cf, cp_cache, 0, 0, code)
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	for i, a in a_code[0x07]:
