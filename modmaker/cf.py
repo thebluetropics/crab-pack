@@ -113,13 +113,13 @@ def cf_load(cf_bytes):
 	cf[0x07] = cf_bytes[i + 4:i + 6]
 
 	cf[0x08] = cf_bytes[i + 6:i + 8]
-	if_count = int.from_bytes(cf[0x08])
+	interface_count = int.from_bytes(cf[0x08])
 	i += 8
 
 	cf[0x09] = []
 	interfaces = cf[0x09]
 
-	for _ in range(if_count):
+	for _ in range(interface_count):
 		interfaces.append(cf_bytes[i:i + 2])
 		i += 2
 
