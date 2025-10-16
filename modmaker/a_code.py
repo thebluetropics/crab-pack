@@ -4,51 +4,51 @@ from sys import exit, stderr
 from operator import eq
 from .cp import *
 
-def a_code_load(a_code_b):
+def a_code_load(buf):
 	a_code = [None] * 8
 
-	a_code[0x00] = a_code_b[0:2]
-	a_code[0x01] = a_code_b[2:4]
+	a_code[0x00] = buf[0:2]
+	a_code[0x01] = buf[2:4]
 
-	a_code[0x02] = a_code_b[4:8]
+	a_code[0x02] = buf[4:8]
 	code_length = int.from_bytes(a_code[0x02])
 
-	a_code[0x03] = a_code_b[8:8 + code_length]
+	a_code[0x03] = buf[8:8 + code_length]
 	i = 8 + code_length
 
-	a_code[0x04] = a_code_b[i:i + 2]
-	excp_table_len = int.from_bytes(a_code[0x04])
+	a_code[0x04] = buf[i:i + 2]
+	exception_table_length = int.from_bytes(a_code[0x04])
 	i = i + 2
 
-	excp_table = []
-	a_code[0x05] = excp_table
+	a_code[0x05] = []
+	exception_table = a_code[0x05]
 
-	for _ in range(excp_table_len):
-		excp_table.append([
-			a_code_b[i:i + 2],
-			a_code_b[i + 2:i + 4],
-			a_code_b[i + 4:i + 6],
-			a_code_b[i + 6:i + 8]
+	for _ in range(exception_table_length):
+		exception_table.append([
+			buf[i:i + 2],
+			buf[i + 2:i + 4],
+			buf[i + 4:i + 6],
+			buf[i + 6:i + 8]
 		])
 		i = i + 8
 
-	a_code[0x06] = a_code_b[i:i + 2]
-	attr_count = int.from_bytes(a_code[0x06])
+	a_code[0x06] = buf[i:i + 2]
+	a_count = int.from_bytes(a_code[0x06])
 	i = i + 2
 
-	attr_list = []
-	a_code[0x07] = attr_list
+	a_code[0x07] = []
+	attributes = a_code[0x07]
 
-	for _ in range(attr_count):
-		attr = [
-			a_code_b[i:i + 2],
-			a_code_b[i + 2:i + 6],
+	for _ in range(a_count):
+		a = [
+			buf[i:i + 2],
+			buf[i + 2:i + 6],
 			None
 		]
-		length = int.from_bytes(attr[0x01])
-
-		attr[0x02] = a_code_b[i + 6:i + 6 + length]
-		i = i + 6 + length
+		sz = int.from_bytes(a[0x01])
+		a[0x02] = buf[i + 6:i + 6 + sz]
+		attributes.append(a)
+		i = i + 6 + sz
 
 	return a_code
 

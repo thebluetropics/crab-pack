@@ -181,12 +181,12 @@ def _patch_static_initializer(cf, cp_cache, side, c_name):
 	a_code[0x03] = a_code[0x03][0:3398] + assemble_code(cf, cp_cache, side, 3398, code) + a_code[0x03][3398:3558] + assemble_code(cf, cp_cache, side, 3558, code_2) + a_code[0x03][3558:3678]
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
-	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
-
-	for i, a in a_code[0x07]:
-		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
-			del a[0x07][i]
+	for i, attribute in enumerate(a_code[0x07]):
+		if get_utf8_at(cp_cache, int.from_bytes(attribute[0x00])).__eq__('LineNumberTable'):
+			del a_code[0x07][i]
 			break
+
+	a_code[0x06] = len(a_code[0x07]).to_bytes(2)
 
 	a[0x02] = a_code_assemble(a_code)
 	a[0x01] = len(a[0x02]).to_bytes(4)

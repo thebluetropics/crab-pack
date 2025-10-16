@@ -74,12 +74,12 @@ def _modify_constructor(cf, cp_cache, side, c_name):
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	# remove line number table
-	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
-
-	for i, a in a_code[0x07]:
-		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+	for i, attribute in enumerate(a_code[0x07]):
+		if get_utf8_at(cp_cache, int.from_bytes(attribute[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
+
+	a_code[0x06] = len(a_code[0x07]).to_bytes(2)
 
 	# update code attribute
 	a[0x02] = a_code_assemble(a_code)
@@ -221,12 +221,12 @@ def _modify_tick_method(cf, cp_cache, side_name, side, c_name):
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	# remove line number table
-	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
-
-	for i, a in a_code[0x07]:
-		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+	for i, attribute in enumerate(a_code[0x07]):
+		if get_utf8_at(cp_cache, int.from_bytes(attribute[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
+
+	a_code[0x06] = len(a_code[0x07]).to_bytes(2)
 
 	# update code attribute
 	a[0x02] = a_code_assemble(a_code)
@@ -381,12 +381,12 @@ def _modify_read_nbt_method(cf, cp_cache, side, c_name):
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	# remove line number table
-	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
-
-	for i, a in a_code[0x07]:
-		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+	for i, attribute in enumerate(a_code[0x07]):
+		if get_utf8_at(cp_cache, int.from_bytes(attribute[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
+
+	a_code[0x06] = len(a_code[0x07]).to_bytes(2)
 
 	# update code attribute
 	a[0x02] = a_code_assemble(a_code)
@@ -441,12 +441,12 @@ def _modify_write_nbt_method(cf, cp_cache, side, c_name):
 	a_code[0x02] = len(a_code[0x03]).to_bytes(4)
 
 	# remove line number table
-	a_code[0x06] = (int.from_bytes(a_code[0x06]) - 1).to_bytes(2)
-
-	for i, a in a_code[0x07]:
-		if get_utf8_at(cp_cache, int.from_bytes(a[0x00])).__eq__('LineNumberTable'):
+	for i, attribute in enumerate(a_code[0x07]):
+		if get_utf8_at(cp_cache, int.from_bytes(attribute[0x00])).__eq__('LineNumberTable'):
 			del a_code[0x07][i]
 			break
+
+	a_code[0x06] = len(a_code[0x07]).to_bytes(2)
 
 	# update code attribute
 	a[0x02] = a_code_assemble(a_code)
