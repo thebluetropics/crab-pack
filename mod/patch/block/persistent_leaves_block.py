@@ -328,9 +328,9 @@ def _create_get_texture_method(cf, cp_cache, c_name):
 		['label', 'L3'],
 		'iload_2', 'iconst_2', ['if_icmpne', 'L4'],
 		'aload_0', ['getfield', c_name, 'useFancyGraphics', 'Z'], ['ifeq', 'ret_fast_graphics_spruce'],
-		['bipush', 132], 'ireturn',
+		['sipush', 132], 'ireturn',
 		['label', 'ret_fast_graphics_spruce'],
-		['bipush', 133], 'ireturn',
+		['sipush', 133], 'ireturn',
 
 		['label', 'L4'], 'iconst_0', 'ireturn'
 	])

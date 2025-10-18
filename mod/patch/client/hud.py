@@ -1,5 +1,5 @@
 from modmaker import *
-import mod
+import mod, struct
 
 def apply():
 	if not mod.config.is_one_of_features_enabled(['etc.hunger_and_thirst', 'actions', 'minimal_crosshair']):
@@ -77,7 +77,7 @@ def apply():
 			['iload', 7], ['bipush', 33], 'isub',
 			['iload', 6], 'iconst_2', 'idiv', ['bipush', 90], 'iadd',
 			['iload', 7], ['bipush', 23], ['iload', 24], 'iadd', 'isub',
-			['ldc_w.i32', 0x40000000],
+			['ldc_w.i32', struct.pack('>I', 0x40000000)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'aload_0',
@@ -85,7 +85,7 @@ def apply():
 			['iload', 7], ['bipush', 23], ['iload', 24], 'iadd', 'isub',
 			['iload', 6], 'iconst_2', 'idiv', ['bipush', 90], 'iadd',
 			['iload', 7], ['bipush', 23], 'isub',
-			['ldc_w.i32', 0x40ff9966],
+			['ldc_w.i32', struct.pack('>I', 0x40ff9966)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'aload_0',
@@ -93,7 +93,7 @@ def apply():
 			['iload', 7], ['bipush', 33], 'isub',
 			['iload', 6], 'iconst_2', 'idiv', ['bipush', 77], 'iadd',
 			['iload', 7], ['bipush', 23], ['iload', 26], 'iadd', 'isub',
-			['ldc_w.i32', 0x40000000],
+			['ldc_w.i32', struct.pack('>I', 0x40000000)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'aload_0',
@@ -101,7 +101,7 @@ def apply():
 			['iload', 7], ['bipush', 23], ['iload', 26], 'iadd', 'isub',
 			['iload', 6], 'iconst_2', 'idiv', ['bipush', 77], 'iadd',
 			['iload', 7], ['bipush', 23], 'isub',
-			['ldc_w.i32', 0x400099cc],
+			['ldc_w.i32', struct.pack('>I', 0x400099cc)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'aload_0',
@@ -121,7 +121,7 @@ def apply():
 			['iload', 7],
 			['bipush', 23],
 			'isub',
-			['ldc_w.i32', 0xff224400],
+			['ldc_w.i32', struct.pack('>I', 0xff224400)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'aload_0',
@@ -129,7 +129,7 @@ def apply():
 			['iload', 7], ['bipush', 23], ['iload', 24], 'iadd', 'isub',
 			['iload', 6], 'iconst_2', 'idiv', ['bipush', 91], 'iadd',
 			['iload', 7], ['bipush', 23], 'isub',
-			['ldc_w.i32', 0xff33cc00],
+			['ldc_w.i32', struct.pack('>I', 0xff33cc00)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'aload_0',
@@ -149,7 +149,7 @@ def apply():
 			['iload', 7],
 			['bipush', 23],
 			'isub',
-			['ldc_w.i32', 0xff004466],
+			['ldc_w.i32', struct.pack('>I', 0xff004466)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'aload_0',
@@ -157,7 +157,7 @@ def apply():
 			['iload', 7], ['bipush', 23], ['iload', 26], 'iadd', 'isub',
 			['iload', 6], 'iconst_2', 'idiv', ['bipush', 78], 'iadd',
 			['iload', 7], ['bipush', 23], 'isub',
-			['ldc_w.i32', 0xff00ffff],
+			['ldc_w.i32', struct.pack('>I', 0xff00ffff)],
 			['invokevirtual', 'uq', 'a', '(IIIII)V'],
 
 			'fconst_1',
@@ -220,7 +220,7 @@ def apply():
 
 			'iconst_0',
 			'iconst_0',
-			['ldc_w.i32', 0xffffff],
+			['ldc_w.i32', struct.pack('>I', 0xffffff)],
 			['invokevirtual', 'uq', 'b', '(Lsj;Ljava/lang/String;III)V'],
 
 			['label', 'skip_render_actions']

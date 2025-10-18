@@ -1,5 +1,5 @@
 from modmaker import *
-import mod
+import mod, struct
 
 def apply():
 	if not mod.config.is_feature_enabled('etc.hunger_and_thirst'):
@@ -73,7 +73,7 @@ def _modify_render_item_decoration_method(cf, cp_cache):
 		['iload', 5], ['bipush', 13], 'iadd',
 		['iload', 12],
 		'iconst_1',
-		['ldc_w.i32', 0xff66cccc],
+		['ldc_w.i32', struct.pack('>I', 0xff66cccc)],
 		['invokevirtual', 'bb', 'a', '(Lnw;IIIII)V'],
 
 		['sipush', 3553],

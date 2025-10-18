@@ -1,5 +1,5 @@
 from modmaker import *
-import mod
+import mod, struct
 
 def apply():
 	if not mod.config.is_feature_enabled('fancy_tooltips'):
@@ -66,7 +66,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], 'iconst_2', 'isub',
 		['iload', 9], ['iload', 11], 'iadd', 'iconst_2', 'iadd',
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_2', 'iadd',
-		['ldc_w.i32', 0xcc000000],
+		['ldc_w.i32', struct.pack('>I', 0xcc000000)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -74,7 +74,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], 'iconst_3', 'isub',
 		['iload', 9], ['iload', 11], 'iadd', 'iconst_3', 'iadd',
 		['iload', 10], 'iconst_2', 'isub',
-		['ldc_w.i32', 0xff7f7f7f],
+		['ldc_w.i32', struct.pack('>I', 0xff7f7f7f)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -82,7 +82,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_2', 'iadd',
 		['iload', 9], ['iload', 11], 'iadd', 'iconst_3', 'iadd',
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_3', 'iadd',
-		['ldc_w.i32', 0xff7f7f7f],
+		['ldc_w.i32', struct.pack('>I', 0xff7f7f7f)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -90,7 +90,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], 'iconst_2', 'isub',
 		['iload', 9], 'iconst_2', 'isub',
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_2', 'iadd',
-		['ldc_w.i32', 0xff7f7f7f],
+		['ldc_w.i32', struct.pack('>I', 0xff7f7f7f)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -98,7 +98,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], 'iconst_2', 'isub',
 		['iload', 9], ['iload', 11], 'iadd', 'iconst_3', 'iadd',
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_2', 'iadd',
-		['ldc_w.i32', 0xff7f7f7f],
+		['ldc_w.i32', struct.pack('>I', 0xff7f7f7f)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -106,7 +106,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], 'iconst_4', 'isub',
 		['iload', 9], ['iload', 11], 'iadd', 'iconst_3', 'iadd',
 		['iload', 10], 'iconst_3', 'isub',
-		['ldc_w.i32', 0xcc000000],
+		['ldc_w.i32', struct.pack('>I', 0xcc000000)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -114,7 +114,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_3', 'iadd',
 		['iload', 9], ['iload', 11], 'iadd', 'iconst_3', 'iadd',
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_4', 'iadd',
-		['ldc_w.i32', 0xcc000000],
+		['ldc_w.i32', struct.pack('>I', 0xcc000000)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -122,7 +122,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], 'iconst_3', 'isub',
 		['iload', 9], 'iconst_3', 'isub',
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_3', 'iadd',
-		['ldc_w.i32', 0xcc000000],
+		['ldc_w.i32', struct.pack('>I', 0xcc000000)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',
@@ -130,7 +130,7 @@ def modify_render_method(cf, cp_cache):
 		['iload', 10], 'iconst_3', 'isub',
 		['iload', 9], ['iload', 11], 'iadd', 'iconst_4', 'iadd',
 		['iload', 10], ['bipush', 8], 'iadd', 'iconst_3', 'iadd',
-		['ldc_w.i32', 0xcc000000],
+		['ldc_w.i32', struct.pack('>I', 0xcc000000)],
 		['invokevirtual', 'id', 'a', '(IIIII)V'],
 
 		'aload_0',

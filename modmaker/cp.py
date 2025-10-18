@@ -12,13 +12,13 @@ def cp_init_cache(cp):
 			cp_cache[1][(0x01, utf8_decode(entry[3]))] = entry[0]
 
 		if entry[1].__eq__(b'\x03'):
-			cp_cache[1][(0x03, int.from_bytes(entry[2]))] = entry[0]
+			cp_cache[1][(0x03, entry[2])] = entry[0]
 
 		if entry[1].__eq__(b'\x04'):
 			cp_cache[1][(0x04, entry[2])] = entry[0]
 
 		if entry[1].__eq__(b'\x05'):
-			cp_cache[1][(0x05, int.from_bytes(entry[2]))] = entry[0]
+			cp_cache[1][(0x05, entry[2])] = entry[0]
 
 		if entry[1].__eq__(b'\x06'):
 			cp_cache[1][(0x06, entry[2])] = entry[0]
@@ -102,6 +102,7 @@ def cp_get_class(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x07'):
+		print(f'Err: can\'t get class entry at index {i}', file=stderr)
 		exit(1)
 
 	return utf8_decode(entry[2])
@@ -110,6 +111,7 @@ def cp_get_field_reference(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x09'):
+		print(f'Err: can\'t get field reference entry at index {i}', file=stderr)
 		exit(1)
 
 	ecp_class = cp_cache[0][int.from_bytes(entry[2])]
@@ -127,6 +129,7 @@ def cp_get_method_reference(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x0a'):
+		print(f'Err: can\'t get method reference entry at index {i}', file=stderr)
 		exit(1)
 
 	ecp_class = cp_cache[0][int.from_bytes(entry[2])]
@@ -144,6 +147,7 @@ def cp_get_interface_method_reference(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x0b'):
+		print(f'Err: can\'t get interface method reference entry at index {i}', file=stderr)
 		exit(1)
 
 	ecp_class = cp_cache[0][int.from_bytes(entry[2])]
@@ -161,6 +165,7 @@ def cp_get_string(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x08'):
+		print(f'Err: can\'t get string entry at index {i}', file=stderr)
 		exit(1)
 
 	return utf8_decode(entry[3])
@@ -169,14 +174,16 @@ def cp_get_i32(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x03'):
+		print(f'Err: can\'t get int entry at index {i}', file=stderr)
 		exit(1)
 
-	return int.from_bytes(entry[2], signed=True)
+	return entry[2]
 
 def cp_get_f32(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x04'):
+		print(f'Err: can\'t get float entry at index {i}', file=stderr)
 		exit(1)
 
 	return entry[2]
@@ -185,14 +192,16 @@ def cp_get_i64(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x05'):
+		print(f'Err: can\'t get long entry at index {i}', file=stderr)
 		exit(1)
 
-	return int.from_bytes(entry[2], signed=True)
+	return entry[2]
 
 def cp_get_f64(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x06'):
+		print(f'Err: can\'t get double entry at index {i}', file=stderr)
 		exit(1)
 
 	return entry[2]
@@ -201,6 +210,7 @@ def cp_get_utf8(cp_cache, i):
 	entry = cp_cache[0][i]
 
 	if not entry[1].__eq__(b'\x01'):
+		print(f'Err: can\'t get utf8 entry at index {i}', file=stderr)
 		exit(1)
 
 	return utf8_decode(entry[3])
@@ -302,7 +312,7 @@ def icpx_int(cf, cp_cache, value):
 		else:
 			i = i + 1
 
-	cp.append([i, b'\x03', value.to_bytes(4)])
+	cp.append([i, b'\x03', value])
 	cp_cache[0][i] = cp[-1]
 	cf[0x03] = (i + 1).to_bytes(2)
 	cp_cache[1][(0x03, value)] = i
@@ -327,7 +337,7 @@ def icpx_long(cf, cp_cache, value):
 		else:
 			i = i + 1
 
-	cp.append([i, b'\x05', value.to_bytes(8, signed=True)])
+	cp.append([i, b'\x05', value])
 	cp_cache[0][i] = cp[-1]
 	cf[0x03] = (i + 2).to_bytes(2)
 	cp_cache[1][(0x05, value)] = i
