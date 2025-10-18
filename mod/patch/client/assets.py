@@ -129,6 +129,3 @@ def apply():
 		if not ret_code.__eq__(0):
 			print('Err: unknown.', file=stderr)
 			exit(1)
-
-
-	print('a')
