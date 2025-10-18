@@ -42,4 +42,4 @@ def package(side):
 			progress = i / total
 			filled = int(bar_width * progress)
 			bar = '█' * filled + '▁' * (bar_width - filled)
-			print(f'\rPackaging {out_name} ▕{bar}▏ {i}/{total} {progress * 100:5.1f}%', end='', flush=True)
+			print(f'\rPackaging {out_name} {bar} {i}/{total} {progress * 100:5.1f}%', end='', flush=True)
